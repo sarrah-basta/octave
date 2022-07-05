@@ -912,6 +912,7 @@ size) with successive @code{regexp} searches.
 
 ## segfault test
 %!assert (regexp ("abcde", "."), [1,2,3,4,5])
+%!assert <*62704> (regexpi('(', '\(?'), 1)
 ## Infinite loop test
 %!assert (isempty (regexp ("abcde", "")))
 
@@ -1198,6 +1199,12 @@ size) with successive @code{regexp} searches.
 %! assert (regexp ('foo!+bar', '.\>'), [3, 4, 8]);
 %! assert (regexp ('foo!+bar\nbar!+foo', '.\>'), [3, 4, 8, 13, 14, 18]);
 %! assert (regexp ('foo!+bar\nbar!+foo', '\<\w'), [1, 6, 10, 16]);
+
+## Test "incomplete" named patterns
+%!assert <*62705> (regexpi ('<', '\(?<'), 1)
+%!assert <*62705> (regexpi ('<n>', '\(?<n\>'), 1)
+%!assert <*62705> (regexpi ('<n>', '\(?<n\>\)?'), 1)
+%!assert <62705> (regexpi ('<n>a', '\(?<n\>a\)?'), 1)
 
 ## Test input validation
 %!error regexp ('string', 'tri', 'BadArg')
