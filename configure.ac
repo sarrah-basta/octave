@@ -710,10 +710,7 @@ AM_CONDITIONAL([AMCOND_LINK_ALL_DEPS], [test $link_all_deps = yes])
 save_FFLAGS="$FFLAGS"
 FFLAGS="$FFLAGS $F77_INTEGER_8_FLAG"
 
-OCTAVE_BLAS_WITH_F77_FUNC([], [],
-  [ax_blas_ok=yes
-  AC_MSG_CHECKING([BLAS can be called from Fortran])
-  AC_MSG_RESULT([yes assumed for cross compilation])])
+OCTAVE_BLAS
 AX_LAPACK
 
 ## Restore FFLAGS.
@@ -724,7 +721,7 @@ if test $ax_blas_ok = no; then
   save_FFLAGS="$FFLAGS"
   FFLAGS="-ff2c $FFLAGS $F77_INTEGER_8_FLAG"
 
-  OCTAVE_BLAS_WITH_F77_FUNC
+  OCTAVE_BLAS
   AX_LAPACK
 
   ## Restore FFLAGS, with -ff2c if that was helpful
@@ -753,7 +750,7 @@ if test $ax_blas_ok = no; then
          save_FFLAGS="$FFLAGS"
          FFLAGS="$FFLAGS $F77_INTEGER_8_FLAG"
 
-         OCTAVE_BLAS_WITH_F77_FUNC
+         OCTAVE_BLAS
          AX_LAPACK
 
          ## Restore FFLAGS.
@@ -2497,55 +2494,59 @@ do
 
   AC_MSG_CHECKING([for $jvmlib])
 
-  if test -z "$JAVA_LDPATH"; then
-    ## Run Java to try and determine library path to libjvm.so.
-    JAVA_TMP_LDPATH=`$JAVA -classpath ${srcdir}/build-aux OctJavaQry JAVA_LDPATH`
-    JAVA_TMP_LDPATH=`echo $JAVA_TMP_LDPATH | $SED -e "s/${PATH_SEPARATOR}/ /g"`
-    for dir in $JAVA_TMP_LDPATH; do
-      if test -f "$dir/$jvmlib"; then
-        JAVA_LDPATH=$dir
-        break
-      fi
-    done
-  fi
-
-  if test -z "$JAVA_LDPATH"; then
-    ## Nothing found.  Try Java again using bootpath argument.
-    JAVA_TMP_LDPATH=`$JAVA -classpath ${srcdir}/build-aux OctJavaQry JAVA_BOOTPATH`
-    JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_TMP_LDPATH}/client ${JAVA_TMP_LDPATH}/server"
-    for dir in $JAVA_TMP_LDPATH; do
-      if test -f "$dir/$jvmlib"; then
-        JAVA_LDPATH=$dir
-        break
-      fi
-    done
-  fi
-
-  if test -z "$JAVA_LDPATH"; then
-    ## Java failed to find its own library path.  Guess wildly.
-    JAVA_TMP_LDPATH=`ls -d $JAVA_HOME/jre/lib/*/client`
-    JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} `ls -d $JAVA_HOME/jre/lib/*/server`"
-    ## Add some paths that might work on Macs.
-    JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_HOME}/../Libraries ${JAVA_HOME}/Libraries"
-    ## Add some paths that might work on MinGW
-    JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_HOME}/bin/client ${JAVA_HOME}/bin/server"
-    for dir in $JAVA_TMP_LDPATH; do
-      if test -f "$dir/$jvmlib"; then
-        JAVA_LDPATH=$dir
-        break
-      fi
-    done
-  fi
-
-  ## Verify value passed in option --with-java-libdir
-  if test -n "$JAVA_LDPATH"; then
-    if test -f "${JAVA_LDPATH}/$jvmlib"; then
-      :  # libjvm found
-    else
-      JAVA_LDPATH=""
+  AC_CACHE_VAL([octave_cv_java_ldpath],[
+    if test -z "$JAVA_LDPATH"; then
+      ## Run Java to try and determine library path to libjvm.so.
+      JAVA_TMP_LDPATH=`$JAVA -classpath ${srcdir}/build-aux OctJavaQry JAVA_LDPATH`
+      JAVA_TMP_LDPATH=`echo $JAVA_TMP_LDPATH | $SED -e "s/${PATH_SEPARATOR}/ /g"`
+      for dir in $JAVA_TMP_LDPATH; do
+        if test -f "$dir/$jvmlib"; then
+          JAVA_LDPATH=$dir
+          break
+        fi
+      done
     fi
-  fi
 
+    if test -z "$JAVA_LDPATH"; then
+      ## Nothing found.  Try Java again using bootpath argument.
+      JAVA_TMP_LDPATH=`$JAVA -classpath ${srcdir}/build-aux OctJavaQry JAVA_BOOTPATH`
+      JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_TMP_LDPATH}/client ${JAVA_TMP_LDPATH}/server"
+      for dir in $JAVA_TMP_LDPATH; do
+        if test -f "$dir/$jvmlib"; then
+          JAVA_LDPATH=$dir
+          break
+        fi
+      done
+    fi
+
+    if test -z "$JAVA_LDPATH"; then
+      ## Java failed to find its own library path.  Guess wildly.
+      JAVA_TMP_LDPATH=`ls -d $JAVA_HOME/jre/lib/*/client`
+      JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} `ls -d $JAVA_HOME/jre/lib/*/server`"
+      ## Add some paths that might work on Macs.
+      JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_HOME}/../Libraries ${JAVA_HOME}/Libraries"
+      ## Add some paths that might work on MinGW
+      JAVA_TMP_LDPATH="${JAVA_TMP_LDPATH} ${JAVA_HOME}/bin/client ${JAVA_HOME}/bin/server"
+      for dir in $JAVA_TMP_LDPATH; do
+        if test -f "$dir/$jvmlib"; then
+          JAVA_LDPATH=$dir
+          break
+        fi
+      done
+    fi
+
+    ## Verify value passed in option --with-java-libdir
+    if test -n "$JAVA_LDPATH"; then
+      if test -f "${JAVA_LDPATH}/$jvmlib"; then
+        :  # libjvm found
+      else
+        JAVA_LDPATH=""
+      fi
+    fi
+
+    octave_cv_java_ldpath=$JAVA_LDPATH
+  ])
+  JAVA_LDPATH=$octave_cv_java_ldpath
   if test -z "$JAVA_LDPATH"; then
     AC_MSG_RESULT([not found])
     warn_java="Library $jvmlib not found.  Octave will not be able to call Java methods."
@@ -2575,13 +2576,19 @@ do
   esac
 
   ## Verify jni.h include file exists.
-  JNI_PATH=`echo $JAVA_CPPFLAGS | $SED -e 's/-I//g'`
-  have_jni=no
-  for dir in $JNI_PATH; do
-    if test -f "${dir}/jni.h"; then have_jni=yes; break; fi
-  done
-  if test $have_jni = yes; then
-    AC_MSG_RESULT([$dir])
+  AC_CACHE_VAL([octave_cv_java_have_jni],[
+    JNI_PATH=`echo $JAVA_CPPFLAGS | $SED -e 's/-I//g'`
+    octave_cv_java_have_jni=no
+    for dir in $JNI_PATH; do
+      if test -f "${dir}/jni.h"; then
+        octave_cv_java_have_jni=yes
+        octave_cv_java_jni_h_path=$dir
+        break
+      fi
+    done
+  ])
+  if test $octave_cv_java_have_jni = yes; then
+    AC_MSG_RESULT([$octave_cv_java_jni_h_path])
   else
     AC_MSG_RESULT([not found])
     warn_java="Include file <jni.h> not found.  Octave will not be able to call Java methods."

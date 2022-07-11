@@ -1,12 +1,11 @@
-dnl aclocal.m4 -- extra macros for configuring Octave
+dnl acinclude.m4 -- extra macros for configuring Octave
 dnl
 dnl --------------------------------------------------------------------
 dnl
 dnl Copyright (C) 1995-2022 The Octave Project Developers
 dnl
 dnl See the file COPYRIGHT.md in the top-level directory of this
-dnl or <https://octave.org/copyright/>.
-dnl
+dnl distribution or <https://octave.org/copyright/>.
 dnl
 dnl This file is part of Octave.
 dnl
@@ -1354,7 +1353,7 @@ AC_DEFUN([OCTAVE_CHECK_LIB_HDF5_DLL], [
       [octave_cv_lib_hdf5_dll=no],
       [save_CFLAGS="$CFLAGS"
       CFLAGS="$CFLAGS -DWIN32 -D_HDF5USEDLL_"
-      save_LIBS="$LIBS"
+      ac_octave_save_LIBS="$LIBS"
       LIBS="$HDF5_LIBS $LIBS"
       AC_LINK_IFELSE([AC_LANG_PROGRAM([[
           #include <hdf5.h>
@@ -1365,7 +1364,7 @@ AC_DEFUN([OCTAVE_CHECK_LIB_HDF5_DLL], [
         octave_cv_lib_hdf5_dll=yes,
         octave_cv_lib_hdf5_dll=no)
       CFLAGS="$save_CFLAGS"
-      LIBS="$save_LIBS"
+      LIBS="$ac_octave_save_LIBS"
     ])
   ])
   if test $octave_cv_lib_hdf5_dll = yes; then
@@ -1433,7 +1432,7 @@ AC_DEFUN([OCTAVE_CHECK_LIB_OPENGL], [
       ])
       case $canonical_host_type in
         *-*-mingw32* | *-*-msdosmsvc)
-          save_LIBS="$LIBS"
+          ac_octave_save_LIBS="$LIBS"
           LIBS="$LIBS -lopengl32"
           AC_MSG_CHECKING([for glEnable in -lopengl32])
           AC_LINK_IFELSE([AC_LANG_PROGRAM([[
@@ -1449,7 +1448,7 @@ AC_DEFUN([OCTAVE_CHECK_LIB_OPENGL], [
             glEnable(GL_SMOOTH);
             ]])], [OPENGL_LIBS="-lopengl32 -lglu32"])
 
-          LIBS="$save_LIBS"
+          LIBS="$ac_octave_save_LIBS"
           if test -n "$OPENGL_LIBS"; then
             AC_MSG_RESULT([yes])
           else
@@ -1760,7 +1759,7 @@ AC_DEFUN([OCTAVE_CHECK_QSCINTILLA], [
       [save_CPPFLAGS="$CPPFLAGS"
       save_CXXFLAGS="$CXXFLAGS"
       save_LDFLAGS="$LDFLAGS"
-      save_LIBS="$LIBS"
+      ac_octave_save_LIBS="$LIBS"
       CPPFLAGS="$QT_CPPFLAGS $CXXPICFLAG $CPPFLAGS"
       CXXFLAGS="$CXXPICFLAG $CXXFLAGS"
       LDFLAGS="$QT_LDFLAGS $LDFLAGS"
@@ -1783,7 +1782,7 @@ AC_DEFUN([OCTAVE_CHECK_QSCINTILLA], [
       CPPFLAGS="$save_CPPFLAGS"
       CXXFLAGS="$save_CXXFLAGS"
       LDFLAGS="$save_LDFLAGS"
-      LIBS="$save_LIBS"
+      LIBS="$ac_octave_save_LIBS"
       AC_LANG_POP([C++])
     ])
 
@@ -3409,7 +3408,7 @@ dnl
 dnl Find Python program.
 dnl
 AC_DEFUN([OCTAVE_PROG_PYTHON], [
-  AC_CHECK_PROG(PYTHON, python, python, [])
+  AC_CHECK_PROGS(PYTHON, [python3 python], python, [])
   AC_SUBST(PYTHON)
 ])
 dnl
@@ -3500,23 +3499,26 @@ dnl Check for options that can be passed to tar to make archives reproducible.
 dnl
 AC_DEFUN([OCTAVE_PROG_TAR_REPRODUCIBLE], [
   AC_MSG_CHECKING([for options to make reproducible archives with GNU tar])
-dnl This uses Automake's logic for finding GNU tar under various names
-  for octave_tar in tar gnutar gtar :; do
-    $octave_tar --version >/dev/null 2>&1 && break
-  done
-dnl If we have a valid GNU tar program, see if it supports sets of options
-  if test x"$octave_tar" != x:; then
-    octave_tar_flags=
-    echo > conftest.txt
-    for octave_tar_flag in --owner=0 --group=0 --numeric-owner --sort=name; do
-      $octave_tar -cf conftest.tar $octave_tar_flags $octave_tar_flag conftest.txt 2>/dev/null
-      if test $? -eq 0; then
-        octave_tar_flags="${octave_tar_flags:+$octave_tar_flags }$octave_tar_flag"
-      fi
+  AC_CACHE_VAL([octave_cv_tar_flags],
+    [octave_cv_tar_flags=
+    dnl This uses Automake's logic for finding GNU tar under various names
+    for octave_tar in tar gnutar gtar :; do
+      $octave_tar --version >/dev/null 2>&1 && break
     done
-    rm -f conftest.tar conftest.txt
-    REPRODUCIBLE_TAR_FLAGS="$octave_tar_flags"
-  fi
+    dnl If we have a valid GNU tar program, see if it supports sets of options
+    if test x"$octave_tar" != x:; then
+      echo > conftest.txt
+      for octave_tar_flag in --owner=0 --group=0 --numeric-owner --sort=name; do
+        $octave_tar -cf conftest.tar $octave_cv_tar_flags $octave_tar_flag conftest.txt 2>/dev/null
+        if test $? -eq 0; then
+          octave_cv_tar_flags="${octave_cv_tar_flags:+$octave_cv_tar_flags }$octave_tar_flag"
+        fi
+      done
+      rm -f conftest.tar conftest.txt
+    fi
+  ])
+
+  REPRODUCIBLE_TAR_FLAGS="$octave_cv_tar_flags"
   AC_SUBST(REPRODUCIBLE_TAR_FLAGS)
   AC_MSG_RESULT([$REPRODUCIBLE_TAR_FLAGS])
 ])
