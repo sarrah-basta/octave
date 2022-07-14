@@ -1,10 +1,8 @@
-// #include <nvector/nvector_col.h>
+
 #include "nvector_col.h"
-// #include <nvector/nvector_Col.h>
 #include <vector>
 #include <iostream>
 #include <stdio.h>
-// #include <dColVector.h>
 /* -----------------------------------------------------------------
  * Programmer(s): Allan Taylor, Alan Hindmarsh and
  *                Radu Serban @ LLNL
@@ -48,7 +46,7 @@
 #include <math.h>
 
 #include <ida/ida.h>                   /* prototypes for IDA fcts., consts.    */
-// #include <nvector/nvector_serial.h>    /* access to Col N_Vector            */
+// #include <nvector/nvector_serial.h>    /* access to Col N_Vector currently given directly in makefile            */
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to spgmr SUNLinearSolver      */
 #include <sundials/sundials_types.h>   /* definition of type realtype          */
 
@@ -578,23 +576,3 @@ static int check_retval(void *returnvalue, const char *funcname, int opt)
   return(0);
 }
 
-
-// int main() {
-
-
-// int length = 7;
-// std::vector<double> ex = {2,3,4,5,6,8,4};
-// ColumnVector data (length);
-// for (octave_f77_int_type i = 0; i < length; i++)
-//       data(i) = i;
-
-// N_Vector v;
-// SUNContext ctx;
-
-// int retval = SUNContext_Create(NULL, &ctx);
-// v = N_VMake_Col(length, ex.data(), ctx);
-// N_VPrint_Col(v);
-// std::cout<<"built succesfully !!";
-
-// return 0;
-// }
