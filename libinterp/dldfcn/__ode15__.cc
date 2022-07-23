@@ -32,6 +32,8 @@
 #include "dSparse.h"
 #include "f77-fcn.h"
 #include "lo-utils.h"
+#include "nvector_col.h"
+#include "sunmatrix_oct.h"
 
 #include "Cell.h"
 #include "defun-dld.h"
@@ -423,14 +425,14 @@ OCTAVE_NAMESPACE_BEGIN
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
-        m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
+        m_sunJacMatrix = SUNOctMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
 #    else
         octave_f77_int_type max_elems;
         if (math::int_multiply_overflow (m_num, m_num, &max_elems))
           error ("Unable to allocate memory for sparse Jacobian");
 
-        m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, max_elems, CSC_MAT
+        m_sunJacMatrix = SUNOctMatrix (m_num, m_num, max_elems, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
 #    endif
         if (! m_sunJacMatrix)
@@ -752,7 +754,8 @@ OCTAVE_NAMESPACE_BEGIN
         if (status == 0)
           {
             // Interpolate in tend
-            N_Vector dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+            N_Vector dky = N_VNew_Serial
+       (m_num OCTAVE_SUNCONTEXT);
 
             if (IDAGetDky (m_mem, tend, 0, dky) != 0)
               error ("IDA failed to interpolate y");
@@ -777,7 +780,8 @@ OCTAVE_NAMESPACE_BEGIN
                                        yold, num_event_args);
               }
 
-            N_VDestroy_Serial (dky);
+            N_VDestroy_Serial
+       (dky);
           }
 
         // Cleanup plotter

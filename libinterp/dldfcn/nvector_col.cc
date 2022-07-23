@@ -1,44 +1,9 @@
 /* generating a custom N_Vector implementation */
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
 #include <vector>
 #include "nvector_col.h"
 #include <sundials/sundials_math.h>
-#include <data.h>
-// need comment
-
-// /* A vector is a structure with an implementation-dependent
-//    'content' field, and a pointer to a structure of vector
-//    operations corresponding to that implementation. */
-
-// /* Forward reference for pointer to N_Vector object */
-// typedef _SUNDIALS_STRUCT_ _N_VectorCol *N_VectorCol;
-
-// /* Forward reference for pointer to N_Vector_v->Ops object */
-// typedef _SUNDIALS_STRUCT_ _N_VectorCol_v->Ops *N_VectorCol_v->Ops;
-
-// struct _N_VectorCol_v->Ops{
-//   N_Vector_ID  (*nvgetvectorid)(N_VectorCol);
-// };
-
-// struct _N_VectorCol{
-//     // _N_VectorContent_Col *N_VectorContent_Col;
-//     void *content;
-//     _N_VectorCol_v->Ops v->ops;
-//     SUNContext sunctx;
-// };
-
-// in header file
-
-/* Defining the content field */
-// struct _N_VectorContent_Col{
-//     int length;  /* vector length       */
-//     bool own_data;           /* data ownership flag */
-//     double *data;            /* data array, will be our column vector */
-// };
-
-// typedef struct _N_VectorContent_Col *N_VectorContent_Col;
 
 extern "C"
 {
@@ -51,11 +16,6 @@ using namespace octave;
 #define ONE RCONST(1.0)
 #define ONEPT5 RCONST(1.5)
 
-// need comment
-// ColumnVector y;
-// ColumnVector& y_data = *y;
-
-  // need comment
 
   /*
    * -----------------------------------------------------------------
@@ -96,108 +56,12 @@ using namespace octave;
    */
   N_Vector_ID N_VGetVectorID_Col(N_Vector v)
   {
-    return SUNDIALS_NVEC_CUSTOM;
+    return SUNDIALS_NVEC_SERIAL;
   }
 
   /* ----------------------------------------------------------------------------
    * Function to create a new empty Col vector
    */
-
-  N_Vector N_VNewEmpty_Col(SUNContext sunctx)
-  {
-    N_Vector v;
-
-    /* Create an empty vector object */
-    v = NULL;
-    v = N_VNewEmpty(sunctx);
-    if (v == NULL)
-      return (NULL);
-
-    /* Attach operations */
-
-    /* constructors, destructors, and utility operations */
-    v->ops->nvgetvectorid     = N_VGetVectorID_Col;
-    v->ops->nvclone           = N_VClone_Col;
-    v->ops->nvcloneempty      = N_VCloneEmpty_Col;
-    v->ops->nvdestroy         = N_VDestroy_Col;
-    v->ops->nvspace           = N_VSpace_Col;
-    v->ops->nvgetarraypointer = N_VGetArrayPointer_Col;
-    v->ops->nvsetarraypointer = N_VSetArrayPointer_Col;
-    v->ops->nvgetlength       = N_VGetLength_Col;
-
-    /* standard vector operations */
-    v->ops->nvlinearsum    = N_VLinearSum_Col;
-    v->ops->nvconst        = N_VConst_Col;
-    v->ops->nvprod         = N_VProd_Col;
-    v->ops->nvdiv          = N_VDiv_Col;
-    v->ops->nvscale        = N_VScale_Col;
-    v->ops->nvabs          = N_VAbs_Col;
-    v->ops->nvinv          = N_VInv_Col;
-    v->ops->nvaddconst     = N_VAddConst_Col;
-    v->ops->nvdotprod      = N_VDotProd_Col;
-    v->ops->nvmaxnorm      = N_VMaxNorm_Col;
-    v->ops->nvwrmsnormmask = N_VWrmsNormMask_Col;
-    v->ops->nvwrmsnorm     = N_VWrmsNorm_Col;
-    v->ops->nvmin          = N_VMin_Col;
-    v->ops->nvwl2norm      = N_VWL2Norm_Col;
-    v->ops->nvl1norm       = N_VL1Norm_Col;
-    v->ops->nvcompare      = N_VCompare_Col;
-    v->ops->nvinvtest      = N_VInvTest_Col;
-    v->ops->nvconstrmask   = N_VConstrMask_Col;
-    v->ops->nvminquotient  = N_VMinQuotient_Col;
-
-    /* fused and vector array operations are disabled (NULL) by default */
-
-    /*
-      * OPTIONAL operations.
-      *
-      * These operations provide default implementations that may be overriden.
-      */
-
-    /* fused vector operations (optional) */
-    v->ops->nvlinearcombination = N_VLinearCombination_Col;
-    // v->ops->nvscaleaddmulti = N_VScaleAddMulti_Col;
-    v->ops->nvdotprodmulti = N_VDotProdMulti_Col;
-
-    // /* vector array operations (optional) */
-    v->ops->nvlinearsumvectorarray = N_VLinearSumVectorArray_Col;
-    v->ops->nvscalevectorarray = N_VScaleVectorArray_Col;
-    v->ops->nvconstvectorarray = N_VConstVectorArray_Col;
-    v->ops->nvwrmsnormvectorarray = N_VWrmsNormVectorArray_Col;
-    v->ops->nvwrmsnormmaskvectorarray = N_VWrmsNormMaskVectorArray_Col;
-    v->ops->nvscaleaddmultivectorarray = N_VScaleAddMultiVectorArray_Col;
-    v->ops->nvlinearcombinationvectorarray = N_VLinearCombinationVectorArray_Col;
-
-    // /*
-    //  * OPTIONAL operations with no default implementation.
-    //  */
-
-    /* local reduction operations */
-    v->ops->nvdotprodlocal     = NULL;
-    v->ops->nvmaxnormlocal     = NULL;
-    v->ops->nvminlocal         = NULL;
-    v->ops->nvl1normlocal      = NULL;
-    v->ops->nvinvtestlocal     = NULL;
-    v->ops->nvconstrmasklocal  = N_VConstrMask_Col;
-    v->ops->nvminquotientlocal = NULL;
-    v->ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Col;
-    v->ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Col;
-
-    // /* single buffer reduction operations */
-    // v->ops->nvdotprodmultilocal = NULL;
-    // v->ops->nvdotprodmultiallreduce = NULL;
-
-    // /* XBraid interface operations */
-    // v->ops->nvbufsize = NULL;
-    // v->ops->nvbufpack = NULL;
-    // v->ops->nvbufunpack = NULL;
-
-    // /* debugging functions */
-    v->ops->nvprint = N_VPrint_Col;
-    v->ops->nvprintfile = NULL;
-
-    return(v);
-  }
 
   N_Vector N_VNew_Col(int length, SUNContext sunctx)
   {
@@ -210,9 +74,92 @@ using namespace octave;
 
     /* Create an empty vector object */
     v = NULL;
-    v = N_VNewEmpty_Col(sunctx);
+    v = N_VNewEmpty(sunctx);
     if (v == NULL)
       return (NULL);
+
+  /* Attach operations */
+
+  /* constructors, destructors, and utility operations */
+  v->ops->nvgetvectorid     = N_VGetVectorID_Col;
+  v->ops->nvclone           = N_VClone_Col;
+  v->ops->nvcloneempty      = NULL;
+  v->ops->nvdestroy         = N_VDestroy_Col;
+  v->ops->nvspace           = N_VSpace_Col;
+  v->ops->nvgetarraypointer = N_VGetArrayPointer_Col;
+  v->ops->nvsetarraypointer = N_VSetArrayPointer_Col;
+  v->ops->nvgetlength       = N_VGetLength_Col;
+
+  /* standard vector operations */
+  v->ops->nvlinearsum    = N_VLinearSum_Col;
+  v->ops->nvconst        = N_VConst_Col;
+  v->ops->nvprod         = N_VProd_Col;
+  v->ops->nvdiv          = N_VDiv_Col;
+  v->ops->nvscale        = N_VScale_Col;
+  v->ops->nvabs          = N_VAbs_Col;
+  v->ops->nvinv          = N_VInv_Col;
+  v->ops->nvaddconst     = N_VAddConst_Col;
+  v->ops->nvdotprod      = N_VDotProd_Col;
+  v->ops->nvmaxnorm      = N_VMaxNorm_Col;
+  v->ops->nvwrmsnormmask = N_VWrmsNormMask_Col;
+  v->ops->nvwrmsnorm     = N_VWrmsNorm_Col;
+  v->ops->nvmin          = N_VMin_Col;
+  v->ops->nvwl2norm      = N_VWL2Norm_Col;
+  v->ops->nvl1norm       = N_VL1Norm_Col;
+  v->ops->nvcompare      = N_VCompare_Col;
+  v->ops->nvinvtest      = N_VInvTest_Col;
+  v->ops->nvconstrmask   = N_VConstrMask_Col;
+  v->ops->nvminquotient  = N_VMinQuotient_Col;
+
+  /* fused and vector array operations are disabled (NULL) by default */
+
+  /*
+    * OPTIONAL operations.
+    *
+    * These operations provide default implementations that may be overriden.
+    */
+
+  /* fused vector operations (optional) */
+  v->ops->nvlinearcombination = N_VLinearCombination_Col;
+  v->ops->nvscaleaddmulti = N_VScaleAddMulti_Col;
+  v->ops->nvdotprodmulti = N_VDotProdMulti_Col;
+
+  // /* vector array operations (optional) */
+  v->ops->nvlinearsumvectorarray = N_VLinearSumVectorArray_Col;
+  v->ops->nvscalevectorarray = N_VScaleVectorArray_Col;
+  v->ops->nvconstvectorarray = N_VConstVectorArray_Col;
+  v->ops->nvwrmsnormvectorarray = N_VWrmsNormVectorArray_Col;
+  v->ops->nvwrmsnormmaskvectorarray = N_VWrmsNormMaskVectorArray_Col;
+  v->ops->nvscaleaddmultivectorarray = N_VScaleAddMultiVectorArray_Col;
+  v->ops->nvlinearcombinationvectorarray = N_VLinearCombinationVectorArray_Col;
+
+  // /*
+  //  * OPTIONAL operations with no default implementation.
+  //  */
+
+  /* local reduction operations */
+  v->ops->nvdotprodlocal     = NULL;
+  v->ops->nvmaxnormlocal     = NULL;
+  v->ops->nvminlocal         = NULL;
+  v->ops->nvl1normlocal      = NULL;
+  v->ops->nvinvtestlocal     = NULL;
+  v->ops->nvconstrmasklocal  = N_VConstrMask_Col;
+  v->ops->nvminquotientlocal = NULL;
+  v->ops->nvwsqrsumlocal     = N_VWSqrSumLocal_Col;
+  v->ops->nvwsqrsummasklocal = N_VWSqrSumMaskLocal_Col;
+
+  /* single buffer reduction operations */
+  v->ops->nvdotprodmultilocal = NULL;
+  v->ops->nvdotprodmultiallreduce = NULL;
+
+  /* XBraid interface operations */
+  v->ops->nvbufsize = NULL;
+  v->ops->nvbufpack = NULL;
+  v->ops->nvbufunpack = NULL;
+
+  // /* debugging functions */
+  v->ops->nvprint = N_VPrint_Col;
+  v->ops->nvprintfile = N_VPrintFile_Col;
 
   /* Create data */
   if (length > 0) {
@@ -237,28 +184,6 @@ using namespace octave;
   return (v);
 }
 
-//   /* ----------------------------------------------------------------------------
-//    * Function to create a serial N_Vector with user data component
-//    */
-
-//   // N_Vector N_VMake_Col(sunindextype length, double *v_data, SUNContext sunctx)
-//   // {
-//   //   N_Vector v;
-
-//   //   v = NULL;
-//   //   v = N_VNewEmpty_Col(length, sunctx);
-//   //   if (v == NULL)
-//   //     return (NULL);
-
-//   //   if (length > 0)
-//   //   {
-//   //     /* Attach data */
-//   //     NV_OWN_DATA_C(v) = SUNFALSE;
-//   //     NV_DATA_C(v) = v_data;
-//   //   }
-
-//   //   return (v);
-//   // }
 
 /* ----------------------------------------------------------------------------
  * Function to create an array of new serial vectors.
@@ -278,33 +203,6 @@ N_Vector* N_VCloneVectorArray_Col(int count, N_Vector w)
   for (j = 0; j < count; j++) {
     vs[j] = NULL;
     vs[j] = N_VClone_Col(w);
-    if (vs[j] == NULL) {
-      N_VDestroyVectorArray_Col(vs, j-1);
-      return(NULL);
-    }
-  }
-
-  return(vs);
-}
-
-/* ----------------------------------------------------------------------------
- * Function to create an array of new serial vectors with NULL data array.
- */
-
-N_Vector* N_VCloneVectorArrayEmpty_Col(int count, N_Vector w)
-{
-  N_Vector* vs;
-  int j;
-
-  if (count <= 0) return(NULL);
-
-  vs = NULL;
-  vs = (N_Vector*) malloc(count * sizeof(N_Vector));
-  if(vs == NULL) return(NULL);
-
-  for (j = 0; j < count; j++) {
-    vs[j] = NULL;
-    vs[j] = N_VCloneEmpty_Col(w);
     if (vs[j] == NULL) {
       N_VDestroyVectorArray_Col(vs, j-1);
       return(NULL);
@@ -341,16 +239,16 @@ sunindextype N_VGetLength_Col(N_Vector v)
  * Function to print the a serial vector to stdout
  */
 
-// void N_VPrint_Col(N_Vector x)
-// {
-//   N_VPrintFile_Col(x, stdout);
-// }
+void N_VPrint_Col(N_Vector x)
+{
+  N_VPrintFile_Col(x, stdout);
+}
 
 /* ----------------------------------------------------------------------------
  * Function to print the a serial vector to outfile
  */
 
-void N_VPrint_Col(N_Vector x)
+void N_VPrintFile_Col(N_Vector x, FILE* outfile)
 {
   sunindextype i, N;
   realtype *xd;
@@ -360,53 +258,39 @@ void N_VPrint_Col(N_Vector x)
   N  = NV_LENGTH_C(x);
   xd = NV_DATA_C(x);
 
-  ColumnVector *xv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-
-  std::cout<<(*xv);
-// #if defined(SUNDIALS_EXTENDED_PRECISION)
-//     fprintf(outfile, "%35.32Lg\n", xd[i]);
-// #elif defined(SUNDIALS_DOUBLE_PRECISION)
-//     std::cout<<(*xv);
-// #else
-//     fprintf(outfile, "%11.8g\n", xd[i]);
-// #endif
-  // fprintf(outfile, "\n");
+  for (i = 0; i < N; i++) {
+#if defined(SUNDIALS_EXTENDED_PRECISION)
+    fprintf(outfile, "%35.32Lg\n", xd[i]);
+#elif defined(SUNDIALS_DOUBLE_PRECISION)
+    fprintf(outfile, "%19.16g\n", xd[i]);
+#else
+    fprintf(outfile, "%11.8g\n", xd[i]);
+#endif
+  }
+  fprintf(outfile, "\n");
 
   return;
 }
 
-/*
- * -----------------------------------------------------------------
- * implementation of vector operations
- * -----------------------------------------------------------------
- */
-
-N_Vector N_VCloneEmpty_Col(N_Vector w)
-{
-  N_Vector v;
-
-  if (w == NULL) return(NULL);
-
-  /* Create vector */
-  v = NULL;
-  v = N_VNewEmpty_Col(w->sunctx);
-  if (v == NULL) return(NULL);
-
-  /* Attach operations */
-  if (N_VCopyOps(w, v)) { N_VDestroy(v); return(NULL); }
-
-  return(v);
-}
+// /*
+//  * -----------------------------------------------------------------
+//  * implementation of vector operations
+//  * -----------------------------------------------------------------
+//  */
 
 N_Vector N_VClone_Col(N_Vector w)
 {
+  N_Vector v;
   void* content;
   sunindextype length;
 
   /* Create vector */
-  N_Vector v = N_VCloneEmpty_Col(w);
+  v = NULL;
+  v = N_VNewEmpty(w->sunctx);
   if (v == NULL) return(NULL);
+
+  /* Attach operations */
+  if (N_VCopyOps(w, v)) { N_VDestroy(v); return(NULL); }
 
   /* Create content */
   content = NULL;
@@ -464,9 +348,13 @@ void N_VSetArrayPointer_Col(realtype* v_data, N_Vector v)
   return;
 }
 
-/*
- * Linear combination of two vectors: z = a*x + b*y
- */
+void N_VdrrayPointer_Col(realtype *v_data, N_Vector v)
+{
+  if (NV_LENGTH_C(v) > 0) v_data = NV_CONTENT_C(v)->fortran_vec();
+
+  return;
+}
+
 void N_VLinearSum_Col(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 {
   sunindextype i, N;
@@ -543,77 +431,74 @@ void N_VLinearSum_Col(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z
      (2) a == 0.0, b == other - user should have called N_VScale
      (3) a,b == other, a !=b, a != -b */
 
-  ColumnVector *xv, *yv, *zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  yd = NV_DATA_C(y);
+  zd = NV_DATA_C(z);
 
-  (*zv) = a * (*xv) + b * (*yv);
+  for (i = 0; i < N; i++)
+    zd[i] = (a*xd[i])+(b*yd[i]);
 
   return;
 }
 
-/*
- * Set all vector elements to a constant: z[i] = c
- */
 void N_VConst_Col(realtype c, N_Vector z)
 {
-  ColumnVector *zv;
-  zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *zd;
 
-  zv->fill(c);
+  zd = NULL;
+
+  N  = NV_LENGTH_C(z);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++) zd[i] = c;
 
   return;
 }
 
-/*
- * Elementwise multiply vectors: z[i] = x[i]*y[i]
- */
 void N_VProd_Col(N_Vector x, N_Vector y, N_Vector z)
 {
+  sunindextype i, N;
+  realtype *xd, *yd, *zd;
 
-  ColumnVector *xv, *zv, *yv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
-  yv = static_cast<ColumnVector *> NV_CONTENT_C(y);
-  // *zv = product((*xv),(*yv));
-  *zv = octave::times((*xv),(*yv));
+  xd = yd = zd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  yd = NV_DATA_C(y);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++)
+    zd[i] = xd[i]*yd[i];
 
   return;
 }
 
 void N_VDiv_Col(N_Vector x, N_Vector y, N_Vector z)
 {
-  // sunindextype i, N;
-  // realtype *xd, *yd, *zd;
+  sunindextype i, N;
+  realtype *xd, *yd, *zd;
 
-  // xd = yd = zd = NULL;
+  xd = yd = zd = NULL;
 
-  // N  = NV_LENGTH_C(x);
-  // xd = NV_DATA_C(x);
-  // yd = NV_DATA_C(y);
-  // zd = NV_DATA_C(z);
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  yd = NV_DATA_C(y);
+  zd = NV_DATA_C(z);
 
-  // for (i = 0; i < N; i++)
-  //   zd[i] = xd[i]/yd[i];
-
-  ColumnVector *xv, *zv, *yv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
-  yv = static_cast<ColumnVector *> NV_CONTENT_C(y);
-  // *zv = (*xv)/(*yv);
+  for (i = 0; i < N; i++)
+    zd[i] = xd[i]/yd[i];
 
   return;
 }
 
-/*
- * Scale vector: z = c*x
- */
 void N_VScale_Col(realtype c, N_Vector x, N_Vector z)
 {
-  ColumnVector *xv, *zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *xd, *zd;
+
+  xd = zd = NULL;
 
   if (z == x) {  /* BLAS usage: scale x <- cx */
     VScaleBy_Col(c, x);
@@ -621,47 +506,67 @@ void N_VScale_Col(realtype c, N_Vector x, N_Vector z)
   }
 
   if (c == ONE) {
-    (*zv ) = (*xv);
+    VCopy_Col(x, z);
   } else if (c == -ONE) {
-    // (*zv) = -ONE * (*xv); // can't understand, weird case, fails with SPGMR solver but passes tests
-    VNeg_Col(x,z);
+    VNeg_Col(x, z);
   } else {
-    (*zv) = c * (*xv);
+    N  = NV_LENGTH_C(x);
+    xd = NV_DATA_C(x);
+    zd = NV_DATA_C(z);
+    for (i = 0; i < N; i++)
+      zd[i] = c*xd[i];
   }
+
   return;
 }
 
-/*
- * Elementwise absolute value: z[i] = |x[i]|
- */
 void N_VAbs_Col(N_Vector x, N_Vector z)
 {
-  ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *xd, *zd;
 
-  (*zv) = xv->abs();
+  xd = zd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++)
+    zd[i] = SUNRabs(xd[i]);
+
   return;
 }
 
 void N_VInv_Col(N_Vector x, N_Vector z)
 {
-  ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *xd, *zd;
 
-  (*zv) = ONE / (*xv);
+  xd = zd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++)
+    zd[i] = ONE/xd[i];
 
   return;
 }
 
 void N_VAddConst_Col(N_Vector x, realtype b, N_Vector z)
 {
-  ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *xd, *zd;
 
-  (*zv) = (*xv) +b;
+  xd = zd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++)
+    zd[i] = xd[i]+b;
 
   return;
 }
@@ -684,9 +589,6 @@ realtype N_VDotProd_Col(N_Vector x, N_Vector y)
   return(sum);
 }
 
-/*
- * Max norm (L infinity) of vector x
- */
 realtype N_VMaxNorm_Col(N_Vector x)
 {
   sunindextype i, N;
@@ -701,7 +603,7 @@ realtype N_VMaxNorm_Col(N_Vector x)
   for (i = 0; i < N; i++) {
     if (SUNRabs(xd[i]) > max) max = SUNRabs(xd[i]);
   }
-  
+
   return(max);
 }
 
@@ -735,7 +637,6 @@ realtype N_VWrmsNormMask_Col(N_Vector x, N_Vector w, N_Vector id)
   return(SUNRsqrt(N_VWSqrSumMaskLocal_Col(x, w, id) / (NV_LENGTH_C(x))));
 }
 
-/* Sum of Squares of element-wise multiplications */
 realtype N_VWSqrSumMaskLocal_Col(N_Vector x, N_Vector w, N_Vector id)
 {
   sunindextype i, N;
@@ -759,19 +660,25 @@ realtype N_VWSqrSumMaskLocal_Col(N_Vector x, N_Vector w, N_Vector id)
   return(sum);
 }
 
-/* Minimum value in Vector */
 realtype N_VMin_Col(N_Vector x)
 {
-  ColumnVector *xv;
-  realtype min;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  sunindextype i, N;
+  realtype min, *xd;
 
-  min = xv->min();
+  xd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+
+  min = xd[0];
+
+  for (i = 1; i < N; i++) {
+    if (xd[i] < min) min = xd[i];
+  }
+
   return(min);
 }
-/* 
-  Sum of Squares of element-wise multiplication products 
-*/ 
+
 realtype N_VWL2Norm_Col(N_Vector x, N_Vector w)
 {
   sunindextype i, N;
@@ -792,9 +699,6 @@ realtype N_VWL2Norm_Col(N_Vector x, N_Vector w)
   return(SUNRsqrt(sum));
 }
 
-/*
-  Sum of absolute values of values in vector
-*/
 realtype N_VL1Norm_Col(N_Vector x)
 {
   sunindextype i, N;
@@ -812,10 +716,6 @@ realtype N_VL1Norm_Col(N_Vector x)
   return(sum);
 }
 
-/*
-  1 if corresponding element is greater than c,
-  0 if not in new vector z
-*/
 void N_VCompare_Col(realtype c, N_Vector x, N_Vector z)
 {
   sunindextype i, N;
@@ -834,9 +734,6 @@ void N_VCompare_Col(realtype c, N_Vector x, N_Vector z)
   return;
 }
 
-/* 
-  Only do inverse if no element is Zero
-*/
 booleantype N_VInvTest_Col(N_Vector x, N_Vector z)
 {
   sunindextype i, N;
@@ -860,10 +757,6 @@ booleantype N_VInvTest_Col(N_Vector x, N_Vector z)
   return no_zero_found;
 }
 
-/*
- * Checks constraint violations for vector x. Constraints are defined in
- * vector c, and constraint violation flags are stored in vector m.
- */
 booleantype N_VConstrMask_Col(N_Vector c, N_Vector x, N_Vector m)
 {
   sunindextype i, N;
@@ -899,9 +792,6 @@ booleantype N_VConstrMask_Col(N_Vector c, N_Vector x, N_Vector m)
   return (temp == ONE) ? SUNFALSE : SUNTRUE;
 }
 
-/*
- * Find minimum quotient: minq  = min ( num[i]/denom[i]), denom[i] != 0.
- */
 realtype N_VMinQuotient_Col(N_Vector num, N_Vector denom)
 {
   booleantype notEvenOnce;
@@ -1581,11 +1471,17 @@ int N_VLinearCombinationVectorArray_Col(int nvec, int nsum, realtype* c,
 
 static void VCopy_Col(N_Vector x, N_Vector z)
 {
-  ColumnVector *xv, *zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  sunindextype i, N;
+  realtype *xd, *zd;
 
-  (*zv) = (*xv); 
+  xd = zd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  zd = NV_DATA_C(z);
+
+  for (i = 0; i < N; i++)
+    zd[i] = xd[i];
 
   return;
 }
@@ -1639,6 +1535,7 @@ static void VNeg_Col(N_Vector x, N_Vector z)
 
   for (i = 0; i < N; i++)
     zd[i] = -xd[i];
+
   return;
 }
 
@@ -1979,186 +1876,5 @@ int N_VEnableFusedOps_Col(N_Vector v, booleantype tf)
   /* return success */
   return(0);
 }
-
-
-// int N_VEnableLinearCombination_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvlinearcombination = N_VLinearCombination_Col;
-//   else
-//     v->ops->nvlinearcombination = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableScaleAddMulti_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvscaleaddmulti = N_VScaleAddMulti_Col;
-//   else
-//     v->ops->nvscaleaddmulti = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableDotProdMulti_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvdotprodmulti = N_VDotProdMulti_Col;
-//   else
-//     v->ops->nvdotprodmulti = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableLinearSumVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvlinearsumvectorarray = N_VLinearSumVectorArray_Col;
-//   else
-//     v->ops->nvlinearsumvectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableScaleVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvscalevectorarray = N_VScaleVectorArray_Col;
-//   else
-//     v->ops->nvscalevectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableConstVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvconstvectorarray = N_VConstVectorArray_Col;
-//   else
-//     v->ops->nvconstvectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableWrmsNormVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvwrmsnormvectorarray = N_VWrmsNormVectorArray_Col;
-//   else
-//     v->ops->nvwrmsnormvectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableWrmsNormMaskVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvwrmsnormmaskvectorarray = N_VWrmsNormMaskVectorArray_Col;
-//   else
-//     v->ops->nvwrmsnormmaskvectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableScaleAddMultiVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvscaleaddmultivectorarray = N_VScaleAddMultiVectorArray_Col;
-//   else
-//     v->ops->nvscaleaddmultivectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
-
-// int N_VEnableLinearCombinationVectorArray_Col(N_Vector v, booleantype tf)
-// {
-//   /* check that vector is non-NULL */
-//   if (v == NULL) return(-1);
-
-//   /* check that ops structure is non-NULL */
-//   if (v->ops == NULL) return(-1);
-
-//   /* enable/disable operation */
-//   if (tf)
-//     v->ops->nvlinearcombinationvectorarray = N_VLinearCombinationVectorArray_Col;
-//   else
-//     v->ops->nvlinearcombinationvectorarray = NULL;
-
-//   /* return success */
-//   return(0);
-// }
 
 } /* extern "C" */

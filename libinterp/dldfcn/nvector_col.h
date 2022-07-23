@@ -7,15 +7,6 @@
 extern "C" {
 #endif
 
-// bool temper;
-// /* Defining the content field */
-// struct _N_VectorContent_Col{
-//     int length;  /* vector length       */
-//     int own_data;           /* data ownership flag */
-//     ColumnVector data_col;  /* our column vector */
-//     double *data;            /* start of data array */
-// };
-
 /*
  * -----------------------------------------------------------------
  * Macros NV_CONTENT_S, NV_DATA_S, NV_OWN_DATA_S,
@@ -30,16 +21,18 @@ extern "C" {
 // #define NV_OWN_DATA_C(v)  (temper)
 
 #define NV_DATA_C(v)     ( NV_CONTENT_C(v)->fortran_vec() )
+
 #define NV_Ith_C(v,i)     ( NV_DATA_C(v)[i])
+
 typedef struct _N_VectorContent_Col *N_VectorContent_Col;
 
 SUNDIALS_EXPORT N_Vector N_VNew_Col(int vec_length, SUNContext sunctx);
-SUNDIALS_EXPORT N_Vector N_VNewEmpty_Col (SUNContext sunctx);
+SUNDIALS_EXPORT N_Vector N_VNewEmpty_Col (int length, SUNContext sunctx);
 // SUNDIALS_EXPORT N_Vector N_VMake_Col(sunindextype length, double *v_data, SUNContext sunctx);
 
 SUNDIALS_EXPORT N_Vector* N_VCloneVectorArray_Col(int count, N_Vector w);
 
-SUNDIALS_EXPORT N_Vector* N_VCloneVectorArrayEmpty_Col(int count, N_Vector w);
+// SUNDIALS_EXPORT N_Vector* N_VCloneVectorArrayEmpty_Col(int count, N_Vector w);
 
 SUNDIALS_EXPORT void N_VDestroyVectorArray_Col(N_Vector* vs, int count);
 
@@ -50,7 +43,7 @@ SUNDIALS_EXPORT void N_VPrint_Col(N_Vector v);
 SUNDIALS_EXPORT void N_VPrintFile_Col(N_Vector v, FILE *outfile);
 
 SUNDIALS_EXPORT N_Vector_ID N_VGetVectorID_Col(N_Vector v);
-SUNDIALS_EXPORT N_Vector N_VCloneEmpty_Col(N_Vector w);
+// SUNDIALS_EXPORT N_Vector N_VCloneEmpty_Col(N_Vector w);
 SUNDIALS_EXPORT N_Vector N_VClone_Col(N_Vector w);
 SUNDIALS_EXPORT void N_VDestroy_Col(N_Vector v);
 SUNDIALS_EXPORT void N_VSpace_Col(N_Vector v, sunindextype *lrw, sunindextype *liw);
