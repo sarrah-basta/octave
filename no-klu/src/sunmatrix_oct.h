@@ -99,7 +99,7 @@ typedef struct _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse;
  * Exported Functions for SUNMATRIX_SPARSE
  * ---------------------------------------- */
 
-SUNDIALS_EXPORT SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N,
+SUNDIALS_EXPORT SUNMatrix SUNOctMatrix(sunindextype M, sunindextype N,
                                           sunindextype NNZ, int sparsetype,
                                           SUNContext sunctx);
 

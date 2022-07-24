@@ -32,8 +32,8 @@
 #include "dSparse.h"
 #include "f77-fcn.h"
 #include "lo-utils.h"
-#include "nvector_col.h"
-#include "sunmatrix_oct.h"
+#include "../../no-klu/src/nvector_octave.h"
+#include "../../no-klu/src/sunmatrix_oct.h"
 
 #include "Cell.h"
 #include "defun-dld.h"

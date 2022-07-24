@@ -5,8 +5,8 @@ EXTRA_DIST += \
   %reldir%/config-module.awk \
   %reldir%/module-files \
   %reldir%/oct-qhull.h  \
-  %reldir%/nvector_col.h \
-  %reldir%/sunmatrix_oct.h
+  %reldir%/../../no-klu/src/nvector_octave.h \
+  %reldir%/../../no-klu/src//sunmatrix_oct.h
 
 DLDFCN_SRC = \
   %reldir%/__delaunayn__.cc \
@@ -21,7 +21,6 @@ DLDFCN_SRC = \
   %reldir%/convhulln.cc \
   %reldir%/fftw.cc \
   %reldir%/gzip.cc 
-  # %reldir%/nvector_col.cc 
 
 DLDFCN_LIBS = $(DLDFCN_SRC:.cc=.la)
 
@@ -69,7 +68,7 @@ octlib_LTLIBRARIES += $(DLDFCN_LIBS)
 # %canon_reldir%_nvector_col_la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) $(SUNDIALS_XLIBS)
 # %canon_reldir%_nvector_col_la_DEPENDENCIES = $(OCT_LINK_DEPS) nvector_col.h
 
-%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/nvector_col.cc %reldir%/sunmatrix_oct.cc
+%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/../../no-klu/src/nvector_octave.cpp %reldir%/../../no-klu/src/sunmatrix_oct.cpp
 %canon_reldir%___ode15___la_CPPFLAGS = $(libinterp_liboctinterp_la_CPPFLAGS) $(SUNDIALS_XCPPFLAGS)
 %canon_reldir%___ode15___la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED_LDFLAG) $(SUNDIALS_XLDFLAGS) $(OCT_LINK_OPTS) $(WARN_LDFLAGS)
 %canon_reldir%___ode15___la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) $(SUNDIALS_XLIBS)

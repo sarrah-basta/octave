@@ -59,7 +59,7 @@ static int format_convert(const SUNMatrix A, SUNMatrix B);
  * Function to create a new sparse matrix
  */
 
-SUNMatrix SUNSparseMatrix(sunindextype M, sunindextype N,
+SUNMatrix SUNOctMatrix(sunindextype M, sunindextype N,
                           sunindextype NNZ, int sparsetype,
                           SUNContext sunctx)
 {
@@ -483,7 +483,7 @@ SUNMatrix_ID SUNMatGetID_Sparse(SUNMatrix A)
 
 SUNMatrix SUNMatClone_Sparse(SUNMatrix A)
 {
-  SUNMatrix B = SUNSparseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
+  SUNMatrix B = SUNOctMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
                                 SM_NNZ_S(A), SM_SPARSETYPE_S(A), A->sunctx);
   return(B);
 }
@@ -709,7 +709,7 @@ int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A)
     x = (realtype *) malloc(M * sizeof(realtype));
 
     /* create new matrix for sum */
-    C = SUNSparseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
+    C = SUNOctMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
                         Ap[N] + newvals,
                         SM_SPARSETYPE_S(A), A->sunctx);
 
@@ -934,7 +934,7 @@ int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B)
 
 
     /* create new matrix for sum */
-    C = SUNSparseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
+    C = SUNOctMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
                         Ap[N] + newvals, SM_SPARSETYPE_S(A), A->sunctx);
 
     /* access data from CSR structures (return if failure) */
