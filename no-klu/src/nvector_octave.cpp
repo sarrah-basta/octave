@@ -618,24 +618,12 @@ void N_VProd_Octave(N_Vector x, N_Vector y, N_Vector z)
 
 void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z)
 {
-  // sunindextype i, N;
-  // realtype *xd, *yd, *zd;
-
-  // xd = yd = zd = NULL;
-
-  // N  = NV_LENGTH_C(x);
-  // xd = NV_DATA_C(x);
-  // yd = NV_DATA_C(y);
-  // zd = NV_DATA_C(z);
-
-  // for (i = 0; i < N; i++)
-  //   zd[i] = xd[i]/yd[i];
 
   ColumnVector *xv, *zv, *yv;
   xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
   zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
   yv = static_cast<ColumnVector *> NV_CONTENT_C(y);
-  // *zv = (*xv)/(*yv);
+  *zv = quotient((*xv),(*yv));
 
   return;
 }

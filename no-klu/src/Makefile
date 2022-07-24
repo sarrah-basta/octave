@@ -1,9 +1,8 @@
 CXX = g++
 CXXFLAGS = -g 
 SOURCES1 = kry_example.c nvector_octave.cpp
-SOURCES2 = test_nvector_octave.cpp test_nvector_octave.cpp nvector_octave.cpp
-DEPS1 = nvector_octave.h
-DEPS2 = nvector_octave.h test_nvector.h
+SOURCES2 = test_nvector_octave.cpp test_nvector.cpp nvector_octave.cpp
+DEPS = nvector_octave.h test_nvector.h
 OBJECTS1 = $(SOURCES1:.cpp=.o)
 OBJECTS2 = $(SOURCES2:.cpp=.o)
 EXECUTABLE1 = app 

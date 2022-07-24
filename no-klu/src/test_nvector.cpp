@@ -432,7 +432,7 @@ int Test_N_VSetArrayPointer(N_Vector W, sunindextype local_length, int myid)
   Wdata = (realtype*) malloc(local_length * sizeof(realtype));
   for(i=0; i < local_length; i++){
     Wdata[i] = ONE;
-    printf("\n F Wdata =",i, Wdata[i]);
+    // printf("\n F Wdata =",i, Wdata[i]);
   }
 
   /* attach data to vector */
@@ -444,7 +444,7 @@ int Test_N_VSetArrayPointer(N_Vector W, sunindextype local_length, int myid)
   N_VConst(NEG_HALF,W); N_VPrint(W);
   for(i=0; i < local_length; i++){
     failure += SUNRCompare(Wdata[i], NEG_HALF);
-    printf("\n Wdata =", Wdata[i]);
+    // printf("\n Wdata =", Wdata[i]);
   }
 
   if (failure) {
@@ -1729,13 +1729,11 @@ int Test_N_VCompare(N_Vector X, N_Vector Z, sunindextype local_length, int myid)
       break;
     }
   }
-  N_VPrint(X);
 
   start_time = get_time();
   N_VCompare(ONE, X, Z);
   sync_device(X);
   stop_time = get_time();
-  N_VPrint(Z);
   /* check return vector */
   for(i=0; i < local_length; i++){
 
