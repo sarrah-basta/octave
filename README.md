@@ -29,7 +29,7 @@ Code in The No-KLU Directory
   - `Makefile`
 
 ### Status :
-While the NVector implementation can be used in the example shown, it is currently being worked on functions-by-function to make them wrappers to ColumnVector methods rather than elementwise operations on ColumnVector entries, to take advantage of vectorization in octave.
+While the NVector implementation can be used in the example shown, it is currently being worked on function-by-function to make them wrappers to ColumnVector methods rather than elementwise operations on ColumnVector entries, to take advantage of vectorization in octave.
 
 ### How to build :
 Since the makefile is made without using Autotools, 
