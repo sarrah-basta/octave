@@ -691,7 +691,7 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
 /*
  * Scalar product of vectors x and y
  */
-realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
+octave_value_list N_VDotProd_Octave(N_Vector x, N_Vector y)
 {
   // sunindextype i, N;
   // realtype sum, *xd, *yd;
@@ -713,7 +713,7 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
 
   return(Fdot(octave_value_list{(*xv),(*yv)},1));
 
-  return(sum);
+  // return(sum);
 }
 
 /*
