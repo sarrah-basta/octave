@@ -688,20 +688,30 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
   return;
 }
 
+/*
+ * Scalar product of vectors x and y
+ */
 realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
 {
-  sunindextype i, N;
-  realtype sum, *xd, *yd;
+  // sunindextype i, N;
+  // realtype sum, *xd, *yd;
 
-  sum = ZERO;
-  xd = yd = NULL;
+  // sum = ZERO;
+  // xd = yd = NULL;
 
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  yd = NV_DATA_C(y);
+  // N  = NV_LENGTH_C(x);
+  // xd = NV_DATA_C(x);
+  // yd = NV_DATA_C(y);
 
-  for (i = 0; i < N; i++)
-    sum += xd[i]*yd[i];
+  // for (i = 0; i < N; i++)
+  //   sum += xd[i]*yd[i];
+
+  ColumnVector *xv,*yv;
+  realtype sum;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
+
+  return(Fdot(octave_value_list{(*xv),(*yv)},1));
 
   return(sum);
 }
