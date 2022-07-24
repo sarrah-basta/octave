@@ -6,6 +6,94 @@ Copyright (C) 1996-2022 The Octave Project Developers
 See the file COPYRIGHT.md in the top-level directory of this
 distribution or <https://octave.org/copyright/>.
 
+Code in The No-KLU Directory
+----------------------------
+### Contains : 
+- **Custom Implementations of NVector** 
+  - `nvector_octave.h`
+  - `nvector_octave.cpp`
+- **Custom Implementations of SUNMatrix** 
+  - `sunmatrix_oct.h`
+  - `sunmatrix_oct.cpp`
+- **Examples to test custom implementations on**
+  - For NVector :
+    - `kry_example.c`
+- **Tests to test individual functions of custom implementations**
+  - For NVector
+    Given in SUNDIALS to test each function's expected output
+    - `test_nvector.h`
+    - `test_nvector.cpp`
+    Main Code to call tests for functions implemented by us
+    - `test_nvector_octave`
+- **Building**
+  - `Makefile`
+
+### How to build :
+Since the makefile is made without using Autotools, 
+the paths for required libraries are stored in
+personalizable variables that must be changed for each build system.
+The variables to look out for are :
+```
+# include+lib paths to be defined by the user temporarily
+KLU_INC_PATH = < path to include files for Suitesparse/KLU >
+SUN_INC_PATH = < path to include files for Sundials >
+OCT_INC_PATH = < path to include files for Octave >
+
+KLU_LIB_PATH = < path to library files for Suitesparse/KLU >
+SUN_LIB_PATH = < path to library files for Sundials >
+OCT_LIB_PATH = < path to library files for Octave >
+```
+
+The Makefile contains the following rules :
+  - `app`
+  Is currently linked to build the `kry_example.c` 
+  with all the reuired dependencies, creates the executable `app`
+  - `test`
+  Builds the `test_nvector_app.cpp`, that calls tests for
+  implemented functions. **Note :** The commented calls are
+  to functions not implemented, either because they are not needed
+  or are still a work in progress, creates the executable `test`
+  - `clean`
+  Removes all object and executable files created in the no-klu/src 
+  directory for a fresh build.
+
+After navigating to the correct directory i.e
+`/octave/no-klu/src`, the expected output for each make rule should be :
+```
+/octave/no-klu/src$ make app
+Makefile:31: warning: overriding recipe for target 'app'
+Makefile:25: warning: ignoring old recipe for target 'app'
+Makefile:34: warning: overriding recipe for target 'test'
+Makefile:28: warning: ignoring old recipe for target 'test'
+g++ -g  -I/usr/include/suitesparse -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolklu -loctave -c nvector_octave.cpp 
+make: Circular app <- app dependency dropped.
+g++ -g  kry_example.c nvector_octave.o -I/usr/include/suitesparse -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolklu -loctave -o app
+```
+```
+octave/no-klu/src$ make test
+Makefile:31: warning: overriding recipe for target 'app'
+Makefile:25: warning: ignoring old recipe for target 'app'
+Makefile:34: warning: overriding recipe for target 'test'
+Makefile:28: warning: ignoring old recipe for target 'test'
+g++ -g  -I/usr/include/suitesparse -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolklu -loctave -c test_nvector_octave.cpp 
+g++ -g  -I/usr/include/suitesparse -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolklu -loctave -c test_nvector.cpp 
+make: Circular test <- test dependency dropped.
+g++ -g  test_nvector_octave.o test_nvector.o nvector_octave.o -I/usr/include/suitesparse -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/lib/x86_64-linux-gnu -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolklu -loctave -o test
+```
+```
+octave/no-klu/src$ make clean
+Makefile:31: warning: overriding recipe for target 'app'
+Makefile:25: warning: ignoring old recipe for target 'app'
+Makefile:34: warning: overriding recipe for target 'test'
+Makefile:28: warning: ignoring old recipe for target 'test'
+rm -f *.o *~ app  test 
+```
+### Reproducing the code :
+Once succesfully built, the executables app and test can be called on the command line as follows:
+
+`./app` : Runs the Kry example for the 2D Heat Equation and shows the solver's output
+`./test <vector length> <print timing>` : Creates a new vector of the specified length, and prints the status of each test run for the vector implementation, along with the timing if `<print timing>` is inputted as **1**, or without if it is inputted as **0**
+
 Overview
 --------
 
