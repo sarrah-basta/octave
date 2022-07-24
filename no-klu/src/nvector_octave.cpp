@@ -691,29 +691,11 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
  */
 realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
 {
-  // sunindextype i, N;
-  // realtype sum, *xd, *yd;
-
-  // sum = ZERO;
-  // xd = yd = NULL;
-
-  // N  = NV_LENGTH_C(x);
-  // xd = NV_DATA_C(x);
-  // yd = NV_DATA_C(y);
-
-  // for (i = 0; i < N; i++)
-  //   sum += xd[i]*yd[i];
-
   ColumnVector *xv,*yv;
   realtype sum;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-  int nout = 1;
   sum = (*xv).transpose() * (*yv);
-  const octave_value_list ov = octave_value_list({(*xv),(*yv)});
-  octave_value_list retval;
-  retval = octave::Fdot(ov,1);
-  sum = static_cast <double> retval(0);
   return(sum);
 }
 
@@ -722,20 +704,26 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
  */
 realtype N_VMaxNorm_Octave(N_Vector x)
 {
-  sunindextype i, N;
-  realtype max, *xd;
+  // sunindextype i, N;
+  // realtype max, *xd;
 
-  max = ZERO;
-  xd = NULL;
+  // max = ZERO;
+  // xd = NULL;
 
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
+  // N  = NV_LENGTH_C(x);
+  // xd = NV_DATA_C(x);
 
-  for (i = 0; i < N; i++) {
-    if (SUNRabs(xd[i]) > max) max = SUNRabs(xd[i]);
-  }
+  // for (i = 0; i < N; i++) {
+  //   if (SUNRabs(xd[i]) > max) max = SUNRabs(xd[i]);
+  // }
+  ColumnVector *xv, abret;
+  realtype ret;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  abret = static_cast <ColumnVector> (xv->abs()); 
+  ColumnVector *abp = &(abret);
+  ret = abp->max();
   
-  return(max);
+  return(ret);
 }
 
 realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
