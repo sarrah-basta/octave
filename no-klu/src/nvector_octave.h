@@ -6,6 +6,9 @@
 #include "oct-locbuf.h"
 #include "quit.h"
 
+#include <oct.h>
+#include <ov.h>
+#include <ovl.h>
 
 
 

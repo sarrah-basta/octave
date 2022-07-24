@@ -8,6 +8,9 @@
 #include <builtin-defun-decls.h>
 
 #include <oct.h>
+#include <ov.h>
+#include <ovl.h>
+
 // #include <dot.h>
 // #include "lo-blas-proto.h"
 // #include "mx-base.h"
@@ -16,7 +19,6 @@
 // #include "error.h"
 // #include "parse.h"
 
-#include <data.h>
 // #include"data.cc"  
 // #include <defun.h>
 // #include "error.h"
@@ -608,10 +610,6 @@ void N_VProd_Octave(N_Vector x, N_Vector y, N_Vector z)
   zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
   yv = static_cast<ColumnVector *> NV_CONTENT_C(y);
   *zv = product((*xv),(*yv));
-  // *zv = times((*xv),(*yv));
-  // ColumnVector v;
-  // ColumnVector w;
-  // return (Ftimes(octave_value_list{v,w},1));
 
   return;
 }
@@ -691,7 +689,7 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
 /*
  * Scalar product of vectors x and y
  */
-octave_value_list N_VDotProd_Octave(N_Vector x, N_Vector y)
+realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
 {
   // sunindextype i, N;
   // realtype sum, *xd, *yd;
@@ -710,10 +708,13 @@ octave_value_list N_VDotProd_Octave(N_Vector x, N_Vector y)
   realtype sum;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-
-  return(Fdot(octave_value_list{(*xv),(*yv)},1));
-
-  // return(sum);
+  int nout = 1;
+  sum = (*xv).transpose() * (*yv);
+  const octave_value_list ov = octave_value_list({(*xv),(*yv)});
+  octave_value_list retval;
+  retval = octave::Fdot(ov,1);
+  sum = static_cast <double> retval(0);
+  return(sum);
 }
 
 /*
