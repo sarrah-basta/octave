@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
   fails += Test_N_VClone(X, length, 0);
   // fails += Test_N_VCloneEmpty(X, 0);
   // fails += Test_N_VCloneEmptyVectorArray(5, X, 0);
-  fails += Test_N_VCloneVectorArray(5, X, length, 0);
+  // fails += Test_N_VCloneVectorArray(5, X, length, 0);
 
   /* Test setting/getting array data */
   // fails += Test_N_VSetArrayPointer(W, length, 0);
@@ -131,8 +131,8 @@ int main(int argc, char *argv[])
   fails += Test_N_VWrmsNorm(X, Y, length, 0);
   fails += Test_N_VWrmsNormMask(X, Y, Z, length, 0);
   fails += Test_N_VMin(X, length, 0);
-  fails += Test_N_VWL2Norm(X, Y, length, 0);
-  fails += Test_N_VL1Norm(X, length, 0);
+  // fails += Test_N_VWL2Norm(X, Y, length, 0);
+  // fails += Test_N_VL1Norm(X, length, 0);
   fails += Test_N_VCompare(X, Z, length, 0);
   fails += Test_N_VInvTest(X, Z, length, 0);
   fails += Test_N_VConstrMask(X, Y, Z, length, 0);
@@ -156,12 +156,12 @@ int main(int argc, char *argv[])
 
   // /* fused operations */
   // fails += Test_N_VLinearCombination(U, length, 0);
-  // fails += Test_N_VScaleAddMulti(U, length, 0);
+  fails += Test_N_VScaleAddMulti(U, length, 0);
   // fails += Test_N_VDotProdMulti(U, length, 0);
 
   // /* vector array operations */
   // fails += Test_N_VLinearSumVectorArray(U, length, 0);
-  // fails += Test_N_VScaleVectorArray(U, length, 0);
+  fails += Test_N_VScaleVectorArray(U, length, 0);
   // fails += Test_N_VConstVectorArray(U, length, 0);
   // fails += Test_N_VWrmsNormVectorArray(U, length, 0);
   // fails += Test_N_VWrmsNormMaskVectorArray(U, length, 0);
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
   // fails += Test_N_VDotProdMulti(V, length, 0);
 
   // /* vector array operations */
-  // fails += Test_N_VLinearSumVectorArray(V, length, 0);
+  fails += Test_N_VLinearSumVectorArray(V, length, 0);
   // fails += Test_N_VScaleVectorArray(V, length, 0);
   // fails += Test_N_VConstVectorArray(V, length, 0);
   // fails += Test_N_VWrmsNormVectorArray(V, length, 0);
@@ -206,10 +206,10 @@ int main(int argc, char *argv[])
   // fails += Test_N_VMaxNormLocal(X, length, 0);
   // fails += Test_N_VMinLocal(X, length, 0);
   // fails += Test_N_VL1NormLocal(X, length, 0);
-  fails += Test_N_VWSqrSumLocal(X, Y, length, 0);
-  fails += Test_N_VWSqrSumMaskLocal(X, Y, Z, length, 0);
+  // fails += Test_N_VWSqrSumLocal(X, Y, length, 0);
+  // fails += Test_N_VWSqrSumMaskLocal(X, Y, Z, length, 0);
   // fails += Test_N_VInvTestLocal(X, Z, length, 0);
-  fails += Test_N_VConstrMaskLocal(X, Y, Z, length, 0);
+  // fails += Test_N_VConstrMaskLocal(X, Y, Z, length, 0);
   // fails += Test_N_VMinQuotientLocal(X, Y, length, 0);
 
   /* local fused reduction operations */
