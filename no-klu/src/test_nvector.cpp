@@ -1704,7 +1704,7 @@ int Test_N_VCompare(N_Vector X, N_Vector Z, sunindextype local_length, int myid)
            (long int) local_length);
     return(1);
   }
-
+  
   /* fill vector data */
   for(i=0; i < local_length; i++){
     set_element(Z, i, NEG_ONE);
@@ -1729,7 +1729,6 @@ int Test_N_VCompare(N_Vector X, N_Vector Z, sunindextype local_length, int myid)
       break;
     }
   }
-
   start_time = get_time();
   N_VCompare(ONE, X, Z);
   sync_device(X);

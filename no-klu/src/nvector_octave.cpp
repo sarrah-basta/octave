@@ -6,6 +6,7 @@
 #include "nvector_octave.h"
 #include <sundials/sundials_math.h>
 #include <builtin-defun-decls.h>
+#include <data.h>
 
 #include <oct.h>
 #include <ov.h>
@@ -697,6 +698,19 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
   yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
   sum = (*xv).transpose() * (*yv);
   return(sum);
+
+    // ColumnVector *xv,*yv;
+    // realtype sum;
+    // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+    // yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
+    // realtype nout = 1;
+    // //  sum = (*xv).transpose() * (*yv);
+    // const octave_value_list ov = ovl((*xv),(*yv));
+    // octave_value_list retval;
+    // retval = octave::Fdot(ov,1);
+    // sum = retval(0).double_value();
+    // return sum;
+
 }
 
 /*
@@ -704,18 +718,6 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
  */
 realtype N_VMaxNorm_Octave(N_Vector x)
 {
-  // sunindextype i, N;
-  // realtype max, *xd;
-
-  // max = ZERO;
-  // xd = NULL;
-
-  // N  = NV_LENGTH_C(x);
-  // xd = NV_DATA_C(x);
-
-  // for (i = 0; i < N; i++) {
-  //   if (SUNRabs(xd[i]) > max) max = SUNRabs(xd[i]);
-  // }
   ColumnVector *xv, abret;
   realtype ret;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
@@ -839,6 +841,22 @@ realtype N_VL1Norm_Octave(N_Vector x)
 */
 void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 {
+  // ColumnVector *xv,*zv;
+  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  // zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+
+
+  // const octave_value_list ov = ovl((*xv),(c));
+  // octave_value_list retval;
+  // printf("start error");
+  // retval = octave::Fge(ov,1);
+
+  // (*zv) = retval(0).column_vector_value();
+  //   // built in func gt or ge
+  // // (zv) = ge((*xv),c);
+
+  // return;
+
   sunindextype i, N;
   realtype *xd, *zd;
 
@@ -860,23 +878,67 @@ void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 */
 booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
 {
-  sunindextype i, N;
-  realtype *xd, *zd;
-  booleantype no_zero_found;
+  // sunindextype i, N;
+  // realtype *xd, *zd;
+  booleantype no_zero_found = SUNTRUE ;
 
-  xd = zd = NULL;
+  // xd = zd = NULL;
 
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  zd = NV_DATA_C(z);
+  // N  = NV_LENGTH_C(x);
+  // xd = NV_DATA_C(x);
+  // zd = NV_DATA_C(z);
 
-  no_zero_found = SUNTRUE;
-  for (i = 0; i < N; i++) {
-    if (xd[i] == ZERO)
+  // ColumnVector *xv, *zv;
+  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  // zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  // printf("%ld",xv->nnz());
+  // if(xv->nnz() != xv->numel())
+  //   no_zero_found = SUNFALSE;
+  // if(no_zero_found==SUNTRUE)
+  //   (*zv) = ONE /(*xv);
+  // else {
+  // for (i = 0; i < N; i++) {
+  //   if (xd[i] == ZERO)
+  //     no_zero_found = SUNFALSE;
+  //   else
+  //     zd[i] = ONE/xd[i]; }
+  // }
+
+    ColumnVector *xv, *zv, *yv, *indices;
+    xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+    zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+    yv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+    indices = static_cast <ColumnVector *> NV_CONTENT_C(z);
+    printf("non zero is %ld and length is %ld \n",xv->nnz(),xv->numel());
+    if(xv->nnz() != xv->numel())
       no_zero_found = SUNFALSE;
-    else
-      zd[i] = ONE/xd[i];
-  }
+    (*zv) = ONE /(*xv);
+    printf("bool is %d \n",no_zero_found);
+    std::cout<<(*zv);
+    if(no_zero_found==0) {
+      std::cout<<"in loop";
+      (*yv) = ONE /(*xv);
+      const octave_value_list ov = ovl((*yv));
+      octave_value_list retval;
+      std::cout<<"yv is "<<(*zv);
+      retval = octave::Fisinf(ov,1);
+      (*indices) = retval(0).column_vector_value();
+      // (*zv)({1,2}) = 0;
+
+      std::cout<<"yv is "<<(*yv);
+
+      std::cout<<"indices is "<<(*indices);
+      (*zv)(1) = 0;
+      std::cout<<" "<<(*zv);
+    }
+
+    // ColumnVector sum;
+    // realtype nout = 1;
+    // //  sum = (*xv).transpose() * (*yv);
+    // const octave_value_list ov = ovl((*zv),);
+    // octave_value_list retval;
+    // retval = octave::Fisfinite(ov,1);
+    // (*zv) = retval(0).column_vector_value();
 
   return no_zero_found;
 }
