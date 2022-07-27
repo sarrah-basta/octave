@@ -441,7 +441,7 @@ N_Vector N_VClone_Octave(N_Vector w)
 
   /* Attach content */
   v->content = content;
-  /* Attach data */
+  /* Claim data */
   // NV_OWN_DATA_C(v) = SUNTRUE;
 
   return(v);
@@ -833,36 +833,57 @@ realtype N_VMin_Octave(N_Vector x)
 */
 void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 {
-  // ColumnVector *xv,*zv;
-  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  // zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+//   ColumnVector *xv,*zv;
+//   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+//   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+// std::cout << "This is a matrix:" << std::endl
+// << (*xv) << std::endl;
+// octave_value_list in;
+// in(0) = *xv;
+// in(1) = c;
+// octave_value_list out = octave::Fnth_element(in, 1);
+// ColumnVector norm_of_the_matrix = out(0).column_vector_value();
+// std::cout << "This is the norm of the matrix:" << std::endl
+// << norm_of_the_matrix
+// << std::endl;
+// return;
+
+
+
 
 
   // const octave_value_list ov = ovl((*xv),(c));
+  // ColumnVector a;
+  // // printf("start error");
+  // // a = (a >= c).column_vector_value();
+  // octave::Fge(ov,1);
+  // // (*zv) = a;
+  // // ((*xv) >= (*zv));
+
+  // // (*zv) = retval(0).column_vector_value();
+
+  // // return;
+
   // octave_value_list retval;
-  // printf("start error");
-  // retval = octave::Fge(ov,1);
-
-  // (*zv) = retval(0).column_vector_value();
-  //   // built in func gt or ge
-  // // (zv) = ge((*xv),c);
-
+  // ColumnVector v ;
+  // ColumnVector w;
+  // retval(0) = (v >= w);
   // return;
 
-  sunindextype i, N;
-  realtype *xd, *zd;
+    sunindextype i, N;
+    realtype *xd, *zd;
 
-  xd = zd = NULL;
+    xd = zd = NULL;
 
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  zd = NV_DATA_C(z);
+    N  = NV_LENGTH_C(x);
+    xd = NV_DATA_C(x);
+    zd = NV_DATA_C(z);
 
-  for (i = 0; i < N; i++) {
-    zd[i] = (SUNRabs(xd[i]) >= c) ? ONE : ZERO;
-  }
+    for (i = 0; i < N; i++) {
+      zd[i] = (SUNRabs(xd[i]) >= c) ? ONE : ZERO;
+    }
 
-  return;
+    return;
 }
 
 /* 
@@ -892,12 +913,16 @@ booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
   if(no_zero_found==SUNTRUE)
     (*zv) = ONE /(*xv);
   else {
-  for (i = 0; i < N; i++) {
-    if (xd[i] == ZERO)
-      no_zero_found = SUNFALSE;
-    else
-      zd[i] = ONE/xd[i]; }
+    for (i = 0; i < N; i++) {
+      if (xd[i] == ZERO)
+        no_zero_found = SUNFALSE;
+      else
+        zd[i] = ONE/xd[i]; }
+    // ColumnVector y(NV_LENGTH_C(x));
+    // y.fill(ONE);
+    // *zv = quotient(y,(*xv));
   }
+    // std::cout<<(*zv);
 
     // ColumnVector *xv, *zv, *yv, *indices;
     // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
@@ -1013,82 +1038,82 @@ realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
   return(min);
 }
 
-// /*
-//  * -----------------------------------------------------------------
-//  * fused vector operations
-//  * -----------------------------------------------------------------
-//  */
+/*
+ * -----------------------------------------------------------------
+ * fused vector operations
+ * -----------------------------------------------------------------
+ */
 
-// int N_VLinearCombination_Octave(int nvec, realtype* c, N_Vector* X, N_Vector z)
-// {
-//   int          i;
-//   sunindextype j, N;
-//   realtype*    zd=NULL;
-//   realtype*    xd=NULL;
+int N_VLinearCombination_Octave(int nvec, realtype* c, N_Vector* X, N_Vector z)
+{
+  int          i;
+  sunindextype j, N;
+  realtype*    zd=NULL;
+  realtype*    xd=NULL;
 
-//   /* invalid number of vectors */
-//   if (nvec < 1) return(-1);
+  /* invalid number of vectors */
+  if (nvec < 1) return(-1);
 
-//   /* should have called N_VScale */
-//   if (nvec == 1) {
-//     N_VScale_Octave(c[0], X[0], z);
-//     return(0);
-//   }
+  /* should have called N_VScale */
+  if (nvec == 1) {
+    N_VScale_Octave(c[0], X[0], z);
+    return(0);
+  }
 
-//   /* should have called N_VLinearSum */
-//   if (nvec == 2) {
-//     N_VLinearSum_Octave(c[0], X[0], c[1], X[1], z);
-//     return(0);
-//   }
+  /* should have called N_VLinearSum */
+  if (nvec == 2) {
+    N_VLinearSum_Octave(c[0], X[0], c[1], X[1], z);
+    return(0);
+  }
 
-//   /* get vector length and data array */
-//   N  = NV_LENGTH_C(z);
-//   zd = NV_DATA_C(z);
+  /* get vector length and data array */
+  N  = NV_LENGTH_C(z);
+  zd = NV_DATA_C(z);
 
-//   /*
-//    * X[0] += c[i]*X[i], i = 1,...,nvec-1
-//    */
-//   if ((X[0] == z) && (c[0] == ONE)) {
-//     for (i=1; i<nvec; i++) {
-//       xd = NV_DATA_C(X[i]);
-//       for (j=0; j<N; j++) {
-//         zd[j] += c[i] * xd[j];
-//       }
-//     }
-//     return(0);
-//   }
+  /*
+   * X[0] += c[i]*X[i], i = 1,...,nvec-1
+   */
+  if ((X[0] == z) && (c[0] == ONE)) {
+    for (i=1; i<nvec; i++) {
+      xd = NV_DATA_C(X[i]);
+      for (j=0; j<N; j++) {
+        zd[j] += c[i] * xd[j];
+      }
+    }
+    return(0);
+  }
 
-//   /*
-//    * X[0] = c[0] * X[0] + sum{ c[i] * X[i] }, i = 1,...,nvec-1
-//    */
-//   if (X[0] == z) {
-//     for (j=0; j<N; j++) {
-//       zd[j] *= c[0];
-//     }
-//     for (i=1; i<nvec; i++) {
-//       xd = NV_DATA_C(X[i]);
-//       for (j=0; j<N; j++) {
-//         zd[j] += c[i] * xd[j];
-//       }
-//     }
-//     return(0);
-//   }
+  /*
+   * X[0] = c[0] * X[0] + sum{ c[i] * X[i] }, i = 1,...,nvec-1
+   */
+  if (X[0] == z) {
+    for (j=0; j<N; j++) {
+      zd[j] *= c[0];
+    }
+    for (i=1; i<nvec; i++) {
+      xd = NV_DATA_C(X[i]);
+      for (j=0; j<N; j++) {
+        zd[j] += c[i] * xd[j];
+      }
+    }
+    return(0);
+  }
 
-//   /*
-//    * z = sum{ c[i] * X[i] }, i = 0,...,nvec-1
-//    */
-//   xd = NV_DATA_C(X[0]);
-//   for (j=0; j<N; j++) {
-//     zd[j] = c[0] * xd[j];
-//   }
-//   for (i=1; i<nvec; i++) {
-//     xd = NV_DATA_C(X[i]);
-//     for (j=0; j<N; j++) {
-//       zd[j] += c[i] * xd[j];
-//     }
-//   }
-//   return(0);
-// }
+  /*
+   * z = sum{ c[i] * X[i] }, i = 0,...,nvec-1
+   */
+  xd = NV_DATA_C(X[0]);
+  for (j=0; j<N; j++) {
+    zd[j] = c[0] * xd[j];
+  }
+  for (i=1; i<nvec; i++) {
+    xd = NV_DATA_C(X[i]);
+    for (j=0; j<N; j++) {
+      zd[j] += c[i] * xd[j];
+    }
+  }
+  return(0);
+}
 
 
 int N_VScaleAddMulti_Octave(int nvec, realtype* a, N_Vector x, N_Vector* Y, N_Vector* Z)

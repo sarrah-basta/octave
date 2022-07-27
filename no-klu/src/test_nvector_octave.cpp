@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
   }
 
   // /* fused operations */
-  // fails += Test_N_VLinearCombination(U, length, 0);
+  fails += Test_N_VLinearCombination(U, length, 0);
   fails += Test_N_VScaleAddMulti(U, length, 0);
   // fails += Test_N_VDotProdMulti(U, length, 0);
 

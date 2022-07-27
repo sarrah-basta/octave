@@ -34,6 +34,7 @@ extern "C" {
  */
 
 #define NV_CONTENT_C(v)  ( (ColumnVector *)(v->content) )
+#define NV_STCONTENT_C(v) ( (ColumnVector)(v->))
 
 #define NV_LENGTH_C(v)   ( NV_CONTENT_C(v)->numel() )
 
