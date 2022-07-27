@@ -101,7 +101,7 @@ using namespace octave;
    */
   N_Vector_ID N_VGetVectorID_Octave(N_Vector v)
   {
-    return SUNDIALS_NVEC_SERIAL;
+    return SUNDIALS_NVEC_CUSTOM;
   }
 
   /* ----------------------------------------------------------------------------
@@ -467,38 +467,49 @@ void N_VdrrayPointer_Octave(realtype *v_data, N_Vector v)
   return;
 }
 
+/*
+ * Linear combination of two vectors: z = a*x + b*y
+ */
 void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 {
-  sunindextype i, N;
-  realtype c, *xd, *yd, *zd;
-  N_Vector v1, v2;
+
+    ColumnVector *xv, *yv, *zv;
+    xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+    yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
+    zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  // sunindextype i, N;
+  // realtype c, *xd, *yd, *zd;
+  ColumnVector *v1, *v2;
   booleantype test;
 
-  xd = yd = zd = NULL;
+  // xd = yd = zd = NULL;
 
   if ((b == ONE) && (z == y)) {    /* BLAS usage: axpy y <- ax+y */
-    Vaxpy_Octave(a,x,y);
+    (*zv) += a*(*xv);
     return;
   }
 
   if ((a == ONE) && (z == x)) {    /* BLAS usage: axpy x <- by+x */
-    Vaxpy_Octave(b,y,x);
+    (*zv) += b*(*yv);
     return;
   }
 
-  /* Case: a == b == 1.0 */
+  // /* Case: a == b == 1.0 */
 
   if ((a == ONE) && (b == ONE)) {
-    VSum_Octave(x, y, z);
+    (*zv) = (*xv) + (*yv);
     return;
   }
 
   /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
 
   if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
-    v1 = test ? y : x;
-    v2 = test ? x : y;
-    VDiff_Octave(v2, v1, z);
+    // *v1 = test ? *yv : *xv;
+    // *v2 = test ? *xv : *yv;
+    if(test == 0)
+    (*zv) = (*yv) - (*xv);
+    else
+    (*zv) = (*xv) - (*yv);
     return;
   }
 
@@ -506,20 +517,20 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
   /* if a or b is 0.0, then user should have called N_VScale */
 
   if ((test = (a == ONE)) || (b == ONE)) {
-    c  = test ? b : a;
-    v1 = test ? y : x;
-    v2 = test ? x : y;
-    VLin1_Octave(c, v1, v2, z);
+    if(test == 1)
+    (*zv) = (*xv) + b * (*yv);
+    else
+    (*zv) = a * (*xv) + (*yv);
     return;
   }
 
   /* Cases: (1) a == -1.0, b != 1.0, (2) a != 1.0, b == -1.0 */
 
   if ((test = (a == -ONE)) || (b == -ONE)) {
-    c = test ? b : a;
-    v1 = test ? y : x;
-    v2 = test ? x : y;
-    VLin2_Octave(c, v1, v2, z);
+    if(test == 1)
+    (*zv) = b * (*yv) - (*xv);
+    else
+    (*zv) = a * (*xv) - (*yv);
     return;
   }
 
@@ -527,14 +538,14 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
   /* catches case both a and b are 0.0 - user should have called N_VConst */
 
   if (a == b) {
-    VScaleSum_Octave(a, x, y, z);
+    (*zv) = a * ((*yv) + (*xv));
     return;
   }
 
   /* Case: a == -b */
 
   if (a == -b) {
-    VScaleDiff_Octave(a, x, y, z);
+    (*zv) = b * ((*yv) - (*xv));
     return;
   }
 
@@ -542,11 +553,6 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
      (1) a == other, b == 0.0 - user should have called N_VScale
      (2) a == 0.0, b == other - user should have called N_VScale
      (3) a,b == other, a !=b, a != -b */
-
-  ColumnVector *xv, *yv, *zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
 
   (*zv) = a * (*xv) + b * (*yv);
 
@@ -603,11 +609,13 @@ void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
     VScaleBy_Octave(c, x);
     return;
   }
-
+  ColumnVector temp(NV_LENGTH_C(x));
+  temp.fill(1);
   if (c == ONE) {
+    // (*zv) += (*xv);
     VCopy_Octave(x, z);  // substituting with (*zv) = (*xv) leads to wrong results.
   } else if (c == -ONE) {
-    VNeg_Octave(x, z);
+    (*zv) -= (*xv);
   } else {
     (*zv) = c * (*xv);
   }
@@ -646,7 +654,6 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
 
   (*zv) = (*xv) +b;
-
   return;
 }
 /*
@@ -660,18 +667,6 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
   yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
   sum = (*xv).transpose() * (*yv);
   return(sum);
-
-    // ColumnVector *xv,*yv;
-    // realtype sum;
-    // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-    // yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-    // realtype nout = 1;
-    // //  sum = (*xv).transpose() * (*yv);
-    // const octave_value_list ov = ovl((*xv),(*yv));
-    // octave_value_list retval;
-    // retval = octave::Fdot(ov,1);
-    // sum = retval(0).double_value();
-    // return sum;
 
 }
 
@@ -692,25 +687,22 @@ realtype N_VMaxNorm_Octave(N_Vector x)
 
 realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
 {
-  return(SUNRsqrt(N_VWSqrSumLocal_Octave(x, w)/(NV_LENGTH_C(x))));
+  octave_value_list ov = ovl((N_VWSqrSumLocal_Octave(x, w)/(NV_LENGTH_C(x))));
+  return((octave::Fsqrt(ov,1)(0)).double_value());
 }
 
 realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
 {
-  sunindextype i, N;
-  realtype sum, prodi, *xd, *wd;
+  N_Vector prod = N_VClone_Octave(x);
+  ColumnVector *xv,*yv, *pv;
+  realtype sum;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
+  pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
 
-  sum = ZERO;
-  xd = wd = NULL;
-
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  wd = NV_DATA_C(w);
-
-  for (i = 0; i < N; i++) {
-    prodi = xd[i]*wd[i];
-    sum += SUNSQR(prodi);
-  }
+  (*pv) = product((*xv),(*yv));
+  octave_value_list ov = ovl((*pv));
+  sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
 
   return(sum);
 }
@@ -848,8 +840,6 @@ void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
 {
   SUNContext ctx;
-  N_Vector y;
-  y = N_VCloneEmpty_Octave(x);
   sunindextype i, N;
   realtype *xd, *zd;
   booleantype no_zero_found = SUNTRUE ;
@@ -860,75 +850,44 @@ booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
   xd = NV_DATA_C(x);
   zd = NV_DATA_C(z);
 
-  ColumnVector *xv, *zv;
+  N_Vector y = N_VClone(x);
+
+  ColumnVector *xv, *zv, *yv;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
+
   printf("%ld",xv->nnz());
+  
+  (*zv) = ONE /(*xv);
   if(xv->nnz() != xv->numel())
     no_zero_found = SUNFALSE;
   if(no_zero_found==SUNTRUE)
     (*zv) = ONE /(*xv);
   else {
-    for (i = 0; i < N; i++) {
-      if (xd[i] == ZERO)
-        no_zero_found = SUNFALSE;
-      else
-        zd[i] = ONE/xd[i]; }
-    // ColumnVector y(NV_LENGTH_C(x));
-    // y.fill(ONE);
-    // *zv = quotient(y,(*xv));
+    (*yv) = (*zv);
+    const octave_value_list ov = ovl((*zv));
+    (*yv) = (octave::Fisfinite(ov,1)(0)).column_vector_value();
+    const octave_value_list ov2 = octave_value_list({(*yv),(*zv),(*yv)});
+    (*zv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
+    std::cout<<(*zv)<<" "<<(*yv);
   }
-    // std::cout<<(*zv);
-
-    // ColumnVector *xv, *zv, *yv, *indices;
-    // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-    // zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
-    // yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
-    // // indices = static_cast <ColumnVector *> NV_CONTENT_C(z);
-    // printf("non zero is %ld and length is %ld \n",xv->nnz(),xv->numel());
-    // if(xv->nnz() != xv->numel())
-    //   no_zero_found = SUNFALSE;
-    // (*zv) = ONE /(*xv);
-    // printf("bool is %d \n",no_zero_found);
-    // if(no_zero_found==0) {
-    //   std::cout<<"in loop";
-
-    //   std::cout<<(*zv);
-    //   (*yv) = ONE /(*xv);
-    //   const octave_value_list ov = ovl((*yv));
-    //   octave_value_list retval;
-    //   retval = octave::Fisinf(ov,1);
-    //   std::cout<<"zv is "<<(*zv);
-
-    //   // (*indices) = retval(0).column_vector_value();
-    //   // (*zv)({1,2}) = 0;
-
-    //   std::cout<<"yv is "<<(*yv);
-
-    //   // std::cout<<"indices is "<<(*indices);
-
-    //   std::cout<<"zv is "<<(*zv);
-    //   (*zv)(*yv) = 0;
-    //   std::cout<<" "<<(*zv);
-    // }
-
-    // ColumnVector sum;
-    // realtype nout = 1;
-    // //  sum = (*xv).transpose() * (*yv);
-    // const octave_value_list ov = ovl((*zv),);
-    // octave_value_list retval;
-    // retval = octave::Fisfinite(ov,1);
-    // (*zv) = retval(0).column_vector_value();
 
   return no_zero_found;
 }
 
+//Should I try writing a lambda function like trilinois
 booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
 {
   sunindextype i, N;
   realtype temp;
   realtype *cd, *xd, *md;
   booleantype test;
+
+  ColumnVector *cv, *xv, *mv;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  cv = static_cast <ColumnVector *> NV_CONTENT_C(c);
+  mv = static_cast <ColumnVector *> NV_CONTENT_C(m);
 
   cd = xd = md = NULL;
 
@@ -1635,7 +1594,8 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
 //  * -----------------------------------------------------------------
 //  */
 
-static void VCopy_Octave(N_Vector x, N_Vector z)
+static void VCopy_Octave(N_Vector x, N_Vector z) 
+// used in N_VScale and if just do (*zv)=(*xv) results in wrong answer.
 {
   sunindextype i, N;
   realtype *xd, *zd;
@@ -1777,34 +1737,34 @@ static void VLin2_Octave(realtype a, N_Vector x, N_Vector y, N_Vector z)
   return;
 }
 
-static void Vaxpy_Octave(realtype a, N_Vector x, N_Vector y)
-{
-  sunindextype i, N;
-  realtype *xd, *yd;
+// static void Vaxpy_Octave(realtype a, N_Vector x, N_Vector y)
+// {
+//   sunindextype i, N;
+//   realtype *xd, *yd;
 
-  xd = yd = NULL;
+//   xd = yd = NULL;
 
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  yd = NV_DATA_C(y);
+//   N  = NV_LENGTH_C(x);
+//   xd = NV_DATA_C(x);
+//   yd = NV_DATA_C(y);
 
-  if (a == ONE) {
-    for (i = 0; i < N; i++)
-      yd[i] += xd[i];
-    return;
-  }
+//   if (a == ONE) {
+//     for (i = 0; i < N; i++)
+//       yd[i] += xd[i];
+//     return;
+//   }
 
-  if (a == -ONE) {
-    for (i = 0; i < N; i++)
-      yd[i] -= xd[i];
-    return;
-  }
+//   if (a == -ONE) {
+//     for (i = 0; i < N; i++)
+//       yd[i] -= xd[i];
+//     return;
+//   }
 
-  for (i = 0; i < N; i++)
-    yd[i] += a*xd[i];
+//   for (i = 0; i < N; i++)
+//     yd[i] += a*xd[i];
 
-  return;
-}
+//   return;
+// }
 
 static void VScaleBy_Octave(realtype a, N_Vector x)
 {
