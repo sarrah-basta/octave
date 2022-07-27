@@ -709,28 +709,27 @@ realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
 
 realtype N_VWrmsNormMask_Octave(N_Vector x, N_Vector w, N_Vector id)
 {
-  return(SUNRsqrt(N_VWSqrSumMaskLocal_Octave(x, w, id) / (NV_LENGTH_C(x))));
+  octave_value_list ov = ovl((N_VWSqrSumMaskLocal_Octave(x, w, id)/(NV_LENGTH_C(x))));
+  return((octave::Fsqrt(ov,1)(0)).double_value());
 }
 
 realtype N_VWSqrSumMaskLocal_Octave(N_Vector x, N_Vector w, N_Vector id)
 {
-  sunindextype i, N;
-  realtype sum, prodi, *xd, *wd, *idd;
+  N_Vector prod = N_VClone_Octave(x);
+  N_Vector prod2 = N_VClone_Octave(x);
+  ColumnVector *xv,*yv, *mv, *pv, *pv2;
+  realtype sum;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
+  mv = static_cast <ColumnVector *> NV_CONTENT_C(id);    //mask vector
+  pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
+  pv2 = static_cast <ColumnVector *> NV_CONTENT_C(prod2);
 
-  sum = ZERO;
-  xd = wd = idd = NULL;
-
-  N  = NV_LENGTH_C(x);
-  xd  = NV_DATA_C(x);
-  wd  = NV_DATA_C(w);
-  idd = NV_DATA_C(id);
-
-  for (i = 0; i < N; i++) {
-    if (idd[i] > ZERO) {
-      prodi = xd[i]*wd[i];
-      sum += SUNSQR(prodi);
-    }
-  }
+  const octave_value_list ov = octave_value_list({(*mv),(*xv),(*mv)});
+  const octave_value_list ov2 = octave_value_list({(*mv),(*yv),(*mv)});
+  (*pv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
+  (*pv2) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
+  sum = N_VWSqrSumLocal_Octave(prod, prod2);
 
   return(sum);
 }
@@ -917,31 +916,44 @@ booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
   return (temp == ONE) ? SUNFALSE : SUNTRUE;
 }
 
+/*
+ * Find minimum quotient: minq  = min ( num[i]/denom[i]), denom[i] != 0.
+ */
 realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
 {
-  booleantype notEvenOnce;
-  sunindextype i, N;
-  realtype *nd, *dd, min;
+  // booleantype notEvenOnce;
+  // sunindextype i, N;
+  // realtype *nd, *dd, min;
 
-  nd = dd = NULL;
+  // nd = dd = NULL;
 
-  N  = NV_LENGTH_C(num);
-  nd = NV_DATA_C(num);
-  dd = NV_DATA_C(denom);
+  // N  = NV_LENGTH_C(num);
+  // nd = NV_DATA_C(num);
+  // dd = NV_DATA_C(denom);
 
-  notEvenOnce = SUNTRUE;
-  min = BIG_REAL;
+  // notEvenOnce = SUNTRUE;
+  // min = BIG_REAL;
 
-  for (i = 0; i < N; i++) {
-    if (dd[i] == ZERO) continue;
-    else {
-      if (!notEvenOnce) min = SUNMIN(min, nd[i]/dd[i]);
-      else {
-	min = nd[i]/dd[i];
-        notEvenOnce = SUNFALSE;
-      }
-    }
-  }
+  // for (i = 0; i < N; i++) {
+  //   if (dd[i] == ZERO) continue;
+  //   else {
+  //     if (!notEvenOnce) min = SUNMIN(min, nd[i]/dd[i]);
+  //     else {
+	// min = nd[i]/dd[i];
+  //       notEvenOnce = SUNFALSE;
+  //     }
+  //   }
+    N_Vector z = N_VClone_Octave(num);
+    ColumnVector *xv, *zv, *yv;
+    realtype min;
+    min = BIG_REAL;
+    
+    xv = static_cast<ColumnVector *> NV_CONTENT_C(num);
+    yv = static_cast<ColumnVector *> NV_CONTENT_C(denom);
+    zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
+    *zv = quotient((*xv),(*yv));
+    min = (zv)->min();
+  // }
 
   return(min);
 }

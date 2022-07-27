@@ -2094,7 +2094,8 @@ int Test_N_VMinQuotient(N_Vector NUM, N_Vector DENOM,
   stop_time = get_time();
 
   /* ans should equal BIG_REAL */
-  failure = SUNRCompare(ans, BIG_REAL);
+  /* OUR (OCTAVE) ANSWER SHOULD EQUAL INF */
+  failure = SUNRCompare(ans, INFINITY);
 
   if (failure) {
     printf(">>> FAILED test -- N_VMinQuotient Case 2, Proc %d \n", myid);
