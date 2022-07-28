@@ -947,7 +947,7 @@ realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
     ColumnVector *xv, *zv, *yv;
     realtype min;
     min = BIG_REAL;
-    
+
     xv = static_cast<ColumnVector *> NV_CONTENT_C(num);
     yv = static_cast<ColumnVector *> NV_CONTENT_C(denom);
     zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
@@ -986,52 +986,16 @@ int N_VLinearCombination_Octave(int nvec, realtype* c, N_Vector* X, N_Vector z)
     return(0);
   }
 
-  /* get vector length and data array */
-  N  = NV_LENGTH_C(z);
-  zd = NV_DATA_C(z);
+  ColumnVector *xv, *zv, *yv;
 
-  /*
-   * X[0] += c[i]*X[i], i = 1,...,nvec-1
-   */
-  if ((X[0] == z) && (c[0] == ONE)) {
-    for (i=1; i<nvec; i++) {
-      xd = NV_DATA_C(X[i]);
-      for (j=0; j<N; j++) {
-        zd[j] += c[i] * xd[j];
-      }
-    }
-    return(0);
-  }
-
-  /*
-   * X[0] = c[0] * X[0] + sum{ c[i] * X[i] }, i = 1,...,nvec-1
-   */
-  if (X[0] == z) {
-    for (j=0; j<N; j++) {
-      zd[j] *= c[0];
-    }
-    for (i=1; i<nvec; i++) {
-      xd = NV_DATA_C(X[i]);
-      for (j=0; j<N; j++) {
-        zd[j] += c[i] * xd[j];
-      }
-    }
-    return(0);
-  }
+  xv = static_cast<ColumnVector *> NV_CONTENT_C(X[0]);
+  zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
 
   /*
    * z = sum{ c[i] * X[i] }, i = 0,...,nvec-1
    */
-  xd = NV_DATA_C(X[0]);
-  for (j=0; j<N; j++) {
-    zd[j] = c[0] * xd[j];
-  }
-  for (i=1; i<nvec; i++) {
-    xd = NV_DATA_C(X[i]);
-    for (j=0; j<N; j++) {
-      zd[j] += c[i] * xd[j];
-    }
-  }
+
+  (*zv) = (*c)*(*xv);
   return(0);
 }
 
@@ -1053,33 +1017,16 @@ int N_VScaleAddMulti_Octave(int nvec, realtype* a, N_Vector x, N_Vector* Y, N_Ve
     return(0);
   }
 
-  /* get vector length and data array */
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
+  ColumnVector *xv, *zv, *yv;
 
-  /*
-   * Y[i][j] += a[i] * x[j]
-   */
-  if (Y == Z) {
-    for (i=0; i<nvec; i++) {
-      yd = NV_DATA_C(Y[i]);
-      for (j=0; j<N; j++) {
-        yd[j] += a[i] * xd[j];
-      }
-    }
-    return(0);
-  }
+  yv = static_cast<ColumnVector *> NV_CONTENT_C(Y[0]);
+  zv = static_cast<ColumnVector *> NV_CONTENT_C(Z[0]);
+  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
 
   /*
    * Z[i][j] = Y[i][j] + a[i] * x[j]
    */
-  for (i=0; i<nvec; i++) {
-    yd = NV_DATA_C(Y[i]);
-    zd = NV_DATA_C(Z[i]);
-    for (j=0; j<N; j++) {
-      zd[j] = a[i] * xd[j] + yd[j];
-    }
-  }
+  (*zv) = (*yv) + (*a)*(*xv);
   return(0);
 }
 
