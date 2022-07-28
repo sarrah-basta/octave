@@ -1075,15 +1075,9 @@ int N_VLinearSumVectorArray_Octave(int nvec,
                                    realtype b, N_Vector* Y,
                                    N_Vector* Z)
 {
+
+  ColumnVector *xv, *zv, *yv;
   int          i;
-  sunindextype j, N;
-  realtype*    xd=NULL;
-  realtype*    yd=NULL;
-  realtype*    zd=NULL;
-  realtype     c;
-  N_Vector*   V1;
-  N_Vector*   V2;
-  booleantype  test;
 
   /* invalid number of vectors */
   if (nvec < 1) return(-1);
@@ -1092,75 +1086,13 @@ int N_VLinearSumVectorArray_Octave(int nvec,
   if (nvec == 1) {
     N_VLinearSum_Octave(a, X[0], b, Y[0], Z[0]);
     return(0);
-  }
+  }                   
 
-  /* BLAS usage: axpy y <- ax+y */
-  if ((b == ONE) && (Z == Y))
-    return(VaxpyVectorArray_Octave(nvec, a, X, Y));
-
-  /* BLAS usage: axpy x <- by+x */
-  if ((a == ONE) && (Z == X))
-    return(VaxpyVectorArray_Octave(nvec, b, Y, X));
-
-  /* Case: a == b == 1.0 */
-  if ((a == ONE) && (b == ONE))
-    return(VSumVectorArray_Octave(nvec, X, Y, Z));
-
-  /* Cases:                    */
-  /*   (1) a == 1.0, b = -1.0, */
-  /*   (2) a == -1.0, b == 1.0 */
-  if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
-    V1 = test ? Y : X;
-    V2 = test ? X : Y;
-    return(VDiffVectorArray_Octave(nvec, V2, V1, Z));
-  }
-
-  /* Cases:                                                  */
-  /*   (1) a == 1.0, b == other or 0.0,                      */
-  /*   (2) a == other or 0.0, b == 1.0                       */
-  /* if a or b is 0.0, then user should have called N_VScale */
-  if ((test = (a == ONE)) || (b == ONE)) {
-    c  = test ? b : a;
-    V1 = test ? Y : X;
-    V2 = test ? X : Y;
-    return(VLin1VectorArray_Octave(nvec, c, V1, V2, Z));
-  }
-
-  /* Cases:                     */
-  /*   (1) a == -1.0, b != 1.0, */
-  /*   (2) a != 1.0, b == -1.0  */
-  if ((test = (a == -ONE)) || (b == -ONE)) {
-    c = test ? b : a;
-    V1 = test ? Y : X;
-    V2 = test ? X : Y;
-    return(VLin2VectorArray_Octave(nvec, c, V1, V2, Z));
-  }
-
-  /* Case: a == b                                                         */
-  /* catches case both a and b are 0.0 - user should have called N_VConst */
-  if (a == b)
-    return(VScaleSumVectorArray_Octave(nvec, a, X, Y, Z));
-
-  /* Case: a == -b */
-  if (a == -b)
-    return(VScaleDiffVectorArray_Octave(nvec, a, X, Y, Z));
-
-  /* Do all cases not handled above:                               */
-  /*   (1) a == other, b == 0.0 - user should have called N_VScale */
-  /*   (2) a == 0.0, b == other - user should have called N_VScale */
-  /*   (3) a,b == other, a !=b, a != -b                            */
-
-  /* get vector length */
-  N = NV_LENGTH_C(Z[0]);
-
-  /* compute linear sum for each vector pair in vector arrays */
-  for (i=0; i<nvec; i++) {
-    xd = NV_DATA_C(X[i]);
-    yd = NV_DATA_C(Y[i]);
-    zd = NV_DATA_C(Z[i]);
-    for (j=0; j<N; j++) {
-      zd[j] = a * xd[j] + b * yd[j];
-    }
+  for (i=0; i<nvec; i++) { 
+    yv = static_cast<ColumnVector *> NV_CONTENT_C(Y[i]);
+    zv = static_cast<ColumnVector *> NV_CONTENT_C(Z[i]);
+    xv = static_cast<ColumnVector *> NV_CONTENT_C(X[i]);
+    (*zv) = a * (*xv) + b * (*yv);
   }
 
   return(0);
@@ -1173,6 +1105,10 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   sunindextype j, N;
   realtype*    xd=NULL;
   realtype*    zd=NULL;
+  ColumnVector *xv, *zv;
+
+  xv = static_cast<ColumnVector *> NV_CONTENT_C(X[0]);
+  zv = static_cast<ColumnVector *> NV_CONTENT_C(Z[0]);
 
   /* invalid number of vectors */
   if (nvec < 1) return(-1);
@@ -1190,6 +1126,7 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
    * X[i] *= c[i]
    */
   if (X == Z) {
+    // (*zv) *= (*c); //this should work but doesn't, in both N_VScale
     for (i=0; i<nvec; i++) {
       xd = NV_DATA_C(X[i]);
       for (j=0; j<N; j++) {
@@ -1202,13 +1139,7 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   /*
    * Z[i] = c[i] * X[i]
    */
-  for (i=0; i<nvec; i++) {
-    xd = NV_DATA_C(X[i]);
-    zd = NV_DATA_C(Z[i]);
-    for (j=0; j<N; j++) {
-      zd[j] = c[i] * xd[j];
-    }
-  }
+  (*zv) = (*c) * (*xv); 
   return(0);
 }
 
