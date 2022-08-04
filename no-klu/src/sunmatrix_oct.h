@@ -99,45 +99,45 @@ typedef struct _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse;
  * Exported Functions for SUNMATRIX_SPARSE
  * ---------------------------------------- */
 
-SUNDIALS_EXPORT SUNMatrix SUNOctMatrix(sunindextype M, sunindextype N,
+SUNDIALS_EXPORT SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
                                           sunindextype NNZ, int sparsetype,
                                           SUNContext sunctx);
 
-SUNDIALS_EXPORT SUNMatrix SUNSparseFromDenseMatrix(SUNMatrix A,
+SUNDIALS_EXPORT SUNMatrix OCTSparseFromDenseMatrix(SUNMatrix A,
                                                    realtype droptol,
                                                    int sparsetype);
 
-SUNDIALS_EXPORT SUNMatrix SUNSparseFromBandMatrix(SUNMatrix A,
+SUNDIALS_EXPORT SUNMatrix OCTSparseFromBandMatrix(SUNMatrix A,
                                                   realtype droptol,
                                                   int sparsetype);
 
-SUNDIALS_EXPORT int SUNSparseMatrix_ToCSR(const SUNMatrix A, SUNMatrix* Bout);
-SUNDIALS_EXPORT int SUNSparseMatrix_ToCSC(const SUNMatrix A, SUNMatrix* Bout);
+// SUNDIALS_EXPORT int OCTSparseMatrix_ToCSR(const SUNMatrix A, SUNMatrix* Bout);
+// SUNDIALS_EXPORT int OCTSparseMatrix_ToCSC(const SUNMatrix A, SUNMatrix* Bout);
 
-SUNDIALS_EXPORT int SUNSparseMatrix_Realloc(SUNMatrix A);
+// SUNDIALS_EXPORT int OCTSparseMatrix_Realloc(SUNMatrix A);
 
-SUNDIALS_EXPORT int SUNSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
+// SUNDIALS_EXPORT int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
 
-SUNDIALS_EXPORT void SUNSparseMatrix_Print(SUNMatrix A, FILE* outfile);
+SUNDIALS_EXPORT void OCTSparseMatrix_Print(SUNMatrix A, FILE* outfile);
 
-SUNDIALS_EXPORT sunindextype SUNSparseMatrix_Rows(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype SUNSparseMatrix_Columns(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype SUNSparseMatrix_NNZ(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype SUNSparseMatrix_NP(SUNMatrix A);
-SUNDIALS_EXPORT int SUNSparseMatrix_SparseType(SUNMatrix A);
-SUNDIALS_EXPORT realtype* SUNSparseMatrix_Data(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* SUNSparseMatrix_IndexValues(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* SUNSparseMatrix_IndexPointers(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype OCTSparseMatrix_Rows(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype OCTSparseMatrix_Columns(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype OCTSparseMatrix_NNZ(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype OCTSparseMatrix_NP(SUNMatrix A);
+SUNDIALS_EXPORT int OCTSparseMatrix_SparseType(SUNMatrix A);
+SUNDIALS_EXPORT realtype* OCTSparseMatrix_Data(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype* OCTSparseMatrix_IndexValues(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype* OCTSparseMatrix_IndexPointers(SUNMatrix A);
 
-SUNDIALS_EXPORT SUNMatrix_ID SUNMatGetID_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT SUNMatrix SUNMatClone_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT void SUNMatDestroy_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT int SUNMatZero_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT int SUNMatCopy_Sparse(SUNMatrix A, SUNMatrix B);
-SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
-SUNDIALS_EXPORT int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A);
-SUNDIALS_EXPORT int SUNMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
-SUNDIALS_EXPORT int SUNMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw);
+SUNDIALS_EXPORT SUNMatrix_ID OCTMatGetID_Sparse(SUNMatrix A);
+SUNDIALS_EXPORT SUNMatrix OCTMatClone_Sparse(SUNMatrix A);
+SUNDIALS_EXPORT void OCTMatDestroy_Sparse (SUNMatrix A);
+SUNDIALS_EXPORT int OCTMatZero_Sparse (SUNMatrix A);
+SUNDIALS_EXPORT int OCTMatCopy_Sparse (SUNMatrix A, SUNMatrix B);
+// SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
+// SUNDIALS_EXPORT int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A);
+// SUNDIALS_EXPORT int SUNMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
+SUNDIALS_EXPORT int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw);
 
 
 #ifdef __cplusplus
