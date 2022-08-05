@@ -296,17 +296,21 @@ extern "C"
 
   int OCTMatZero_Sparse(SUNMatrix A)
   {
-    sunindextype i;
+    // sunindextype i;
+    SparseMatrix *am;
+    am = static_cast <SparseMatrix *> SM_CONTENT_S(A);
 
-    /* Perform operation */
-    for (i = 0; i < SM_NNZ_S(A); i++)
-    {
-      (SM_DATA_S(A))[i] = ZERO;
-      (SM_INDEXVALS_S(A))[i] = 0;
-    }
-    for (i = 0; i < SM_NP_S(A); i++)
-      (SM_INDEXPTRS_S(A))[i] = 0;
-    (SM_INDEXPTRS_S(A))[SM_NP_S(A)] = 0;
+    am->change_capacity(0);
+
+    // /* Perform operation */
+    // for (i = 0; i < SM_NNZ_S(A); i++)
+    // {
+    //   (SM_DATA_S(A))[i] = ZERO;
+    //   (SM_INDEXVALS_S(A))[i] = 0;
+    // }
+    // for (i = 0; i < SM_NP_S(A); i++)
+    //   (SM_INDEXPTRS_S(A))[i] = 0;
+    // (SM_INDEXPTRS_S(A))[SM_NP_S(A)] = 0;
     return SUNMAT_SUCCESS;
   }
 
@@ -337,8 +341,8 @@ extern "C"
     // }
 
     /* zero out B so that copy works correctly */
-    if (OCTMatZero_Sparse(B) != SUNMAT_SUCCESS)
-      return SUNMAT_OPERATION_FAIL;
+    // if (OCTMatZero_Sparse(B) != SUNMAT_SUCCESS)
+    //   return SUNMAT_OPERATION_FAIL;
 
     /* copy the data and row indices over */
     for (i = 0; i < A_nz; i++)
