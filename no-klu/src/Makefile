@@ -26,7 +26,7 @@ OCT_LIB_PATH = /usr/lib/octave/8.0.0
 LDFLAGS = -I$(KLU_INC_PATH) -I$(PT_INC_PATH) -I$(SUN_INC_PATH) -I$(OCT_INC_PATH) -L$(KLU_LIB_PATH) -L$(SUN_LIB_PATH) -L$(OCT_LIB_PATH) -Wl,-Bsymbolic 
 # -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolspgmr -loctave
 # LDFLAGS = -I$(KLU_INC_PATH) -I$(SUN_INC_PATH) -I$(OCT_INC_PATH) -L$(KLU_LIB_PATH) -L$(SUN_LIB_PATH) -L$(OCT_LIB_PATH)
-LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -lklu -lsundials_sunlinsolklu -loctave -loctinterp -lm -lpthread
+LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_idas -lklu -lsundials_sunlinsolklu -loctave -loctinterp -lm -lpthread
 
 app: $(EXECUTABLE1)
 	@echo Make of example has finished successfully.
