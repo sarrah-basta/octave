@@ -133,6 +133,7 @@ SUNDIALS_EXPORT SUNMatrix_ID OCTMatGetID_Sparse(SUNMatrix A);
 SUNDIALS_EXPORT SUNMatrix OCTMatClone_Sparse(SUNMatrix A);
 SUNDIALS_EXPORT void OCTMatDestroy_Sparse (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatZero_Sparse (SUNMatrix A);
+SUNDIALS_EXPORT int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
 SUNDIALS_EXPORT int OCTMatCopy_Sparse (SUNMatrix A, SUNMatrix B);
 // SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
 // SUNDIALS_EXPORT int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A);

@@ -101,7 +101,7 @@ using namespace octave;
    */
   N_Vector_ID N_VGetVectorID_Octave(N_Vector v)
   {
-    return SUNDIALS_NVEC_CUSTOM;
+    return SUNDIALS_NVEC_SERIAL;
   }
 
   /* ----------------------------------------------------------------------------
