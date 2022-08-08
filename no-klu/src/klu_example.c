@@ -41,8 +41,7 @@
 #include <math.h>
 
 #include <ida/ida.h>                       /* prototypes for IDA fcts., consts.    */
-#include <nvector/nvector_serial.h>        /* access to serial N_Vector  */
-// #include <nvector/nvector_col.h>        /* access to serial N_Vector           */
+#include <nvector/nvector_serial.h>        /* access to serial N_Vector            */
 #include <sunmatrix/sunmatrix_sparse.h>    /* access to sparse SUNMatrix           */
 #include <sunlinsol/sunlinsol_klu.h>       /* access to KLU linear solver          */
 #include <sundials/sundials_types.h>       /* defs. of realtype, sunindextype      */
@@ -121,16 +120,16 @@ int main(void)
   if (check_retval(&retval, "SUNContext_Create", 1)) return 1;
 
   /* Create vectors uu, up, res, constraints, id. */
-  uu = N_VNewEmpty_Serial(NEQ, ctx);
-  if(check_retval((void *)uu, "N_VNewEmpty_Serial", 0)) return(1);
+  uu = N_VNew_Serial(NEQ, ctx);
+  if(check_retval((void *)uu, "N_VNew_Serial", 0)) return(1);
   up = N_VClone(uu);
-  if(check_retval((void *)up, "N_VNewEmpty_Serial", 0)) return(1);
+  if(check_retval((void *)up, "N_VNew_Serial", 0)) return(1);
   res = N_VClone(uu);
-  if(check_retval((void *)res, "N_VNewEmpty_Serial", 0)) return(1);
+  if(check_retval((void *)res, "N_VNew_Serial", 0)) return(1);
   constraints = N_VClone(uu);
-  if(check_retval((void *)constraints, "N_VNewEmpty_Serial", 0)) return(1);
+  if(check_retval((void *)constraints, "N_VNew_Serial", 0)) return(1);
   id = N_VClone(uu);
-  if(check_retval((void *)id, "N_VNewEmpty_Serial", 0)) return(1);
+  if(check_retval((void *)id, "N_VNew_Serial", 0)) return(1);
 
   /* Create and load problem data block. */
   data = (UserData) malloc(sizeof *data);
