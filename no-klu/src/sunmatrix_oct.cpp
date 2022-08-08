@@ -300,7 +300,14 @@ extern "C"
     SparseMatrix *am;
     am = static_cast <SparseMatrix *> SM_CONTENT_S(A);
 
+    //Used change_capacity to directly remove memory
+    //that was occupied by zeros.
+    // But as documented this is an expensive approach,
+    // and also changes size of data arrays
     am->change_capacity(0);
+
+    // So should naive approach to replace
+    // with zeros be used instead
 
     // /* Perform operation */
     // for (i = 0; i < SM_NNZ_S(A); i++)
