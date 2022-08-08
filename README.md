@@ -29,7 +29,9 @@ Code in The No-KLU Directory
   - `Makefile`
 
 ### Status :
-While the NVector implementation can be used in the example shown, it is currently being worked on function-by-function to make them wrappers to ColumnVector methods rather than elementwise operations on ColumnVector entries, to take advantage of vectorization in octave.
+While the NVector implementation now has complete wrappers to ColumnVector methods rather than elementwise operations on ColumnVector entries, to take advantage of vectorization in octave. It also has an encompassing function-by-funtion test that I show how to reproduce below, along with the kry2DHeat example that we are completely able to solve with the custom implementation. 
+The SUNMatrix_Oct is also an implementation for Sparse Matrices that contains wrappers to SparseMatrix class functions. Since we will be using our own solver, I have identified 4 functions that are required by IDA and only wrappers to them need to be implemented, so far. I also have similar function-by-funtion tests for those 4 functions with how to reproduce them added below.
+Once the solver implementation is complete both the matrix and solver implmentation will be tested together on an example before integrating to ode15.
 
 ### How to build :
 Since the makefile is made without using Autotools, 
@@ -52,10 +54,16 @@ The Makefile contains the following rules :
   Is currently linked to build the `kry_example.c` 
   with all the reuired dependencies, creates the executable `app`
   - `test`
-  Builds the `test_nvector_app.cpp`, that calls tests for
+  Builds the `test_nvector_octave.cpp`, that calls tests for
   implemented functions. **Note :** The commented calls are
-  to functions not implemented, either because they are not needed
-  or are still a work in progress, creates the executable `test`
+  to functions not implemented,
+  because they are not identified as being required so far.
+  - ` test2`
+    Builds the `test_sunmatrix_octave.cpp`, that calls tests for
+  implemented functions of the sunmatrix_oct implementation. 
+  **Note :** The commented calls are to functions not implemented,
+  because they are not identified as being required so far.
+  It creates the executable `test2`
   - `clean`
   Removes all object and executable files created in the no-klu/src 
   directory for a fresh build.
@@ -96,6 +104,9 @@ Once succesfully built, the executables app and test can be called on the comman
 
 `./app` : Runs the Kry example for the 2D Heat Equation and shows the solver's output
 `./test <vector length> <print timing>` : Creates a new vector of the specified length, and prints the status of each test run for the vector implementation, along with the timing if `<print timing>` is inputted as **1**, or without if it is inputted as **0**
+`./test2` : Prints the status of the functions in SUNMatrix_Oct implementation.
+
+
 
 Overview
 --------
