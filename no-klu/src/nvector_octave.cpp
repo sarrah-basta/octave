@@ -217,6 +217,7 @@ using namespace octave;
     /* Allocate memory */
     /* Create content */
     content = NULL;
+
     content = new ColumnVector(length);
     if (content == NULL)
     {
@@ -484,70 +485,70 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
 
   // xd = yd = zd = NULL;
 
-  if ((b == ONE) && (z == y)) {    /* BLAS usage: axpy y <- ax+y */
-    (*zv) += a*(*xv);
-    return;
-  }
+  // if ((b == ONE) && (z == y)) {    /* BLAS usage: axpy y <- ax+y */
+  //   (*zv) += a*(*xv);
+  //   return;
+  // }
 
-  if ((a == ONE) && (z == x)) {    /* BLAS usage: axpy x <- by+x */
-    (*zv) += b*(*yv);
-    return;
-  }
+  // if ((a == ONE) && (z == x)) {    /* BLAS usage: axpy x <- by+x */
+  //   (*zv) += b*(*yv);
+  //   return;
+  // }
 
-  // /* Case: a == b == 1.0 */
+  // // /* Case: a == b == 1.0 */
 
-  if ((a == ONE) && (b == ONE)) {
-    (*zv) = (*xv) + (*yv);
-    return;
-  }
+  // if ((a == ONE) && (b == ONE)) {
+  //   (*zv) = (*xv) + (*yv);
+  //   return;
+  // }
 
-  /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
+  // /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
 
-  if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
-    // *v1 = test ? *yv : *xv;
-    // *v2 = test ? *xv : *yv;
-    if(test == 0)
-    (*zv) = (*yv) - (*xv);
-    else
-    (*zv) = (*xv) - (*yv);
-    return;
-  }
+  // if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
+  //   // *v1 = test ? *yv : *xv;
+  //   // *v2 = test ? *xv : *yv;
+  //   if(test == 0)
+  //   (*zv) = (*yv) - (*xv);
+  //   else
+  //   (*zv) = (*xv) - (*yv);
+  //   return;
+  // }
 
-  /* Cases: (1) a == 1.0, b == other or 0.0, (2) a == other or 0.0, b == 1.0 */
-  /* if a or b is 0.0, then user should have called N_VScale */
+  // /* Cases: (1) a == 1.0, b == other or 0.0, (2) a == other or 0.0, b == 1.0 */
+  // /* if a or b is 0.0, then user should have called N_VScale */
 
-  if ((test = (a == ONE)) || (b == ONE)) {
-    if(test == 1)
-    (*zv) = (*xv) + b * (*yv);
-    else
-    (*zv) = a * (*xv) + (*yv);
-    return;
-  }
+  // if ((test = (a == ONE)) || (b == ONE)) {
+  //   if(test == 1)
+  //   (*zv) = (*xv) + b * (*yv);
+  //   else
+  //   (*zv) = a * (*xv) + (*yv);
+  //   return;
+  // }
 
-  /* Cases: (1) a == -1.0, b != 1.0, (2) a != 1.0, b == -1.0 */
+  // /* Cases: (1) a == -1.0, b != 1.0, (2) a != 1.0, b == -1.0 */
 
-  if ((test = (a == -ONE)) || (b == -ONE)) {
-    if(test == 1)
-    (*zv) = b * (*yv) - (*xv);
-    else
-    (*zv) = a * (*xv) - (*yv);
-    return;
-  }
+  // if ((test = (a == -ONE)) || (b == -ONE)) {
+  //   if(test == 1)
+  //   (*zv) = b * (*yv) - (*xv);
+  //   else
+  //   (*zv) = a * (*xv) - (*yv);
+  //   return;
+  // }
 
-  /* Case: a == b */
-  /* catches case both a and b are 0.0 - user should have called N_VConst */
+  // /* Case: a == b */
+  // /* catches case both a and b are 0.0 - user should have called N_VConst */
 
-  if (a == b) {
-    (*zv) = a * ((*yv) + (*xv));
-    return;
-  }
+  // if (a == b) {
+  //   (*zv) = a * ((*yv) + (*xv));
+  //   return;
+  // }
 
-  /* Case: a == -b */
+  // /* Case: a == -b */
 
-  if (a == -b) {
-    (*zv) = b * ((*yv) - (*xv));
-    return;
-  }
+  // if (a == -b) {
+  //   (*zv) = b * ((*yv) - (*xv));
+  //   return;
+  // }
 
   /* Do all cases not handled above:
      (1) a == other, b == 0.0 - user should have called N_VScale
@@ -784,29 +785,12 @@ realtype N_VMin_Octave(N_Vector x)
 
 void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 {
-//   ColumnVector *xv,*zv;
-//   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-//   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
-// std::cout << "This is a matrix:" << std::endl
-// << (*xv) << std::endl;
-// octave_value_list in;
-// in(0) = *xv;
-// in(1) = c;
-// octave_value_list out = octave::Fnth_element(in, 1);
-// ColumnVector norm_of_the_matrix = out(0).column_vector_value();
-// std::cout << "This is the norm of the matrix:" << std::endl
-// << norm_of_the_matrix
-// << std::endl;
-// return;
-
-
-
-
-
-  // const octave_value_list ov = ovl((*xv),(c));
-  // ColumnVector a;
-  // // printf("start error");
-  // // a = (a >= c).column_vector_value();
+  // ColumnVector *xv,*zv;
+  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  // zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  // double cv = static_cast <double> (c);
+  // // double cv = 4;
+  // const octave_value_list ov = ovl((*xv),(*zv));
   // octave::Fge(ov,1);
   // // (*zv) = a;
   // // ((*xv) >= (*zv));
@@ -814,11 +798,6 @@ void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
   // // (*zv) = retval(0).column_vector_value();
 
   // // return;
-
-  // octave_value_list retval;
-  // ColumnVector v ;
-  // ColumnVector w;
-  // retval(0) = (v >= w);
   // return;
   sunindextype i, N;
   realtype *xd, *zd;
@@ -921,28 +900,6 @@ booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
  */
 realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
 {
-  // booleantype notEvenOnce;
-  // sunindextype i, N;
-  // realtype *nd, *dd, min;
-
-  // nd = dd = NULL;
-
-  // N  = NV_LENGTH_C(num);
-  // nd = NV_DATA_C(num);
-  // dd = NV_DATA_C(denom);
-
-  // notEvenOnce = SUNTRUE;
-  // min = BIG_REAL;
-
-  // for (i = 0; i < N; i++) {
-  //   if (dd[i] == ZERO) continue;
-  //   else {
-  //     if (!notEvenOnce) min = SUNMIN(min, nd[i]/dd[i]);
-  //     else {
-	// min = nd[i]/dd[i];
-  //       notEvenOnce = SUNFALSE;
-  //     }
-  //   }
     N_Vector z = N_VClone_Octave(num);
     ColumnVector *xv, *zv, *yv;
     realtype min;
@@ -953,7 +910,6 @@ realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
     zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
     *zv = quotient((*xv),(*yv));
     min = (zv)->min();
-  // }
 
   return(min);
 }
@@ -1121,20 +1077,6 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
 
   /* get vector length */
   N = NV_LENGTH_C(Z[0]);
-
-  /*
-   * X[i] *= c[i]
-   */
-  if (X == Z) {
-    // (*zv) *= (*c); //this should work but doesn't, in both N_VScale
-    for (i=0; i<nvec; i++) {
-      xd = NV_DATA_C(X[i]);
-      for (j=0; j<N; j++) {
-        xd[j] *= c[i];
-      }
-    }
-    return(0);
-  }
 
   /*
    * Z[i] = c[i] * X[i]

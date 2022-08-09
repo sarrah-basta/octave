@@ -95,6 +95,8 @@ SUNLinearSolver SUNLinSol_KLU(N_Vector y, SUNMatrix A, SUNContext sunctx)
   S->ops->lastflag   = SUNLinSolLastFlag_KLU;
   S->ops->space      = SUNLinSolSpace_KLU;
   S->ops->free       = SUNLinSolFree_KLU;
+  // apart from this, require preconditioner, Atimes, 
+  // and scalingVector
 
   /* Create content */
   content = NULL;
