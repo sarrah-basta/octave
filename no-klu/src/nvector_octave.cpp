@@ -477,22 +477,9 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
     xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
     yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
     zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
-  // sunindextype i, N;
-  // realtype c, *xd, *yd, *zd;
-  ColumnVector *v1, *v2;
-  booleantype test;
-
-  // xd = yd = zd = NULL;
-
-  if ((b == ONE) && (z == y)) {    /* BLAS usage: axpy y <- ax+y */
-    (*zv) += a*(*xv);
-    return;
-  }
-
-  if ((a == ONE) && (z == x)) {    /* BLAS usage: axpy x <- by+x */
-    (*zv) += b*(*yv);
-    return;
-  }
+  
+    ColumnVector *v1, *v2;
+    booleantype test;
 
   // /* Case: a == b == 1.0 */
 
@@ -504,8 +491,6 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
   /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
 
   if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
-    // *v1 = test ? *yv : *xv;
-    // *v2 = test ? *xv : *yv;
     if(test == 0)
     (*zv) = (*yv) - (*xv);
     else
@@ -605,8 +590,12 @@ void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
 
-  if (z == x) {  /* BLAS usage: scale x <- cx */
-    VScaleBy_Octave(c, x);
+  // checks if both NVectors z and x
+  // are stored in the same place
+  if (zv == xv) {  /* BLAS usage: scale x <- cx */
+    (*xv) *= c;
+    // Not using this results in poor iterative
+    // algorthm performance
     return;
   }
   ColumnVector temp(NV_LENGTH_C(x));
@@ -921,28 +910,6 @@ booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
  */
 realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
 {
-  // booleantype notEvenOnce;
-  // sunindextype i, N;
-  // realtype *nd, *dd, min;
-
-  // nd = dd = NULL;
-
-  // N  = NV_LENGTH_C(num);
-  // nd = NV_DATA_C(num);
-  // dd = NV_DATA_C(denom);
-
-  // notEvenOnce = SUNTRUE;
-  // min = BIG_REAL;
-
-  // for (i = 0; i < N; i++) {
-  //   if (dd[i] == ZERO) continue;
-  //   else {
-  //     if (!notEvenOnce) min = SUNMIN(min, nd[i]/dd[i]);
-  //     else {
-	// min = nd[i]/dd[i];
-  //       notEvenOnce = SUNFALSE;
-  //     }
-  //   }
     N_Vector z = N_VClone_Octave(num);
     ColumnVector *xv, *zv, *yv;
     realtype min;
@@ -953,7 +920,6 @@ realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
     zv = static_cast<ColumnVector *> NV_CONTENT_C(z);
     *zv = quotient((*xv),(*yv));
     min = (zv)->min();
-  // }
 
   return(min);
 }
@@ -1125,8 +1091,11 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   /*
    * X[i] *= c[i]
    */
-  if (X == Z) {
-    // (*zv) *= (*c); //this should work but doesn't, in both N_VScale
+  // only checking if NVectors X and Z 
+  // are stored in the same address
+  if (xv == zv) { 
+    // (*xv) *= (*c); //this should work but doesn't, in both N_VScale
+    //                // instead results in convergence failures and wrong answer
     for (i=0; i<nvec; i++) {
       xd = NV_DATA_C(X[i]);
       for (j=0; j<N; j++) {
@@ -1655,23 +1624,6 @@ static void VLin2_Octave(realtype a, N_Vector x, N_Vector y, N_Vector z)
 
 //   return;
 // }
-
-static void VScaleBy_Octave(realtype a, N_Vector x)
-{
-  sunindextype i, N;
-  realtype *xd;
-
-  xd = NULL;
-
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-
-  for (i = 0; i < N; i++)
-    xd[i] *= a;
-
-  return;
-}
-
 
 /*
  * -----------------------------------------------------------------
