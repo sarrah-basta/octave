@@ -89,12 +89,12 @@ SUNLinearSolver SUNLinSol_KLU(N_Vector y, SUNMatrix A, SUNContext sunctx)
   /* Attach operations */
   S->ops->gettype    = SUNLinSolGetType_KLU;
   S->ops->getid      = SUNLinSolGetID_KLU;
-  S->ops->initialize = SUNLinSolInitialize_KLU;
-  S->ops->setup      = SUNLinSolSetup_KLU;
+  S->ops->initialize = NULL;
+  S->ops->setup      = NULL;
   S->ops->solve      = SUNLinSolSolve_KLU;
-  S->ops->lastflag   = SUNLinSolLastFlag_KLU;
-  S->ops->space      = SUNLinSolSpace_KLU;
-  S->ops->free       = SUNLinSolFree_KLU;
+  S->ops->lastflag   = NULL;
+  S->ops->space      = NULL;
+  S->ops->free       = NULL;
 
   /* Create content */
   content = NULL;
@@ -132,86 +132,6 @@ SUNLinearSolver SUNLinSol_KLU(N_Vector y, SUNMatrix A, SUNContext sunctx)
 
   return(S);
 }
-
-
-/* ----------------------------------------------------------------------------
- * Function to reinitialize a KLU linear solver
- */
-
-int SUNLinSol_KLUReInit(SUNLinearSolver S, SUNMatrix A,
-                        sunindextype nnz, int reinit_type)
-{
-  /* Check for non-NULL SUNLinearSolver */
-  if ((S == NULL) || (A == NULL))
-    return(SUNLS_MEM_NULL);
-
-  /* Check for valid SUNMatrix */
-  if (SUNMatGetID(A) != SUNMATRIX_SPARSE)
-    return(SUNLS_ILL_INPUT);
-
-  /* Check for valid reinit_type */
-  if ((reinit_type != SUNKLU_REINIT_FULL) &&
-      (reinit_type != SUNKLU_REINIT_PARTIAL))
-    return(SUNLS_ILL_INPUT);
-
-  /* Full re-initialization: reallocate matrix for updated storage */
-  if (reinit_type == SUNKLU_REINIT_FULL)
-    if (OCTSparseMatrix_Reallocate(A, nnz) != 0)
-      return(SUNLS_MEM_FAIL);
-
-  /* Free the prior factorazation and reset for first factorization */
-  if( SYMBOLIC(S) != NULL)
-    sun_klu_free_symbolic(&SYMBOLIC(S), &COMMON(S));
-  if( NUMERIC(S) != NULL)
-    sun_klu_free_numeric(&NUMERIC(S), &COMMON(S));
-  FIRSTFACTORIZE(S) = 1;
-
-  LASTFLAG(S) = SUNLS_SUCCESS;
-  return(LASTFLAG(S));
-}
-
-/* ----------------------------------------------------------------------------
- * Function to set the ordering type for a KLU linear solver
- */
-
-int SUNLinSol_KLUSetOrdering(SUNLinearSolver S, int ordering_choice)
-{
-  /* Check for legal ordering_choice */
-  if ((ordering_choice < 0) || (ordering_choice > 2))
-    return(SUNLS_ILL_INPUT);
-
-  /* Check for non-NULL SUNLinearSolver */
-  if (S == NULL) return(SUNLS_MEM_NULL);
-
-  /* Set ordering_choice */
-  COMMON(S).ordering = ordering_choice;
-
-  LASTFLAG(S) = SUNLS_SUCCESS;
-  return(LASTFLAG(S));
-}
-
-
-/*
- * -----------------------------------------------------------------
- * accessor functions
- * -----------------------------------------------------------------
- */
-
-sun_klu_symbolic* SUNLinSol_KLUGetSymbolic(SUNLinearSolver S)
-{
-  return(SYMBOLIC(S));
-}
-
-sun_klu_numeric* SUNLinSol_KLUGetNumeric(SUNLinearSolver S)
-{
-  return(NUMERIC(S));
-}
-
-sun_klu_common* SUNLinSol_KLUGetCommon(SUNLinearSolver S)
-{
-  return(&(COMMON(S)));
-}
-
 
 /*
  * -----------------------------------------------------------------
@@ -362,24 +282,25 @@ int SUNLinSolSolve_KLU(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   /* copy b into x */
   N_VScale(ONE, b, x);
 
-  /* access x data array */
-  xdata = N_VGetArrayPointer(x);
-  if (xdata == NULL) {
-    LASTFLAG(S) = SUNLS_MEM_FAIL;
-    return(LASTFLAG(S));
-  }
+  ColumnVector *xv, *zv;
+  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
+  zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
 
-  /* Call KLU to solve the linear system */
-  flag = SOLVE(S)(SYMBOLIC(S), NUMERIC(S),
-                  OCTSparseMatrix_NP(A), 1, xdata,
-                  &COMMON(S));
-  if (flag == 0) {
-    LASTFLAG(S) = SUNLS_PACKAGE_FAIL_REC;
-    return(LASTFLAG(S));
-  }
+  Matrix *am;
+  am = static_cast<Matrix *> SM_CONTENT_S(A);
 
-  LASTFLAG(S) = SUNLS_SUCCESS;
-  return(LASTFLAG(S));
+  xv = am.solve(zv);
+  // /* Call KLU to solve the linear system */
+  // flag = SOLVE(S)(SYMBOLIC(S), NUMERIC(S),
+  //                 OCTSparseMatrix_NP(A), 1, xdata,
+  //                 &COMMON(S));
+  // if (flag == 0) {
+  //   LASTFLAG(S) = SUNLS_PACKAGE_FAIL_REC;
+  //   return(LASTFLAG(S));
+  // }
+
+  // LASTFLAG(S) = SUNLS_SUCCESS;
+  // return(LASTFLAG(S));
 }
 
 
@@ -425,3 +346,82 @@ int SUNLinSolFree_KLU(SUNLinearSolver S)
   free(S); S = NULL;
   return(SUNLS_SUCCESS);
 }
+/* ----------------------------------------------------------------------------
+ * Function to reinitialize a KLU linear solver
+ */
+
+int SUNLinSol_KLUReInit(SUNLinearSolver S, SUNMatrix A,
+                        sunindextype nnz, int reinit_type)
+{
+  /* Check for non-NULL SUNLinearSolver */
+  if ((S == NULL) || (A == NULL))
+    return(SUNLS_MEM_NULL);
+
+  /* Check for valid SUNMatrix */
+  if (SUNMatGetID(A) != SUNMATRIX_SPARSE)
+    return(SUNLS_ILL_INPUT);
+
+  /* Check for valid reinit_type */
+  if ((reinit_type != SUNKLU_REINIT_FULL) &&
+      (reinit_type != SUNKLU_REINIT_PARTIAL))
+    return(SUNLS_ILL_INPUT);
+
+  /* Full re-initialization: reallocate matrix for updated storage */
+  if (reinit_type == SUNKLU_REINIT_FULL)
+    if (OCTSparseMatrix_Reallocate(A, nnz) != 0)
+      return(SUNLS_MEM_FAIL);
+
+  /* Free the prior factorazation and reset for first factorization */
+  if( SYMBOLIC(S) != NULL)
+    sun_klu_free_symbolic(&SYMBOLIC(S), &COMMON(S));
+  if( NUMERIC(S) != NULL)
+    sun_klu_free_numeric(&NUMERIC(S), &COMMON(S));
+  FIRSTFACTORIZE(S) = 1;
+
+  LASTFLAG(S) = SUNLS_SUCCESS;
+  return(LASTFLAG(S));
+}
+
+/* ----------------------------------------------------------------------------
+ * Function to set the ordering type for a KLU linear solver
+ */
+
+int SUNLinSol_KLUSetOrdering(SUNLinearSolver S, int ordering_choice)
+{
+  /* Check for legal ordering_choice */
+  if ((ordering_choice < 0) || (ordering_choice > 2))
+    return(SUNLS_ILL_INPUT);
+
+  /* Check for non-NULL SUNLinearSolver */
+  if (S == NULL) return(SUNLS_MEM_NULL);
+
+  /* Set ordering_choice */
+  COMMON(S).ordering = ordering_choice;
+
+  LASTFLAG(S) = SUNLS_SUCCESS;
+  return(LASTFLAG(S));
+}
+
+
+/*
+ * -----------------------------------------------------------------
+ * accessor functions
+ * -----------------------------------------------------------------
+ */
+
+sun_klu_symbolic* SUNLinSol_KLUGetSymbolic(SUNLinearSolver S)
+{
+  return(SYMBOLIC(S));
+}
+
+sun_klu_numeric* SUNLinSol_KLUGetNumeric(SUNLinearSolver S)
+{
+  return(NUMERIC(S));
+}
+
+sun_klu_common* SUNLinSol_KLUGetCommon(SUNLinearSolver S)
+{
+  return(&(COMMON(S)));
+}
+
+
