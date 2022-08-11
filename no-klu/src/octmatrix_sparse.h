@@ -29,14 +29,14 @@
  * -----------------------------------------------------------------
  */
 
-#ifndef _SUNMATRIX_SPARSE_H
-#define _SUNMATRIX_SPARSE_H
 
 #include <stdio.h>
+
+#include <dSparse.h>
 #include <sundials/sundials_matrix.h>
 #include <sunmatrix/sunmatrix_dense.h>
 #include <sunmatrix/sunmatrix_band.h>
-#include <dSparse.h>
+
 #ifdef __cplusplus  /* wrapper to enable C++ usage */
 extern "C" {
 #endif
@@ -116,7 +116,7 @@ SUNDIALS_EXPORT SUNMatrix OCTSparseFromBandMatrix(SUNMatrix A,
 
 // SUNDIALS_EXPORT int OCTSparseMatrix_Realloc(SUNMatrix A);
 
-// SUNDIALS_EXPORT int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
+SUNDIALS_EXPORT int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
 
 SUNDIALS_EXPORT void OCTSparseMatrix_Print(SUNMatrix A, FILE* outfile);
 
@@ -144,4 +144,4 @@ SUNDIALS_EXPORT int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *l
 }
 #endif
 
-#endif
+

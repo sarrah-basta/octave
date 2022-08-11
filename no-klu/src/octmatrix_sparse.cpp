@@ -24,7 +24,7 @@
 #include <stdlib.h>
 
 // #include <sunmatrix/sunmatrix_sparse.h>
-#include "sunmatrix_oct.h"
+#include "octmatrix_sparse.h"
 #include <sundials/sundials_nvector.h>
 #include <sundials/sundials_math.h>
 
@@ -320,6 +320,37 @@ extern "C"
     // (SM_INDEXPTRS_S(A))[SM_NP_S(A)] = 0;
     return SUNMAT_SUCCESS;
   }
+
+    /* ----------------------------------------------------------------------------
+ * Function to reallocate internal sparse matrix storage arrays so that the
+ * resulting sparse matrix has storage for a specified number of nonzeros.
+ * Returns 0 on success and 1 on failure (e.g. if A does not have sparse type,
+ * or if nnz is negative)
+ */
+
+int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
+{
+  /* check for valid matrix type */
+  if (SUNMatGetID(A) != SUNMATRIX_SPARSE)  return SUNMAT_ILL_INPUT;
+
+  /* check for valid nnz */
+  if (NNZ < 0)  return SUNMAT_ILL_INPUT;
+
+  /* perform reallocation */
+  // SM_INDEXVALS_S(A) = (sunindextype *) realloc(SM_INDEXVALS_S(A), NNZ*sizeof(sunindextype));
+  // SM_DATA_S(A) = (realtype *) realloc(SM_DATA_S(A), NNZ*sizeof(realtype));
+  // SM_NNZ_S(A) = NNZ;
+
+    SparseMatrix *am;
+    am = static_cast <SparseMatrix *> SM_CONTENT_S(A);
+
+    //Used change_capacity to directly remove memory
+    //that was occupied by zeros.
+    // But as documented this is an expensive approach,
+    // and also changes size of data arrays
+    am->change_capacity(NNZ);
+  return SUNMAT_SUCCESS;
+}
 
   int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw)
   {

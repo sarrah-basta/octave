@@ -23,8 +23,8 @@
 
 #include <sundials/sundials_types.h>
 // #include <sunmatrix/sunmatrix_sparse.h>
-#include "sunmatrix_oct.h"
-#include <nvector/nvector_serial.h>
+#include "octmatrix_sparse.h"
+#include "<nvector/nvector_serial.h>"
 #include <sundials/sundials_math.h>
 #include "test_sunmatrix.h"
 
