@@ -86,7 +86,7 @@ extern "C"
     A->ops->copy = OCTMatCopy_Sparse;
     A->ops->scaleadd = NULL;
     A->ops->scaleaddi = NULL;
-    A->ops->matvec = NULL;
+    A->ops->matvec = OCTMatMatvec_Sparse;
     A->ops->space = OCTMatSpace_Sparse;
 
     /* Create content */
@@ -886,18 +886,17 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
 
   // }
 
-  // int SUNMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y)
-  // {
-  //   /* Verify that A, x and y are compatible */
-  //   if (!SMCompatible2_Sparse(A, x, y))
-  //     return SUNMAT_ILL_INPUT;
+  // only needed temporarily for test function
+  int OCTMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y)
+  {
+    /* Verify that A, x and y are compatible */
+    if (!SMCompatible2_Sparse(A, x, y))
+      return SUNMAT_ILL_INPUT;
 
-  //   /* Perform operation */
-  //   if(SM_SPARSETYPE_S(A) == CSC_MAT)
-  //     return Matvec_SparseCSC(A, x, y);
-  //   else
-  //     return Matvec_SparseCSR(A, x, y);
-  // }
+    /* Perform operation */
+    if(SM_SPARSETYPE_S(A) == CSC_MAT)
+      return Matvec_SparseCSC(A, x, y);
+  }
 
   /*
    * =================================================================
@@ -955,40 +954,40 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
   //  * Returns 0 if successful, 1 if unsuccessful (failed memory access, or both
   //  * x and y are the same vector).
   //  */
-  // int Matvec_SparseCSC(SUNMatrix A, N_Vector x, N_Vector y)
-  // {
-  //   sunindextype i, j;
-  //   sunindextype *Ap, *Ai;
-  //   realtype *Ax, *xd, *yd;
+  int Matvec_SparseCSC(SUNMatrix A, N_Vector x, N_Vector y)
+  {
+    sunindextype i, j;
+    sunindextype *Ap, *Ai;
+    realtype *Ax, *xd, *yd;
 
-  //   /* access data from CSC structure (return if failure) */
-  //   Ap = SM_INDEXPTRS_S(A);
-  //   Ai = SM_INDEXVALS_S(A);
-  //   Ax = SM_DATA_S(A);
-  //   if ((Ap == NULL) || (Ai == NULL) || (Ax == NULL))
-  //     return SUNMAT_MEM_FAIL;
+    /* access data from CSC structure (return if failure) */
+    Ap = SM_INDEXPTRS_S(A);
+    Ai = SM_INDEXVALS_S(A);
+    Ax = SM_DATA_S(A);
+    if ((Ap == NULL) || (Ai == NULL) || (Ax == NULL))
+      return SUNMAT_MEM_FAIL;
 
-  //   /* access vector data (return if failure) */
-  //   xd = N_VGetArrayPointer(x);
-  //   yd = N_VGetArrayPointer(y);
-  //   if ((xd == NULL) || (yd == NULL) || (xd == yd) )
-  //     return SUNMAT_MEM_FAIL;
+    /* access vector data (return if failure) */
+    xd = N_VGetArrayPointer(x);
+    yd = N_VGetArrayPointer(y);
+    if ((xd == NULL) || (yd == NULL) || (xd == yd) )
+      return SUNMAT_MEM_FAIL;
 
-  //   /* initialize result */
-  //   for (i=0; i<SM_ROWS_S(A); i++)
-  //     yd[i] = 0.0;
+    /* initialize result */
+    for (i=0; i<SM_ROWS_S(A); i++)
+      yd[i] = 0.0;
 
-  //   /* iterate through matrix columns */
-  //   for (j=0; j<SM_COLUMNS_S(A); j++) {
+    /* iterate through matrix columns */
+    for (j=0; j<SM_COLUMNS_S(A); j++) {
 
-  //     /* iterate down column of A, performing product */
-  //     for (i=Ap[j]; i<Ap[j+1]; i++)
-  //       yd[Ai[i]] += Ax[i]*xd[j];
+      /* iterate down column of A, performing product */
+      for (i=Ap[j]; i<Ap[j+1]; i++)
+        yd[Ai[i]] += Ax[i]*xd[j];
 
-  //   }
+    }
 
-  //   return SUNMAT_SUCCESS;
-  // }
+    return SUNMAT_SUCCESS;
+  }
 
   // /* -----------------------------------------------------------------
   //  * Computes y=A*x, where A is a CSR SUNMatrix_Sparse of dimension MxN, x is a

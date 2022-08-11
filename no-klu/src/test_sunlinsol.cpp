@@ -465,6 +465,10 @@ int Test_SUNLinSolSolve(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   if (failure) {
     printf(">>> FAILED test -- SUNLinSolSolve check, Proc %d \n", myid);
     PRINT_TIME("    SUNLinSolSolve Time: %22.15e \n \n", stop_time - start_time);
+    printf("y is : \n");
+    N_VPrint(y);
+    printf("x is : \n");
+    N_VPrint(x);
     N_VDestroy(y);
     return(1);
   }

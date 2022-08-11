@@ -24,7 +24,8 @@
 #include <sundials/sundials_types.h>
 // #include <sunmatrix/sunmatrix_sparse.h>
 #include "octmatrix_sparse.h"
-#include "<nvector/nvector_serial.h>"
+// #include <nvector/nvector_Octave.h>
+#include "nvector_octave.h"
 #include <sundials/sundials_math.h>
 #include "test_sunmatrix.h"
 
@@ -220,9 +221,9 @@ int main(int argc, char *argv[])
   B = OCTSparseFromDenseMatrix(D, ZERO, mattype);
 
   /* Create vectors and fill */
-  x = N_VNew_Serial(matcols, sunctx);
-  y = N_VNew_Serial(matrows, sunctx);
-  z = N_VNew_Serial(matrows, sunctx);
+  x = N_VNew_Octave(matcols, sunctx);
+  y = N_VNew_Octave(matrows, sunctx);
+  z = N_VNew_Octave(matrows, sunctx);
   vecdata = N_VGetArrayPointer(x);
   for(i=0; i<matcols; i++)
     vecdata[i] = (realtype) rand() / (realtype) RAND_MAX;
@@ -276,11 +277,11 @@ int main(int argc, char *argv[])
       OCTSparseMatrix_Print(I,stdout);
     }
     // printf("\nx =\n");
-    // N_VPrint_Serial(x);
+    // N_VPrint_Octave(x);
     // printf("\ny =\n");
-    // N_VPrint_Serial(y);
+    // N_VPrint_Octave(y);
     // printf("\nz =\n");
-    // N_VPrint_Serial(z);
+    // N_VPrint_Octave(z);
   } else {
     printf("SUCCESS: SUNMatrix module passed all tests \n \n");
   }
@@ -416,8 +417,8 @@ int check_vector(N_Vector x, N_Vector y, realtype tol)
   ydata = N_VGetArrayPointer(y);
 
   /* check data lengths */
-  xldata = N_VGetLength_Serial(x);
-  yldata = N_VGetLength_Serial(y);
+  xldata = N_VGetLength_Octave(x);
+  yldata = N_VGetLength_Octave(y);
 
   if (xldata != yldata) {
     printf(">>> ERROR: check_vector: Different data array lengths \n");

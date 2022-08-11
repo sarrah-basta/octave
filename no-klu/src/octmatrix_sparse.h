@@ -49,29 +49,6 @@ extern "C" {
 #define CSR_MAT 1
 
 
-/* ------------------------------------------
- * Sparse Implementation of SUNMATRIX_SPARSE
- * ------------------------------------------ */
-
-struct _SUNMatrixContent_Sparse {
-  sunindextype M;
-  sunindextype N;
-  sunindextype NNZ;
-  sunindextype NP;
-  realtype *data;
-  int sparsetype;
-  sunindextype *indexvals;
-  sunindextype *indexptrs;
-  /* CSC indices */
-  sunindextype **rowvals;
-  sunindextype **colptrs;
-  /* CSR indices */
-  sunindextype **colvals;
-  sunindextype **rowptrs;
-};
-
-typedef struct _SUNMatrixContent_Sparse *SUNMatrixContent_Sparse;
-
 
 /* ---------------------------------------
  * Macros for access to SUNMATRIX_SPARSE
@@ -136,7 +113,7 @@ SUNDIALS_EXPORT int OCTMatZero_Sparse (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatCopy_Sparse (SUNMatrix A, SUNMatrix B);
 // SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
 // SUNDIALS_EXPORT int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A);
-// SUNDIALS_EXPORT int SUNMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
+SUNDIALS_EXPORT int OCTMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
 SUNDIALS_EXPORT int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw);
 
 
