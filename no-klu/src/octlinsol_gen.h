@@ -36,7 +36,12 @@
 extern "C" {
 #endif
 
+struct _OCTLinearSolverContent_GEN {
+  int              last_flag;
+  int              first_factorize;
+};
 
+typedef struct _OCTLinearSolverContent_GEN *OCTLinearSolverContent_GEN;
 /* -------------------------------------
  * Exported Functions for OCTLINSOL_GEN
  ------------ */

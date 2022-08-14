@@ -41,7 +41,8 @@
 #include <math.h>
 
 #include <ida/ida.h>                       /* prototypes for IDA fcts., consts.    */
-#include "nvector_octave.h"        /* access to serial N_Vector            */
+// #include "nvector_octave.h"        /* access to serial N_Vector            */
+#include <nvector/nvector_serial.h>   
 // #include <sunmatrix/sunmatrix_sparse.h>    /* access to sparse SUNMatrix           */
 #include "octmatrix_sparse.h"
 #include "octlinsol_gen.h"       /* access to KLU linear solver          */
@@ -121,16 +122,16 @@ int main(void)
   if (check_retval(&retval, "SUNContext_Create", 1)) return 1;
 
   /* Create vectors uu, up, res, constraints, id. */
-  uu = N_VNew_Octave(NEQ, ctx);
-  if(check_retval((void *)uu, "N_VNew_Octave", 0)) return(1);
+  uu = N_VNew_Serial(NEQ, ctx);
+  if(check_retval((void *)uu, "N_VNew_Serial", 0)) return(1);
   up = N_VClone(uu);
-  if(check_retval((void *)up, "N_VNew_Octave", 0)) return(1);
+  if(check_retval((void *)up, "N_VNew_Serial", 0)) return(1);
   res = N_VClone(uu);
-  if(check_retval((void *)res, "N_VNew_Octave", 0)) return(1);
+  if(check_retval((void *)res, "N_VNew_Serial", 0)) return(1);
   constraints = N_VClone(uu);
-  if(check_retval((void *)constraints, "N_VNew_Octave", 0)) return(1);
+  if(check_retval((void *)constraints, "N_VNew_Serial", 0)) return(1);
   id = N_VClone(uu);
-  if(check_retval((void *)id, "N_VNew_Octave", 0)) return(1);
+  if(check_retval((void *)id, "N_VNew_Serial", 0)) return(1);
 
   /* Create and load problem data block. */
   data = (UserData) malloc(sizeof *data);
@@ -199,8 +200,8 @@ int main(void)
 
   /* Call IDACalcIC to correct the initial values. */
 
-  retval = IDACalcIC(mem, IDA_YA_YDP_INIT, t1);
-  if(check_retval(&retval, "IDACalcIC", 1)) return(1);
+  // retval = IDACalcIC(mem, IDA_YA_YDP_INIT, t1);
+  // if(check_retval(&retval, "IDACalcIC", 1)) return(1);
 
   /* Print output heading. */
   PrintHeader(rtol, atol);

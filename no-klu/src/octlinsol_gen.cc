@@ -41,6 +41,7 @@
 SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContext sunctx)
 {
   SUNLinearSolver S;
+  OCTLinearSolverContent_GEN content;
 
   /* Check compatibility with supplied SUNMatrix and N_Vector */
   // if (SUNMatGetID(A) != SUNMATRIX_SPARSE) return(NULL);
@@ -68,6 +69,18 @@ SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContext sunctx)
   S->ops->lastflag   = NULL;
   S->ops->space      = NULL;
   S->ops->free       = OCTLinSolFree_Gen;
+
+    /* Create content */
+  content = NULL;
+  content = (OCTLinearSolverContent_GEN) malloc(sizeof *content);
+  if (content == NULL) { SUNLinSolFree(S); return(NULL); }
+
+  /* Attach content */
+  S->content = content;
+
+  /* Fill content */
+  content->last_flag       = 0;
+  content->first_factorize = 1;
 
 // #if defined(SUNDIALS_INT64_T)
 //   if (OCTSparseMatrix_SparseType(A) == CSC_MAT) {
