@@ -13,25 +13,38 @@ Code in The No-KLU Directory
   - `nvector_octave.h`
   - `nvector_octave.cpp`
 - **Custom Implementations of SUNMatrix** 
-  - `sunmatrix_oct.h`
-  - `sunmatrix_oct.cpp`
+  - `octmatrix_sparse.h`
+  - `octmatrix_sparse.cpp`
+- **Custom Implementations of SUNMatrix** 
+  - `octlinsol_gen.h`
+  - `octlinsol_gen.cc`
 - **Examples to test custom implementations on**
   - For NVector :
     - `kry_example.c`
+  - For SUNMatrix and Solver :
+    - `klu_example.c`
+   
 - **Tests to test individual functions of custom implementations**
   - For NVector
     Given in SUNDIALS to test each function's expected output
     - `test_nvector.h`
     - `test_nvector.cpp`
+    - `test_sunmatrix.h`
+    - `test_sunmatrix.cpp`
+    - `test_sunlinsol.h`
+    - `test_sunlinsol.cpp`
     Main Code to call tests for functions implemented by us
     - `test_nvector_octave`
+    - `test_sunmatrix_octave`
+    - `test_sunlinsol_oct`
 - **Building**
   - `Makefile`
 
 ### Status :
 While the NVector implementation now has complete wrappers to ColumnVector methods rather than elementwise operations on ColumnVector entries, to take advantage of vectorization in octave. It also has an encompassing function-by-funtion test that I show how to reproduce below, along with the kry2DHeat example that we are completely able to solve with the custom implementation. 
 The SUNMatrix_Oct is also an implementation for Sparse Matrices that contains wrappers to SparseMatrix class functions. Since we will be using our own solver, I have identified 4 functions that are required by IDA and only wrappers to them need to be implemented, so far. I also have similar function-by-funtion tests for those 4 functions with how to reproduce them added below.
-Once the solver implementation is complete both the matrix and solver implmentation will be tested together on an example before integrating to ode15.
+The solver implementation is now complete and is integrated with both the matrix and vector implementations working in it. 
+Added functionality in the form of a dense matrix implementation and then a test on an example (maybe the 2DHeatKLU, but with initial conditions hardcoded as IDACalcIC is not correctly working) will be added before integrating to ode15.
 
 ### How to build :
 Since the makefile is made without using Autotools, 
@@ -64,6 +77,12 @@ The Makefile contains the following rules :
   **Note :** The commented calls are to functions not implemented,
   because they are not identified as being required so far.
   It creates the executable `test2`
+    - ` test3`
+    Builds the `test_sunlinsol_oct.cpp`, that calls tests for
+  implemented functions of the sunmatrix_oct implementation. 
+  **Note :** The commented calls are to functions not implemented,
+  because they are not identified as being required so far.
+  It creates the executable `test3`
   - `clean`
   Removes all object and executable files created in the no-klu/src 
   directory for a fresh build.
@@ -105,6 +124,7 @@ Once succesfully built, the executables app and test can be called on the comman
 `./app` : Runs the Kry example for the 2D Heat Equation and shows the solver's output
 `./test <vector length> <print timing>` : Creates a new vector of the specified length, and prints the status of each test run for the vector implementation, along with the timing if `<print timing>` is inputted as **1**, or without if it is inputted as **0**
 `./test2` : Prints the status of the functions in SUNMatrix_Oct implementation.
+`./test3 <matrix size> <matrix type> <print timing>` : Creates a new matrix of the specified length, with **matrix_type as 1** always as we have implemented Sparse Matrices in CSC format and prints the status of each test run for the vector implementation, along with the timing if `<print timing>` is inputted as **1**, or without if it is inputted as **0**.
 
 
 
