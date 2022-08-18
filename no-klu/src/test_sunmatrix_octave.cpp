@@ -257,7 +257,7 @@ int main(int argc, char *argv[])
   //   fails += Test_SUNMatScaleAddI(A, I, 0);
   //   fails += Test_SUNMatScaleAddI2(A, x, y);
   // }
-  // fails += Test_SUNMatMatvec(A, x, y, 0);
+  fails += Test_SUNMatMatvec(A, x, y, 0);
   fails += Test_SUNMatSpace(A, 0);
   // if (mattype == CSR_MAT) {
   //   fails += Test_OCTSparseMatrixToCSC(A);

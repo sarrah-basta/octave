@@ -22,8 +22,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
-// #include <sunmatrix/sunmatrix_Dense.h>
+// #include <sunmatrix/SUNMATRIX_DENSE.h>
 #include "octmatrix_dense.h"
 #include <sundials/sundials_nvector.h>
 #include <sundials/sundials_math.h>
@@ -82,14 +83,14 @@ extern "C"
     A->ops->zero = OCTMatZero_Dense;
     A->ops->copy = OCTMatCopy_Dense;
     A->ops->scaleadd = NULL;
-    A->ops->scaleaddi = NULL;
+    A->ops->scaleaddi = SUNMatScaleAddI_Dense;
     A->ops->matvec = OCTMatMatvec_Dense;
     A->ops->space = OCTMatSpace_Dense;
 
     /* Create content */
     content = NULL;
     // creating a new DenseMatrix Octave data structure with rows and columns as specified
-    content = new Matrix(M, N, NNZ);
+    content = new Matrix(M, N);
     if (content == NULL)
     {
       SUNMatDestroy(A);
@@ -109,7 +110,7 @@ extern "C"
 
   sunindextype OCTDenseMatrix_Rows(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_Dense)
+    if (SUNMatGetID(A) == SUNMATRIX_DENSE)
       return SM_ROWS_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -117,16 +118,24 @@ extern "C"
 
   sunindextype OCTDenseMatrix_Columns(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_Dense)
-      return SM_COLUMNS_S(A);
+    if (SUNMatGetID(A) == SUNMATRIX_DENSE)
+      return SM_COLS_S(A);
     else
       return SUNMAT_ILL_INPUT;
   }
 
   realtype *OCTDenseMatrix_Data(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_Dense)
+    if (SUNMatGetID(A) == SUNMATRIX_DENSE)
       return SM_DATA_S(A);
+    else
+      return NULL;
+  }
+
+  sunindextype OCTDenseMatrix_LData(SUNMatrix A)
+  {
+    if (SUNMatGetID(A) == SUNMATRIX_DENSE)
+      return SM_LDATA_S(A);
     else
       return NULL;
   }
@@ -152,8 +161,8 @@ extern "C"
 
   SUNMatrix OCTMatClone_Dense(SUNMatrix A)
   {
-    SUNMatrix B = OCTDenseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
-                               SM_NNZ_S(A), A->sunctx);
+    SUNMatrix B = OCTDenseMatrix(SM_ROWS_S(A), SM_COLS_S(A),
+                                A->sunctx);
     return (B);
   }
 
@@ -187,7 +196,7 @@ extern "C"
     // sunindextype i;
     Matrix *am;
     am = static_cast <Matrix *> SM_CONTENT_S(A);
-
+    sunindextype i,j;
     //Used change_capacity to directly remove memory
     //that was occupied by zeros.
     // But as documented this is an expensive approach,
@@ -199,7 +208,7 @@ extern "C"
     /* Perform operation */
     for(i=0; i < SM_ROWS_S(A); i++ ){
       for(j=0; j<SM_COLS_S(A); j++){
-        am(i)(j) = 0;
+        (*am)((j-1)*i + 1) = 0;
       }
     }
     return SUNMAT_SUCCESS;
@@ -215,7 +224,7 @@ extern "C"
 // int OCTDenseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
 // {
 //   /* check for valid matrix type */
-//   if (SUNMatGetID(A) != SUNMATRIX_Dense)  return SUNMAT_ILL_INPUT;
+//   if (SUNMatGetID(A) != SUNMATRIX_DENSE)  return SUNMAT_ILL_INPUT;
 
 //   /* check for valid nnz */
 //   if (NNZ < 0)  return SUNMAT_ILL_INPUT;
@@ -238,23 +247,23 @@ extern "C"
 
   int OCTMatSpace_Dense(SUNMatrix A, long int *lenrw, long int *leniw)
   {
-    *lenrw = SM_LDATA_D(A);
-  *leniw = 3 + SM_COLUMNS_D(A);
-  return SUNMAT_SUCCESS;
+    *lenrw = SM_LDATA_S(A);
+    *leniw = 3 + SM_COLS_S(A);
+    return SUNMAT_SUCCESS;
   }
 
   int OCTMatCopy_Dense(SUNMatrix A, SUNMatrix B)
   {
-    sunindextype i, A_nz;
+    sunindextype i,j;
 
     /* Verify that A and B are compatible */
     if (!SMCompatible_Dense(A, B))
       return SUNMAT_ILL_INPUT;
 
     /* Perform operation */
-  for (j=0; j<SM_COLUMNS_D(A); j++)
-    for (i=0; i<SM_ROWS_D(A); i++)
-      SM_ELEMENT_D(B,i,j) = SM_ELEMENT_D(A,i,j);
+  for (j=0; j<SM_COLS_S(A); j++)
+    for (i=0; i<SM_ROWS_S(A); i++)
+      SM_ELEMENT_S(B,i,j) = SM_ELEMENT_S(A,i,j);
 
     return SUNMAT_SUCCESS;
   }
@@ -281,212 +290,20 @@ extern "C"
 
   // optional matrix functions
 
-  // int SUNMatScaleAddI_Dense(realtype c, SUNMatrix A)
-  // {
-  //   sunindextype j, i, p, nz, newvals, M, N, cend;
-  //   booleantype newmat, found;
-  //   sunindextype *w, *Ap, *Ai, *Cp, *Ci;
-  //   realtype *x, *Ax, *Cx;
-  //   SUNMatrix C;
+  int SUNMatScaleAddI_Dense(realtype c, SUNMatrix A)
+  {
+    sunindextype i, j;
 
-  //   /* store shortcuts to matrix dimensions (M is inner dimension, N is outer) */
-  //   if (SM_DenseTYPE_S(A) == CSC_MAT) {
-  //     M = SM_ROWS_S(A);
-  //     N = SM_COLUMNS_S(A);
-  //   }
-  //   else {
-  //     M = SM_COLUMNS_S(A);
-  //     N = SM_ROWS_S(A);
-  //   }
+    /* Perform operation */
+    for (j=0; j<SM_COLS_S(A); j++)
+      for (i=0; i<SM_ROWS_S(A); i++) {
+        SM_ELEMENT_S(A,i,j) *= c;
+        if (i == j)
+          SM_ELEMENT_S(A,i,j) += ONE;
+      }
+    return SUNMAT_SUCCESS;
 
-  //   /* access data arrays from A (return if failure) */
-  //   Ap = Ai = NULL;
-  //   Ax = NULL;
-  //   if (SM_INDEXPTRS_S(A))  Ap = SM_INDEXPTRS_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
-  //   if (SM_INDEXVALS_S(A))  Ai = SM_INDEXVALS_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
-  //   if (SM_DATA_S(A))       Ax = SM_DATA_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
-
-  //   /* determine if A: contains values on the diagonal (so I can just be added in);
-  //      if not, then increment counter for extra storage that should be required. */
-  //   newvals = 0;
-  //   for (j=0; j < SUNMIN(M,N); j++) {
-  //     /* scan column (row if CSR) of A, searching for diagonal value */
-  //     found = SUNFALSE;
-  //     for (i=Ap[j]; i<Ap[j+1]; i++) {
-  //       if (Ai[i] == j) {
-  //         found = SUNTRUE;
-  //         break;
-  //       }
-  //     }
-  //     /* if no diagonal found, increment necessary storage counter */
-  //     if (!found)  newvals += 1;
-  //   }
-
-  //   /* If extra nonzeros required, check whether matrix has sufficient storage space
-  //      for new nonzero entries  (so I can be inserted into existing storage) */
-  //   newmat = SUNFALSE;   /* no reallocation needed */
-  //   if (newvals > (SM_NNZ_S(A) - Ap[N]))
-  //     newmat = SUNTRUE;
-
-  //   /* perform operation based on existing/necessary structure */
-
-  //   /*   case 1: A already contains a diagonal */
-  //   if (newvals == 0) {
-
-  //     /* iterate through columns, adding 1.0 to diagonal */
-  //     for (j=0; j < SUNMIN(M,N); j++)
-  //       for (i=Ap[j]; i<Ap[j+1]; i++)
-  //         if (Ai[i] == j) {
-  //           Ax[i] = ONE + c*Ax[i];
-  //         } else {
-  //           Ax[i] = c*Ax[i];
-  //         }
-
-  //   /*   case 2: A has sufficient storage, but does not already contain a diagonal */
-  //   } else if (!newmat) {
-
-  //     /* create work arrays for nonzero indices and values in a single column (row) */
-  //     w = (sunindextype *) malloc(M * sizeof(sunindextype));
-  //     x = (realtype *) malloc(M * sizeof(realtype));
-
-  //     /* determine storage location where last column (row) should end */
-  //     nz = Ap[N] + newvals;
-
-  //     /* store pointer past last column (row) from original A,
-  //        and store updated value in revised A */
-  //     cend = Ap[N];
-  //     Ap[N] = nz;
-
-  //     /* iterate through columns (rows) backwards */
-  //     for (j=N-1; j>=0; j--) {
-
-  //       /* clear out temporary arrays for this column (row) */
-  //       for (i=0; i<M; i++) {
-  //         w[i] = 0;
-  //         x[i] = RCONST(0.0);
-  //       }
-
-  //       /* iterate down column (row) of A, collecting nonzeros */
-  //       for (p=Ap[j]; p<cend; p++) {
-  //         w[Ai[p]] += 1;         /* indicate that row (column) is filled */
-  //         x[Ai[p]] = c*Ax[p];    /* collect/scale value */
-  //       }
-
-  //       /* add identity to this column (row) */
-  //       if (j < M) {
-  //         w[j] += 1;     /* indicate that row (column) is filled */
-  //         x[j] += ONE;   /* update value */
-  //       }
-
-  //       /* fill entries of A with this column's (row's) data */
-  //       for (i=M-1; i>=0; i--) {
-  //         if ( w[i] > 0 ) {
-  //           Ai[--nz] = i;
-  //           Ax[nz] = x[i];
-  //         }
-  //       }
-
-  //       /* store ptr past this col (row) from orig A, update value for new A */
-  //       cend = Ap[j];
-  //       Ap[j] = nz;
-
-  //     }
-
-  //     /* clean up */
-  //     free(w);
-  //     free(x);
-
-  //   /*   case 3: A must be reallocated with sufficient storage */
-  //   } else {
-
-  //     /* create work arrays for nonzero indices and values */
-  //     w = (sunindextype *) malloc(M * sizeof(sunindextype));
-  //     x = (realtype *) malloc(M * sizeof(realtype));
-
-  //     /* create new matrix for sum */
-  //     C = OCTDenseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
-  //                         Ap[N] + newvals,
-  //                         SM_DenseTYPE_S(A), A->sunctx);
-
-  //     /* access data from CSR structures (return if failure) */
-  //     Cp = Ci = NULL;
-  //     Cx = NULL;
-  //     if (SM_INDEXPTRS_S(C))  Cp = SM_INDEXPTRS_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
-  //     if (SM_INDEXVALS_S(C))  Ci = SM_INDEXVALS_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
-  //     if (SM_DATA_S(C))       Cx = SM_DATA_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
-
-  //     /* initialize total nonzero count */
-  //     nz = 0;
-
-  //     /* iterate through columns (rows for CSR) */
-  //     for (j=0; j<N; j++) {
-
-  //       /* set current column (row) pointer to current # nonzeros */
-  //       Cp[j] = nz;
-
-  //       /* clear out temporary arrays for this column (row) */
-  //       for (i=0; i<M; i++) {
-  //         w[i] = 0;
-  //         x[i] = 0.0;
-  //       }
-
-  //       /* iterate down column (along row) of A, collecting nonzeros */
-  //       for (p=Ap[j]; p<Ap[j+1]; p++) {
-  //         w[Ai[p]] += 1;         /* indicate that row is filled */
-  //         x[Ai[p]] = c*Ax[p];    /* collect/scale value */
-  //       }
-
-  //       /* add identity to this column (row) */
-  //       if (j < M) {
-  //         w[j] += 1;     /* indicate that row is filled */
-  //         x[j] += ONE;   /* update value */
-  //       }
-
-  //       /* fill entries of C with this column's (row's) data */
-  //       for (i=0; i<M; i++) {
-  //         if ( w[i] > 0 ) {
-  //           Ci[nz] = i;
-  //           Cx[nz++] = x[i];
-  //         }
-  //       }
-  //     }
-
-  //     /* indicate end of data */
-  //     Cp[N] = nz;
-
-  //     /* update A's structure with C's values; nullify C's pointers */
-  //     // SM_NNZ_S(A) = SM_CONTENT_S(C)->nnz();
-
-  //     // if (SM_DATA_S(A))
-  //     //   free(SM_DATA_S(A));
-  //     // SM_DATA_S(A) = SM_DATA_S(C);
-  //     // SM_DATA_S(C) = NULL;
-
-  //     // if (SM_INDEXVALS_S(A))
-  //     //   free(SM_INDEXVALS_S(A));
-  //     // SM_INDEXVALS_S(A) = SM_INDEXVALS_S(C);
-  //     // SM_INDEXVALS_S(C) = NULL;
-
-  //     // if (SM_INDEXPTRS_S(A))
-  //     //   free(SM_INDEXPTRS_S(A));
-  //     // SM_INDEXPTRS_S(A) = SM_INDEXPTRS_S(C);
-  //     // SM_INDEXPTRS_S(C) = NULL;
-
-  //     /* clean up */
-  //     OCTMatDestroy_Dense(C);
-  //     free(w);
-  //     free(x);
-
-  //   }
-  //   return SUNMAT_SUCCESS;
-
-  // }
+  }
 
   // int SUNMatScaleAdd_Dense(realtype c, SUNMatrix A, SUNMatrix B)
   // {
@@ -503,10 +320,10 @@ extern "C"
   //   /* store shortcuts to matrix dimensions (M is inner dimension, N is outer) */
   //   if (SM_DenseTYPE_S(A) == CSC_MAT) {
   //     M = SM_ROWS_S(A);
-  //     N = SM_COLUMNS_S(A);
+  //     N = SM_COLS_S(A);
   //   }
   //   else {
-  //     M = SM_COLUMNS_S(A);
+  //     M = SM_COLS_S(A);
   //     N = SM_ROWS_S(A);
   //   }
 
@@ -629,7 +446,7 @@ extern "C"
   //   } else {
 
   //     /* create new matrix for sum */
-  //     C = OCTDenseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
+  //     C = OCTDenseMatrix(SM_ROWS_S(A), SM_COLS_S(A),
   //                         Ap[N] + newvals, SM_DenseTYPE_S(A), A->sunctx);
 
   //     /* access data from CSR structures (return if failure) */
@@ -710,31 +527,31 @@ extern "C"
 
   // }
 
-  only needed temporarily for test function
+  //only needed temporarily for test function
   int OCTMatMatvec_Dense(SUNMatrix A, N_Vector x, N_Vector y)
   {
     sunindextype i, j;
-  realtype *col_j, *xd, *yd;
+    realtype *col_j, *xd, *yd;
 
-  /* Verify that A, x and y are compatible */
-  if (!SMCompatible2_Dense(A, x, y))
-    return SUNMAT_ILL_INPUT;
+    /* Verify that A, x and y are compatible */
+    if (!SMCompatible2_Dense(A, x, y))
+      return SUNMAT_ILL_INPUT;
 
-  /* access vector data (return if failure) */
-  xd = N_VGetArrayPointer(x);
-  yd = N_VGetArrayPointer(y);
-  if ((xd == NULL) || (yd == NULL) || (xd == yd))
-    return SUNMAT_MEM_FAIL;
+    /* access vector data (return if failure) */
+    xd = N_VGetArrayPointer(x);
+    yd = N_VGetArrayPointer(y);
+    if ((xd == NULL) || (yd == NULL) || (xd == yd))
+      return SUNMAT_MEM_FAIL;
 
-  /* Perform operation */
-  for (i=0; i<SM_ROWS_D(A); i++)
-    yd[i] = ZERO;
-  for(j=0; j<SM_COLUMNS_D(A); j++) {
-    col_j = SM_COLUMN_D(A,j);
-    for (i=0; i<SM_ROWS_D(A); i++)
-      yd[i] += col_j[i]*xd[j];
-  }
-  return SUNMAT_SUCCESS;
+    /* Perform operation */
+    for (i=0; i<SM_ROWS_S(A); i++)
+      yd[i] = ZERO;
+    for(j=0; j<SM_COLS_S(A); j++) {
+      // col_j = (*SM_COLS_S(A))(j);
+      for (i=0; i<SM_ROWS_S(A); i++)
+        yd[i] += SM_ELEMENT_S(A,i,j)*xd[j];
+    }
+    return SUNMAT_SUCCESS;
   }
 
   /*
@@ -742,30 +559,45 @@ extern "C"
    * private functions
    * =================================================================
    */
+  static booleantype SMCompatible_Dense(SUNMatrix A, SUNMatrix B)
+{
+  /* both matrices must be SUNMATRIX_DENSE */
+  if (SUNMatGetID(A) != SUNMATRIX_DENSE)
+    return SUNFALSE;
+  if (SUNMatGetID(B) != SUNMATRIX_DENSE)
+    return SUNFALSE;
 
+  /* both matrices must have the same shape */
+  if (SM_ROWS_D(A) != SM_ROWS_D(B))
+    return SUNFALSE;
+  if (SM_COLUMNS_D(A) != SM_COLUMNS_D(B))
+    return SUNFALSE;
+
+  return SUNTRUE;
+}
 
   /* -----------------------------------------------------------------
    * Function to check compatibility of a SUNMatrix object with two
    * N_Vectors (A*x = b)
    */
 
-  // static booleantype SMCompatible2_Dense(SUNMatrix A, N_Vector x, N_Vector y)
-  // {
-  //   /* vectors must implement N_VGetArrayPointer */
-  //   if ((x->ops->nvgetarraypointer == NULL) ||
-  //       (y->ops->nvgetarraypointer == NULL))
-  //     return SUNFALSE;
+  static booleantype SMCompatible2_Dense(SUNMatrix A, N_Vector x, N_Vector y)
+  {
+    /* vectors must implement N_VGetArrayPointer */
+    if ((x->ops->nvgetarraypointer == NULL) ||
+        (y->ops->nvgetarraypointer == NULL))
+      return SUNFALSE;
 
-  //   /* Verify that the dimensions of A, x, and y agree */
-  //   if ((OCTDenseMatrix_Columns(A) != N_VGetLength(x)) ||
-  //       (OCTDenseMatrix_Rows(A) != N_VGetLength(y)))
-  //     return SUNFALSE;
+    /* Verify that the dimensions of A, x, and y agree */
+    if ((OCTDenseMatrix_Columns(A) != N_VGetLength(x)) ||
+        (OCTDenseMatrix_Rows(A) != N_VGetLength(y)))
+      return SUNFALSE;
 
-  //   return SUNTRUE;
-  // }
+    return SUNTRUE;
+  }
 
   // /* -----------------------------------------------------------------
-  //  * Computes y=A*x, where A is a CSC SUNMatrix_Dense of dimension MxN, x is a
+  //  * Computes y=A*x, where A is a CSC SUNMATRIX_DENSE of dimension MxN, x is a
   //  * compatible N_Vector object of length N, and y is a compatible
   //  * N_Vector object of length M.
   //  *
@@ -796,7 +628,7 @@ extern "C"
   //     yd[i] = 0.0;
 
   //   /* iterate through matrix columns */
-  //   for (j=0; j<SM_COLUMNS_S(A); j++) {
+  //   for (j=0; j<SM_COLS_S(A); j++) {
 
   //     /* iterate down column of A, performing product */
   //     for (i=Ap[j]; i<Ap[j+1]; i++)
@@ -808,7 +640,7 @@ extern "C"
   // }
 
   // /* -----------------------------------------------------------------
-  //  * Computes y=A*x, where A is a CSR SUNMatrix_Dense of dimension MxN, x is a
+  //  * Computes y=A*x, where A is a CSR SUNMATRIX_DENSE of dimension MxN, x is a
   //  * compatible N_Vector object of length N, and y is a compatible
   //  * N_Vector object of length M.
   //  *
@@ -868,8 +700,8 @@ extern "C"
   // //     Aj = SM_INDEXVALS_S(A);
   // //     Ax = SM_DATA_S(A);
 
-  // //     n_row = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_ROWS_S(A) : SM_COLUMNS_S(A);
-  // //     n_col = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_COLUMNS_S(A) : SM_ROWS_S(A);
+  // //     n_row = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_ROWS_S(A) : SM_COLS_S(A);
+  // //     n_col = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_COLS_S(A) : SM_ROWS_S(A);
 
   // //     Bp = SM_INDEXPTRS_S(B);
   // //     Bi = SM_INDEXVALS_S(B);

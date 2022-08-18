@@ -4,17 +4,20 @@ SOURCES1 = kry_example.c nvector_octave.cpp
 SOURCES2 = test_nvector_octave.cpp test_nvector.cpp nvector_octave.cpp
 SOURCES3 = klu_example.c nvector_octave.cpp octmatrix_sparse.cpp octlinsol_gen.cc
 SOURCES4 = test_sunmatrix_octave.cpp test_sunmatrix.cpp octmatrix_sparse.cpp nvector_octave.cpp
-SOURCES5 = test_sunlinsol_oct.cpp test_sunlinsol.cpp octlinsol_gen.cc octmatrix_sparse.cpp nvector_octave.cpp
+SOURCES5 = test_sunmatrix_octave_dense.cpp test_sunmatrix.cpp octmatrix_dense.cpp nvector_octave.cpp
+SOURCES6 = test_sunlinsol_oct.cpp test_sunlinsol.cpp octlinsol_gen.cc octmatrix_sparse.cpp nvector_octave.cpp
 OBJECTS1 = $(SOURCES1:.cpp=.o)
 OBJECTS2 = $(SOURCES2:.cpp=.o)
 OBJECTS3 = $(SOURCES3:.cpp=.o)
 OBJECTS4 = $(SOURCES4:.cpp=.o)
 OBJECTS5 = $(SOURCES5:.cpp=.o)
+OBJECTS6 = $(SOURCES6:.cpp=.o)
 EXECUTABLE1 = app 
 EXECUTABLE2 = test 
 EXECUTABLE3 = app2 
 EXECUTABLE4 = test2 
 EXECUTABLE5 = test3 
+EXECUTABLE6 = test4 
 
 # include+lib paths to be defined by the user temporarily
 KLU_INC_PATH = /usr/include/suitesparse
@@ -60,11 +63,15 @@ $(EXECUTABLE4) : $(OBJECTS4)
 $(EXECUTABLE5) : $(OBJECTS5)
 	$(CXX) $(CXXFLAGS) $(OBJECTS5) $(LDFLAGS) $(LIBS) -o $@
 
+$(EXECUTABLE6) : $(OBJECTS6)
+	$(CXX) $(CXXFLAGS) $(OBJECTS6) $(LDFLAGS) $(LIBS) -o $@
+
 %.o: %.cpp $(DEPS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LIBS) -c $*.cpp 
 
 clean:
 	$(RM) *.o *~ $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4)
 
-# requires the export LD_LIBRARY_PATH=/usr/lib/octave/8.0.0 variable to be set on my device
+# requires the 
+# export LD_LIBRARY_PATH=/usr/lib/octave/8.0.0 variable to be set on my device
 # to access shared libraries as octave is built from source

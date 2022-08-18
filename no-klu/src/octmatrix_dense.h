@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 
-#include <Array.h>
+#include <dMatrix.h>
 #include <sundials/sundials_matrix.h>
 #include <sunmatrix/sunmatrix_dense.h>
 #include <sunmatrix/sunmatrix_band.h>
@@ -40,14 +40,6 @@
 #ifdef __cplusplus  /* wrapper to enable C++ usage */
 extern "C" {
 #endif
-
-/* ------------------------
- * Matrix Type Definitions
- * ------------------------ */
-
-#define CSC_MAT 0
-#define CSR_MAT 1
-
 
 
 /* ---------------------------------------
@@ -58,20 +50,20 @@ extern "C" {
 
 #define SM_ROWS_S(A)        ( SM_CONTENT_S(A)->rows() )
 
-#define SM_COLUMNS_S(A)     ( SM_CONTENT_S(A)->cols() )
+#define SM_COLS_S(A)        ( SM_CONTENT_S(A)->cols() )
 
-#define SM_LDATA_S(A)         ( SM_ROWS_S(A)*SM_COLUMNS_S(A) )
+#define SM_LDATA_S(A)       ( int(SM_ROWS_S(A)*SM_COLS_S(A)) )
 
 #define SM_DATA_S(A)        ( SM_CONTENT_S(A)->fortran_vec() )
 
+#define SM_ELEMENT_S(A,i,j)  ( SM_CONTENT_S(A)->elem(i,j) )
 
 /* ----------------------------------------
  * Exported Functions for SUNMATRIX_Dense
  * ---------------------------------------- */
 
 SUNDIALS_EXPORT SUNMatrix OCTDenseMatrix(sunindextype M, sunindextype N,
-                                          sunindextype NNZ, int Densetype,
-                                          SUNContext sunctx);
+                                        SUNContext sunctx);
 
 
 // SUNDIALS_EXPORT int OCTDenseMatrix_ToCSR(const SUNMatrix A, SUNMatrix* Bout);
@@ -87,10 +79,8 @@ SUNDIALS_EXPORT sunindextype OCTDenseMatrix_Rows(SUNMatrix A);
 SUNDIALS_EXPORT sunindextype OCTDenseMatrix_Columns(SUNMatrix A);
 SUNDIALS_EXPORT sunindextype OCTDenseMatrix_NNZ(SUNMatrix A);
 SUNDIALS_EXPORT sunindextype OCTDenseMatrix_NP(SUNMatrix A);
-SUNDIALS_EXPORT int OCTDenseMatrix_DenseType(SUNMatrix A);
 SUNDIALS_EXPORT realtype* OCTDenseMatrix_Data(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* OCTDenseMatrix_IndexValues(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* OCTDenseMatrix_IndexPointers(SUNMatrix A);
+SUNDIALS_EXPORT sunindextype OCTDenseMatrix_LData(SUNMatrix A);
 
 SUNDIALS_EXPORT SUNMatrix_ID OCTMatGetID_Dense(SUNMatrix A);
 SUNDIALS_EXPORT SUNMatrix OCTMatClone_Dense(SUNMatrix A);
