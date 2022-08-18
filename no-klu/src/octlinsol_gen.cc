@@ -45,60 +45,75 @@ SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContext sunctx)
 
   /* Check compatibility with supplied SUNMatrix and N_Vector */
   // if (SUNMatGetID(A) != SUNMATRIX_SPARSE) return(NULL);
+  if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+  {
+    if (OCTSparseMatrix_Rows(A) != OCTSparseMatrix_Columns(A)) return(NULL);
 
-  if (OCTSparseMatrix_Rows(A) != OCTSparseMatrix_Columns(A)) return(NULL);
+    // if ( (N_VGetVectorID(y) != SUNDIALS_NVEC_SERIAL) &&
+    //      (N_VGetVectorID(y) != SUNDIALS_NVEC_OPENMP) &&
+    //      (N_VGetVectorID(y) != SUNDIALS_NVEC_PTHREADS) )
+    //   return(NULL);
 
-  // if ( (N_VGetVectorID(y) != SUNDIALS_NVEC_SERIAL) &&
-  //      (N_VGetVectorID(y) != SUNDIALS_NVEC_OPENMP) &&
-  //      (N_VGetVectorID(y) != SUNDIALS_NVEC_PTHREADS) )
-  //   return(NULL);
+    if (OCTSparseMatrix_Rows(A) != N_VGetLength(y)) return(NULL);
+  }
+  else if (SUNMatGetID(A) == SUNMATRIX_DENSE)
+  {
+    sunindextype MatrixRows;
+    if (OCTDenseMatrix_Rows(A) != OCTDenseMatrix_Columns(A)) return(NULL);
 
-  if (OCTSparseMatrix_Rows(A) != N_VGetLength(y)) return(NULL);
+    if ( (N_VGetVectorID(y) != SUNDIALS_NVEC_SERIAL) &&
+        (N_VGetVectorID(y) != SUNDIALS_NVEC_OPENMP) &&
+        (N_VGetVectorID(y) != SUNDIALS_NVEC_PTHREADS) )
+      return(NULL);
 
-  /* Create an empty linear solver */
-  S = NULL;
-  S = SUNLinSolNewEmpty(sunctx);
-  if (S == NULL) return(NULL);
+    MatrixRows = OCTDenseMatrix_Rows(A);
+    if (MatrixRows != N_VGetLength(y)) return(NULL);
+  }
 
-  /* Attach operations */
-  S->ops->gettype    = OCTLinSolGetType_Gen;
-  S->ops->getid      = OCTLinSolGetID_Gen;
-  S->ops->initialize = NULL;
-  S->ops->setup      = NULL;
-  S->ops->solve      = OCTLinSolSolve_Gen;
-  S->ops->lastflag   = NULL;
-  S->ops->space      = NULL;
-  S->ops->free       = OCTLinSolFree_Gen;
+    /* Create an empty linear solver */
+    S = NULL;
+    S = SUNLinSolNewEmpty(sunctx);
+    if (S == NULL) return(NULL);
 
-    /* Create content */
-  content = NULL;
-  content = (OCTLinearSolverContent_GEN) malloc(sizeof *content);
-  if (content == NULL) { SUNLinSolFree(S); return(NULL); }
+    /* Attach operations */
+    S->ops->gettype    = OCTLinSolGetType_Gen;
+    S->ops->getid      = OCTLinSolGetID_Gen;
+    S->ops->initialize = NULL;
+    S->ops->setup      = NULL;
+    S->ops->solve      = OCTLinSolSolve_Gen;
+    S->ops->lastflag   = NULL;
+    S->ops->space      = NULL;
+    S->ops->free       = OCTLinSolFree_Gen;
 
-  /* Attach content */
-  S->content = content;
+      /* Create content */
+    content = NULL;
+    content = (OCTLinearSolverContent_GEN) malloc(sizeof *content);
+    if (content == NULL) { SUNLinSolFree(S); return(NULL); }
 
-  /* Fill content */
-  content->last_flag       = 0;
-  content->first_factorize = 1;
+    /* Attach content */
+    S->content = content;
 
-// #if defined(SUNDIALS_INT64_T)
-//   if (OCTSparseMatrix_SparseType(A) == CSC_MAT) {
-//     content->klu_solver = (KLUSolveFn) &klu_l_solve;
-//   } else {
-//     content->klu_solver = (KLUSolveFn) &klu_l_tsolve;
-//   }
-// #elif defined(SUNDIALS_INT32_T)
-//   if (OCTSparseMatrix_SparseType(A) == CSC_MAT) {
-//     content->klu_solver = &klu_solve;
-//   } else {
-//     content->klu_solver = &klu_tsolve;
-//   }
-// #else  /* incompatible sunindextype for KLU */
-// #error  Incompatible sunindextype for KLU
-// #endif
+    /* Fill content */
+    content->last_flag       = 0;
+    content->first_factorize = 1;
 
-  return(S);
+  // #if defined(SUNDIALS_INT64_T)
+  //   if (OCTSparseMatrix_SparseType(A) == CSC_MAT) {
+  //     content->klu_solver = (KLUSolveFn) &klu_l_solve;
+  //   } else {
+  //     content->klu_solver = (KLUSolveFn) &klu_l_tsolve;
+  //   }
+  // #elif defined(SUNDIALS_INT32_T)
+  //   if (OCTSparseMatrix_SparseType(A) == CSC_MAT) {
+  //     content->klu_solver = &klu_solve;
+  //   } else {
+  //     content->klu_solver = &klu_tsolve;
+  //   }
+  // #else  /* incompatible sunindextype for KLU */
+  // #error  Incompatible sunindextype for KLU
+  // #endif
+
+    return(S);
 }
 
 /*
@@ -122,21 +137,43 @@ SUNLinearSolver_ID OCTLinSolGetID_Gen(SUNLinearSolver S)
 int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
                        N_Vector b, realtype tol)
 {
-  /* check for valid inputs */
-  if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
-    return(SUNLS_MEM_NULL);
+  if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+  {
+    /* check for valid inputs */
+    if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
+      return(SUNLS_MEM_NULL);
 
-  /* copy b into x */
-  N_VScale(ONE, b, x);
+    /* copy b into x */
+    N_VScale(ONE, b, x);
 
-  ColumnVector *xv, *zv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
+    ColumnVector *xv, *zv;
+    xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
+    zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
 
-  SparseMatrix *am;
-  am = static_cast<SparseMatrix *> SM_CONTENT_S(A);
+    SparseMatrix *am;
+    am = static_cast<SparseMatrix *> SM_CONTENT_S(A);
 
-  (*xv) = am->solve((*zv));
+    (*xv) = am->solve((*zv));
+  }
+  else if ( SUNMatGetID(A) == SUNMATRIX_DENSE )
+  {
+    /* check for valid inputs */
+    if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
+      return(SUNLS_MEM_NULL);
+
+    /* copy b into x */
+    N_VScale(ONE, b, x);
+
+    ColumnVector *xv, *zv;
+    xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
+    zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
+
+    Matrix *am;
+    am = static_cast<Matrix *> SM_CONTENT_D(A);
+
+    (*xv) = am->solve((*zv));
+  }
+  
 }
 
 int OCTLinSolFree_Gen(SUNLinearSolver S)

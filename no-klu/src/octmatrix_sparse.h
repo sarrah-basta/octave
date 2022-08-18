@@ -34,8 +34,9 @@
 
 #include <dSparse.h>
 #include <sundials/sundials_matrix.h>
-#include <sunmatrix/sunmatrix_dense.h>
-#include <sunmatrix/sunmatrix_band.h>
+#include "octmatrix_dense.h"
+// #include <sunmatrix/sunmatrix_dense.h>
+// #include <sunmatrix/sunmatrix_band.h>
 
 #ifdef __cplusplus  /* wrapper to enable C++ usage */
 extern "C" {
@@ -112,7 +113,7 @@ SUNDIALS_EXPORT void OCTMatDestroy_Sparse (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatZero_Sparse (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatCopy_Sparse (SUNMatrix A, SUNMatrix B);
 // SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
-// SUNDIALS_EXPORT int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A);
+SUNDIALS_EXPORT int OCTMatScaleAddI_Sparse(realtype c, SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
 SUNDIALS_EXPORT int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw);
 

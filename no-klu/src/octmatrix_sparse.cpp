@@ -25,6 +25,7 @@
 
 // #include <sunmatrix/sunmatrix_sparse.h>
 #include "octmatrix_sparse.h"
+#include "octmatrix_dense.h"
 #include <sundials/sundials_nvector.h>
 #include <sundials/sundials_math.h>
 
@@ -85,7 +86,7 @@ extern "C"
     A->ops->zero = OCTMatZero_Sparse;
     A->ops->copy = OCTMatCopy_Sparse;
     A->ops->scaleadd = NULL;
-    A->ops->scaleaddi = NULL;
+    A->ops->scaleaddi = OCTMatScaleAddI_Sparse;
     A->ops->matvec = OCTMatMatvec_Sparse;
     A->ops->space = OCTMatSpace_Sparse;
 
@@ -457,212 +458,213 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
 
   // optional matrix functions
 
-  // int SUNMatScaleAddI_Sparse(realtype c, SUNMatrix A)
-  // {
-  //   sunindextype j, i, p, nz, newvals, M, N, cend;
-  //   booleantype newmat, found;
-  //   sunindextype *w, *Ap, *Ai, *Cp, *Ci;
-  //   realtype *x, *Ax, *Cx;
-  //   SUNMatrix C;
+  // only required now for testing SUNMatMatvec
+  int OCTMatScaleAddI_Sparse(realtype c, SUNMatrix A)
+  {
+    sunindextype j, i, p, nz, newvals, M, N, cend;
+    booleantype newmat, found;
+    sunindextype *w, *Ap, *Ai, *Cp, *Ci;
+    realtype *x, *Ax, *Cx;
+    SUNMatrix C;
 
-  //   /* store shortcuts to matrix dimensions (M is inner dimension, N is outer) */
-  //   if (SM_SPARSETYPE_S(A) == CSC_MAT) {
-  //     M = SM_ROWS_S(A);
-  //     N = SM_COLUMNS_S(A);
-  //   }
-  //   else {
-  //     M = SM_COLUMNS_S(A);
-  //     N = SM_ROWS_S(A);
-  //   }
+    /* store shortcuts to matrix dimensions (M is inner dimension, N is outer) */
+    if (SM_SPARSETYPE_S(A) == CSC_MAT) {
+      M = SM_ROWS_S(A);
+      N = SM_COLUMNS_S(A);
+    }
+    else {
+      M = SM_COLUMNS_S(A);
+      N = SM_ROWS_S(A);
+    }
 
-  //   /* access data arrays from A (return if failure) */
-  //   Ap = Ai = NULL;
-  //   Ax = NULL;
-  //   if (SM_INDEXPTRS_S(A))  Ap = SM_INDEXPTRS_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
-  //   if (SM_INDEXVALS_S(A))  Ai = SM_INDEXVALS_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
-  //   if (SM_DATA_S(A))       Ax = SM_DATA_S(A);
-  //   else  return (SUNMAT_MEM_FAIL);
+    /* access data arrays from A (return if failure) */
+    Ap = Ai = NULL;
+    Ax = NULL;
+    if (SM_INDEXPTRS_S(A))  Ap = SM_INDEXPTRS_S(A);
+    else  return (SUNMAT_MEM_FAIL);
+    if (SM_INDEXVALS_S(A))  Ai = SM_INDEXVALS_S(A);
+    else  return (SUNMAT_MEM_FAIL);
+    if (SM_DATA_S(A))       Ax = SM_DATA_S(A);
+    else  return (SUNMAT_MEM_FAIL);
 
-  //   /* determine if A: contains values on the diagonal (so I can just be added in);
-  //      if not, then increment counter for extra storage that should be required. */
-  //   newvals = 0;
-  //   for (j=0; j < SUNMIN(M,N); j++) {
-  //     /* scan column (row if CSR) of A, searching for diagonal value */
-  //     found = SUNFALSE;
-  //     for (i=Ap[j]; i<Ap[j+1]; i++) {
-  //       if (Ai[i] == j) {
-  //         found = SUNTRUE;
-  //         break;
-  //       }
-  //     }
-  //     /* if no diagonal found, increment necessary storage counter */
-  //     if (!found)  newvals += 1;
-  //   }
+    /* determine if A: contains values on the diagonal (so I can just be added in);
+       if not, then increment counter for extra storage that should be required. */
+    newvals = 0;
+    for (j=0; j < SUNMIN(M,N); j++) {
+      /* scan column (row if CSR) of A, searching for diagonal value */
+      found = SUNFALSE;
+      for (i=Ap[j]; i<Ap[j+1]; i++) {
+        if (Ai[i] == j) {
+          found = SUNTRUE;
+          break;
+        }
+      }
+      /* if no diagonal found, increment necessary storage counter */
+      if (!found)  newvals += 1;
+    }
 
-  //   /* If extra nonzeros required, check whether matrix has sufficient storage space
-  //      for new nonzero entries  (so I can be inserted into existing storage) */
-  //   newmat = SUNFALSE;   /* no reallocation needed */
-  //   if (newvals > (SM_NNZ_S(A) - Ap[N]))
-  //     newmat = SUNTRUE;
+    /* If extra nonzeros required, check whether matrix has sufficient storage space
+       for new nonzero entries  (so I can be inserted into existing storage) */
+    newmat = SUNFALSE;   /* no reallocation needed */
+    if (newvals > (SM_NNZ_S(A) - Ap[N]))
+      newmat = SUNTRUE;
 
-  //   /* perform operation based on existing/necessary structure */
+    /* perform operation based on existing/necessary structure */
 
-  //   /*   case 1: A already contains a diagonal */
-  //   if (newvals == 0) {
+    /*   case 1: A already contains a diagonal */
+    if (newvals == 0) {
 
-  //     /* iterate through columns, adding 1.0 to diagonal */
-  //     for (j=0; j < SUNMIN(M,N); j++)
-  //       for (i=Ap[j]; i<Ap[j+1]; i++)
-  //         if (Ai[i] == j) {
-  //           Ax[i] = ONE + c*Ax[i];
-  //         } else {
-  //           Ax[i] = c*Ax[i];
-  //         }
+      /* iterate through columns, adding 1.0 to diagonal */
+      for (j=0; j < SUNMIN(M,N); j++)
+        for (i=Ap[j]; i<Ap[j+1]; i++)
+          if (Ai[i] == j) {
+            Ax[i] = ONE + c*Ax[i];
+          } else {
+            Ax[i] = c*Ax[i];
+          }
 
-  //   /*   case 2: A has sufficient storage, but does not already contain a diagonal */
-  //   } else if (!newmat) {
+    /*   case 2: A has sufficient storage, but does not already contain a diagonal */
+    } else if (!newmat) {
 
-  //     /* create work arrays for nonzero indices and values in a single column (row) */
-  //     w = (sunindextype *) malloc(M * sizeof(sunindextype));
-  //     x = (realtype *) malloc(M * sizeof(realtype));
+      /* create work arrays for nonzero indices and values in a single column (row) */
+      w = (sunindextype *) malloc(M * sizeof(sunindextype));
+      x = (realtype *) malloc(M * sizeof(realtype));
 
-  //     /* determine storage location where last column (row) should end */
-  //     nz = Ap[N] + newvals;
+      /* determine storage location where last column (row) should end */
+      nz = Ap[N] + newvals;
 
-  //     /* store pointer past last column (row) from original A,
-  //        and store updated value in revised A */
-  //     cend = Ap[N];
-  //     Ap[N] = nz;
+      /* store pointer past last column (row) from original A,
+         and store updated value in revised A */
+      cend = Ap[N];
+      Ap[N] = nz;
 
-  //     /* iterate through columns (rows) backwards */
-  //     for (j=N-1; j>=0; j--) {
+      /* iterate through columns (rows) backwards */
+      for (j=N-1; j>=0; j--) {
 
-  //       /* clear out temporary arrays for this column (row) */
-  //       for (i=0; i<M; i++) {
-  //         w[i] = 0;
-  //         x[i] = RCONST(0.0);
-  //       }
+        /* clear out temporary arrays for this column (row) */
+        for (i=0; i<M; i++) {
+          w[i] = 0;
+          x[i] = RCONST(0.0);
+        }
 
-  //       /* iterate down column (row) of A, collecting nonzeros */
-  //       for (p=Ap[j]; p<cend; p++) {
-  //         w[Ai[p]] += 1;         /* indicate that row (column) is filled */
-  //         x[Ai[p]] = c*Ax[p];    /* collect/scale value */
-  //       }
+        /* iterate down column (row) of A, collecting nonzeros */
+        for (p=Ap[j]; p<cend; p++) {
+          w[Ai[p]] += 1;         /* indicate that row (column) is filled */
+          x[Ai[p]] = c*Ax[p];    /* collect/scale value */
+        }
 
-  //       /* add identity to this column (row) */
-  //       if (j < M) {
-  //         w[j] += 1;     /* indicate that row (column) is filled */
-  //         x[j] += ONE;   /* update value */
-  //       }
+        /* add identity to this column (row) */
+        if (j < M) {
+          w[j] += 1;     /* indicate that row (column) is filled */
+          x[j] += ONE;   /* update value */
+        }
 
-  //       /* fill entries of A with this column's (row's) data */
-  //       for (i=M-1; i>=0; i--) {
-  //         if ( w[i] > 0 ) {
-  //           Ai[--nz] = i;
-  //           Ax[nz] = x[i];
-  //         }
-  //       }
+        /* fill entries of A with this column's (row's) data */
+        for (i=M-1; i>=0; i--) {
+          if ( w[i] > 0 ) {
+            Ai[--nz] = i;
+            Ax[nz] = x[i];
+          }
+        }
 
-  //       /* store ptr past this col (row) from orig A, update value for new A */
-  //       cend = Ap[j];
-  //       Ap[j] = nz;
+        /* store ptr past this col (row) from orig A, update value for new A */
+        cend = Ap[j];
+        Ap[j] = nz;
 
-  //     }
+      }
 
-  //     /* clean up */
-  //     free(w);
-  //     free(x);
+      /* clean up */
+      free(w);
+      free(x);
 
-  //   /*   case 3: A must be reallocated with sufficient storage */
-  //   } else {
+    /*   case 3: A must be reallocated with sufficient storage */
+    } else {
 
-  //     /* create work arrays for nonzero indices and values */
-  //     w = (sunindextype *) malloc(M * sizeof(sunindextype));
-  //     x = (realtype *) malloc(M * sizeof(realtype));
+      /* create work arrays for nonzero indices and values */
+      w = (sunindextype *) malloc(M * sizeof(sunindextype));
+      x = (realtype *) malloc(M * sizeof(realtype));
 
-  //     /* create new matrix for sum */
-  //     C = OCTSparseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
-  //                         Ap[N] + newvals,
-  //                         SM_SPARSETYPE_S(A), A->sunctx);
+      /* create new matrix for sum */
+      C = OCTSparseMatrix(SM_ROWS_S(A), SM_COLUMNS_S(A),
+                          Ap[N] + newvals,
+                          SM_SPARSETYPE_S(A), A->sunctx);
 
-  //     /* access data from CSR structures (return if failure) */
-  //     Cp = Ci = NULL;
-  //     Cx = NULL;
-  //     if (SM_INDEXPTRS_S(C))  Cp = SM_INDEXPTRS_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
-  //     if (SM_INDEXVALS_S(C))  Ci = SM_INDEXVALS_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
-  //     if (SM_DATA_S(C))       Cx = SM_DATA_S(C);
-  //     else  return (SUNMAT_MEM_FAIL);
+      /* access data from CSR structures (return if failure) */
+      Cp = Ci = NULL;
+      Cx = NULL;
+      if (SM_INDEXPTRS_S(C))  Cp = SM_INDEXPTRS_S(C);
+      else  return (SUNMAT_MEM_FAIL);
+      if (SM_INDEXVALS_S(C))  Ci = SM_INDEXVALS_S(C);
+      else  return (SUNMAT_MEM_FAIL);
+      if (SM_DATA_S(C))       Cx = SM_DATA_S(C);
+      else  return (SUNMAT_MEM_FAIL);
 
-  //     /* initialize total nonzero count */
-  //     nz = 0;
+      /* initialize total nonzero count */
+      nz = 0;
 
-  //     /* iterate through columns (rows for CSR) */
-  //     for (j=0; j<N; j++) {
+      /* iterate through columns (rows for CSR) */
+      for (j=0; j<N; j++) {
 
-  //       /* set current column (row) pointer to current # nonzeros */
-  //       Cp[j] = nz;
+        /* set current column (row) pointer to current # nonzeros */
+        Cp[j] = nz;
 
-  //       /* clear out temporary arrays for this column (row) */
-  //       for (i=0; i<M; i++) {
-  //         w[i] = 0;
-  //         x[i] = 0.0;
-  //       }
+        /* clear out temporary arrays for this column (row) */
+        for (i=0; i<M; i++) {
+          w[i] = 0;
+          x[i] = 0.0;
+        }
 
-  //       /* iterate down column (along row) of A, collecting nonzeros */
-  //       for (p=Ap[j]; p<Ap[j+1]; p++) {
-  //         w[Ai[p]] += 1;         /* indicate that row is filled */
-  //         x[Ai[p]] = c*Ax[p];    /* collect/scale value */
-  //       }
+        /* iterate down column (along row) of A, collecting nonzeros */
+        for (p=Ap[j]; p<Ap[j+1]; p++) {
+          w[Ai[p]] += 1;         /* indicate that row is filled */
+          x[Ai[p]] = c*Ax[p];    /* collect/scale value */
+        }
 
-  //       /* add identity to this column (row) */
-  //       if (j < M) {
-  //         w[j] += 1;     /* indicate that row is filled */
-  //         x[j] += ONE;   /* update value */
-  //       }
+        /* add identity to this column (row) */
+        if (j < M) {
+          w[j] += 1;     /* indicate that row is filled */
+          x[j] += ONE;   /* update value */
+        }
 
-  //       /* fill entries of C with this column's (row's) data */
-  //       for (i=0; i<M; i++) {
-  //         if ( w[i] > 0 ) {
-  //           Ci[nz] = i;
-  //           Cx[nz++] = x[i];
-  //         }
-  //       }
-  //     }
+        /* fill entries of C with this column's (row's) data */
+        for (i=0; i<M; i++) {
+          if ( w[i] > 0 ) {
+            Ci[nz] = i;
+            Cx[nz++] = x[i];
+          }
+        }
+      }
 
-  //     /* indicate end of data */
-  //     Cp[N] = nz;
+      /* indicate end of data */
+      Cp[N] = nz;
 
-  //     /* update A's structure with C's values; nullify C's pointers */
-  //     // SM_NNZ_S(A) = SM_CONTENT_S(C)->nnz();
+      /* update A's structure with C's values; nullify C's pointers */
+      // SM_NNZ_S(A) = SM_CONTENT_S(C)->nnz();
 
-  //     // if (SM_DATA_S(A))
-  //     //   free(SM_DATA_S(A));
-  //     // SM_DATA_S(A) = SM_DATA_S(C);
-  //     // SM_DATA_S(C) = NULL;
+      // if (SM_DATA_S(A))
+      //   free(SM_DATA_S(A));
+      // SM_DATA_S(A) = SM_DATA_S(C);
+      // SM_DATA_S(C) = NULL;
 
-  //     // if (SM_INDEXVALS_S(A))
-  //     //   free(SM_INDEXVALS_S(A));
-  //     // SM_INDEXVALS_S(A) = SM_INDEXVALS_S(C);
-  //     // SM_INDEXVALS_S(C) = NULL;
+      // if (SM_INDEXVALS_S(A))
+      //   free(SM_INDEXVALS_S(A));
+      // SM_INDEXVALS_S(A) = SM_INDEXVALS_S(C);
+      // SM_INDEXVALS_S(C) = NULL;
 
-  //     // if (SM_INDEXPTRS_S(A))
-  //     //   free(SM_INDEXPTRS_S(A));
-  //     // SM_INDEXPTRS_S(A) = SM_INDEXPTRS_S(C);
-  //     // SM_INDEXPTRS_S(C) = NULL;
+      // if (SM_INDEXPTRS_S(A))
+      //   free(SM_INDEXPTRS_S(A));
+      // SM_INDEXPTRS_S(A) = SM_INDEXPTRS_S(C);
+      // SM_INDEXPTRS_S(C) = NULL;
 
-  //     /* clean up */
-  //     OCTMatDestroy_Sparse(C);
-  //     free(w);
-  //     free(x);
+      /* clean up */
+      OCTMatDestroy_Sparse(C);
+      free(w);
+      free(x);
 
-  //   }
-  //   return SUNMAT_SUCCESS;
+    }
+    return SUNMAT_SUCCESS;
 
-  // }
+  }
 
   // int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B)
   // {

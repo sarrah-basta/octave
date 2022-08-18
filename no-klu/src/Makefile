@@ -2,10 +2,10 @@ CXX = g++
 CXXFLAGS = -g
 SOURCES1 = kry_example.c nvector_octave.cpp
 SOURCES2 = test_nvector_octave.cpp test_nvector.cpp nvector_octave.cpp
-SOURCES3 = klu_example.c nvector_octave.cpp octmatrix_sparse.cpp octlinsol_gen.cc
+SOURCES3 = klu_example.c nvector_octave.cpp octmatrix_sparse.cpp octmatrix_dense.cpp octlinsol_gen.cc
 SOURCES4 = test_sunmatrix_octave.cpp test_sunmatrix.cpp octmatrix_sparse.cpp nvector_octave.cpp
 SOURCES5 = test_sunmatrix_octave_dense.cpp test_sunmatrix.cpp octmatrix_dense.cpp nvector_octave.cpp
-SOURCES6 = test_sunlinsol_oct.cpp test_sunlinsol.cpp octlinsol_gen.cc octmatrix_sparse.cpp nvector_octave.cpp
+SOURCES6 = test_sunlinsol_oct.cpp test_sunlinsol.cpp octlinsol_gen.cc octmatrix_sparse.cpp octmatrix_dense.cpp nvector_octave.cpp
 OBJECTS1 = $(SOURCES1:.cpp=.o)
 OBJECTS2 = $(SOURCES2:.cpp=.o)
 OBJECTS3 = $(SOURCES3:.cpp=.o)

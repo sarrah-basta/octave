@@ -21,7 +21,9 @@
 #include <stdlib.h>
 #include <sundials/sundials_types.h>
 #include "octlinsol_gen.h"
-#include <sunmatrix/sunmatrix_dense.h>
+// #include <sunmatrix/sunmatrix_dense.h>
+#include "octmatrix_dense.h"
+#include "octmatrix_sparse.h"
 // #include <sunmatrix/sunmatrix_sparse.h>
 // #include "octmatrix_sparse.h"
 // #include <nvector/nvector_Octave.h>
@@ -76,7 +78,7 @@ int main(int argc, char *argv[])
          (long int) N, mattype);
 
   /* Create matrices and vectors */
-  B = SUNDenseMatrix(N, N, sunctx);
+  B = OCTDenseMatrix(N, N, sunctx);
   x = N_VNew_Octave(N, sunctx);
   y = N_VNew_Octave(N, sunctx);
   b = N_VNew_Octave(N, sunctx);
@@ -85,7 +87,7 @@ int main(int argc, char *argv[])
   for (k=0; k<5*N; k++) {
     i = rand() % N;
     j = rand() % N;
-    matdata = SUNDenseMatrix_Column(B,j);
+    matdata = OCTDenseMatrix_Column(B,j);
     matdata[i] = (realtype) rand() / (realtype) RAND_MAX / N;
   }
 

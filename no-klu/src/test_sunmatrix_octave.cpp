@@ -253,10 +253,10 @@ int main(int argc, char *argv[])
   fails += Test_SUNMatZero(A, 0);
   // fails += Test_SUNMatScaleAdd(A, I, 0);
   // fails += Test_SUNMatScaleAdd2(A, B, x, y, z);
-  // if (square) {
-  //   fails += Test_SUNMatScaleAddI(A, I, 0);
+  if (square) {
+    fails += Test_SUNMatScaleAddI(A, I, 0);
   //   fails += Test_SUNMatScaleAddI2(A, x, y);
-  // }
+  }
   fails += Test_SUNMatMatvec(A, x, y, 0);
   fails += Test_SUNMatSpace(A, 0);
   // if (mattype == CSR_MAT) {

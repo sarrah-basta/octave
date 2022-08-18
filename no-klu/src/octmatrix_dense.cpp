@@ -83,7 +83,7 @@ extern "C"
     A->ops->zero = OCTMatZero_Dense;
     A->ops->copy = OCTMatCopy_Dense;
     A->ops->scaleadd = NULL;
-    A->ops->scaleaddi = SUNMatScaleAddI_Dense;
+    A->ops->scaleaddi = OCTMatScaleAddI_Dense;
     A->ops->matvec = OCTMatMatvec_Dense;
     A->ops->space = OCTMatSpace_Dense;
 
@@ -111,7 +111,7 @@ extern "C"
   sunindextype OCTDenseMatrix_Rows(SUNMatrix A)
   {
     if (SUNMatGetID(A) == SUNMATRIX_DENSE)
-      return SM_ROWS_S(A);
+      return SM_ROWS_D(A);
     else
       return SUNMAT_ILL_INPUT;
   }
@@ -119,15 +119,23 @@ extern "C"
   sunindextype OCTDenseMatrix_Columns(SUNMatrix A)
   {
     if (SUNMatGetID(A) == SUNMATRIX_DENSE)
-      return SM_COLS_S(A);
+      return SM_COLUMNS_D(A);
     else
       return SUNMAT_ILL_INPUT;
+  }
+
+  realtype *OCTDenseMatrix_Column(SUNMatrix A, sunindextype j)
+  {
+    if (SUNMatGetID(A) == SUNMATRIX_DENSE)
+      return ((realtype *) SM_COLUMN_D(A,j));
+    else
+      return NULL;
   }
 
   realtype *OCTDenseMatrix_Data(SUNMatrix A)
   {
     if (SUNMatGetID(A) == SUNMATRIX_DENSE)
-      return SM_DATA_S(A);
+      return SM_DATA_D(A);
     else
       return NULL;
   }
@@ -135,7 +143,7 @@ extern "C"
   sunindextype OCTDenseMatrix_LData(SUNMatrix A)
   {
     if (SUNMatGetID(A) == SUNMATRIX_DENSE)
-      return SM_LDATA_S(A);
+      return SM_LDATA_D(A);
     else
       return NULL;
   }
@@ -161,7 +169,7 @@ extern "C"
 
   SUNMatrix OCTMatClone_Dense(SUNMatrix A)
   {
-    SUNMatrix B = OCTDenseMatrix(SM_ROWS_S(A), SM_COLS_S(A),
+    SUNMatrix B = OCTDenseMatrix(SM_ROWS_D(A), SM_COLUMNS_D(A),
                                 A->sunctx);
     return (B);
   }
@@ -195,7 +203,7 @@ extern "C"
   {
     // sunindextype i;
     Matrix *am;
-    am = static_cast <Matrix *> SM_CONTENT_S(A);
+    am = static_cast <Matrix *> SM_CONTENT_D(A);
     sunindextype i,j;
     //Used change_capacity to directly remove memory
     //that was occupied by zeros.
@@ -206,8 +214,8 @@ extern "C"
     // So should naive approach to replace
     // with zeros be used instead
     /* Perform operation */
-    for(i=0; i < SM_ROWS_S(A); i++ ){
-      for(j=0; j<SM_COLS_S(A); j++){
+    for(i=0; i < SM_ROWS_D(A); i++ ){
+      for(j=0; j<SM_COLUMNS_D(A); j++){
         (*am)((j-1)*i + 1) = 0;
       }
     }
@@ -231,11 +239,11 @@ extern "C"
 
 //   /* perform reallocation */
 //   // SM_INDEXVALS_S(A) = (sunindextype *) realloc(SM_INDEXVALS_S(A), NNZ*sizeof(sunindextype));
-//   // SM_DATA_S(A) = (realtype *) realloc(SM_DATA_S(A), NNZ*sizeof(realtype));
+//   // SM_DATA_D(A) = (realtype *) realloc(SM_DATA_D(A), NNZ*sizeof(realtype));
 //   // SM_NNZ_S(A) = NNZ;
 
 //   Matrix *am;
-//   am = static_cast <Matrix *> SM_CONTENT_S(A);
+//   am = static_cast <Matrix *> SM_CONTENT_D(A);
 
 //   //Used change_capacity to directly remove memory
 //   //that was occupied by zeros.
@@ -247,8 +255,8 @@ extern "C"
 
   int OCTMatSpace_Dense(SUNMatrix A, long int *lenrw, long int *leniw)
   {
-    *lenrw = SM_LDATA_S(A);
-    *leniw = 3 + SM_COLS_S(A);
+    *lenrw = SM_LDATA_D(A);
+    *leniw = 3 + SM_COLUMNS_D(A);
     return SUNMAT_SUCCESS;
   }
 
@@ -261,9 +269,9 @@ extern "C"
       return SUNMAT_ILL_INPUT;
 
     /* Perform operation */
-  for (j=0; j<SM_COLS_S(A); j++)
-    for (i=0; i<SM_ROWS_S(A); i++)
-      SM_ELEMENT_S(B,i,j) = SM_ELEMENT_S(A,i,j);
+  for (j=0; j<SM_COLUMNS_D(A); j++)
+    for (i=0; i<SM_ROWS_D(A); i++)
+      SM_ELEMENT_D(B,i,j) = SM_ELEMENT_D(A,i,j);
 
     return SUNMAT_SUCCESS;
   }
@@ -290,16 +298,16 @@ extern "C"
 
   // optional matrix functions
 
-  int SUNMatScaleAddI_Dense(realtype c, SUNMatrix A)
+  int OCTMatScaleAddI_Dense(realtype c, SUNMatrix A)
   {
     sunindextype i, j;
 
     /* Perform operation */
-    for (j=0; j<SM_COLS_S(A); j++)
-      for (i=0; i<SM_ROWS_S(A); i++) {
-        SM_ELEMENT_S(A,i,j) *= c;
+    for (j=0; j<SM_COLUMNS_D(A); j++)
+      for (i=0; i<SM_ROWS_D(A); i++) {
+        SM_ELEMENT_D(A,i,j) *= c;
         if (i == j)
-          SM_ELEMENT_S(A,i,j) += ONE;
+          SM_ELEMENT_D(A,i,j) += ONE;
       }
     return SUNMAT_SUCCESS;
 
@@ -319,12 +327,12 @@ extern "C"
 
   //   /* store shortcuts to matrix dimensions (M is inner dimension, N is outer) */
   //   if (SM_DenseTYPE_S(A) == CSC_MAT) {
-  //     M = SM_ROWS_S(A);
-  //     N = SM_COLS_S(A);
+  //     M = SM_ROWS_D(A);
+  //     N = SM_COLUMNS_D(A);
   //   }
   //   else {
-  //     M = SM_COLS_S(A);
-  //     N = SM_ROWS_S(A);
+  //     M = SM_COLUMNS_D(A);
+  //     N = SM_ROWS_D(A);
   //   }
 
   //   /* access data arrays from A and B (return if failure) */
@@ -334,13 +342,13 @@ extern "C"
   //   else  return(SUNMAT_MEM_FAIL);
   //   if (SM_INDEXVALS_S(A))  Ai = SM_INDEXVALS_S(A);
   //   else  return(SUNMAT_MEM_FAIL);
-  //   if (SM_DATA_S(A))       Ax = SM_DATA_S(A);
+  //   if (SM_DATA_D(A))       Ax = SM_DATA_D(A);
   //   else  return(SUNMAT_MEM_FAIL);
   //   if (SM_INDEXPTRS_S(B))  Bp = SM_INDEXPTRS_S(B);
   //   else  return(SUNMAT_MEM_FAIL);
   //   if (SM_INDEXVALS_S(B))  Bi = SM_INDEXVALS_S(B);
   //   else  return(SUNMAT_MEM_FAIL);
-  //   if (SM_DATA_S(B))       Bx = SM_DATA_S(B);
+  //   if (SM_DATA_D(B))       Bx = SM_DATA_D(B);
   //   else  return(SUNMAT_MEM_FAIL);
 
   //   /* create work arrays for row indices and nonzero column values */
@@ -446,7 +454,7 @@ extern "C"
   //   } else {
 
   //     /* create new matrix for sum */
-  //     C = OCTDenseMatrix(SM_ROWS_S(A), SM_COLS_S(A),
+  //     C = OCTDenseMatrix(SM_ROWS_D(A), SM_COLUMNS_D(A),
   //                         Ap[N] + newvals, SM_DenseTYPE_S(A), A->sunctx);
 
   //     /* access data from CSR structures (return if failure) */
@@ -456,7 +464,7 @@ extern "C"
   //     else  return(SUNMAT_MEM_FAIL);
   //     if (SM_INDEXVALS_S(C))  Ci = SM_INDEXVALS_S(C);
   //     else  return(SUNMAT_MEM_FAIL);
-  //     if (SM_DATA_S(C))       Cx = SM_DATA_S(C);
+  //     if (SM_DATA_D(C))       Cx = SM_DATA_D(C);
   //     else  return(SUNMAT_MEM_FAIL);
 
   //     /* initialize total nonzero count */
@@ -501,9 +509,9 @@ extern "C"
   //     /* update A's structure with C's values; nullify C's pointers */
   //     // SM_NNZ_S(A) = SM_NNZ_S(C);
 
-  //     free(SM_DATA_S(A));
-  //     // SM_DATA_S(A) = SM_DATA_S(C);
-  //     // SM_DATA_S(C) = NULL;
+  //     free(SM_DATA_D(A));
+  //     // SM_DATA_D(A) = SM_DATA_D(C);
+  //     // SM_DATA_D(C) = NULL;
 
   //     free(SM_INDEXVALS_S(A));
   //     // SM_INDEXVALS_S(A) = SM_INDEXVALS_S(C);
@@ -544,12 +552,12 @@ extern "C"
       return SUNMAT_MEM_FAIL;
 
     /* Perform operation */
-    for (i=0; i<SM_ROWS_S(A); i++)
+    for (i=0; i<SM_ROWS_D(A); i++)
       yd[i] = ZERO;
-    for(j=0; j<SM_COLS_S(A); j++) {
-      // col_j = (*SM_COLS_S(A))(j);
-      for (i=0; i<SM_ROWS_S(A); i++)
-        yd[i] += SM_ELEMENT_S(A,i,j)*xd[j];
+    for(j=0; j<SM_COLUMNS_D(A); j++) {
+      // col_j = (*SM_COLUMNS_D(A))(j);
+      for (i=0; i<SM_ROWS_D(A); i++)
+        yd[i] += SM_ELEMENT_D(A,i,j)*xd[j];
     }
     return SUNMAT_SUCCESS;
   }
@@ -613,7 +621,7 @@ extern "C"
   //   /* access data from CSC structure (return if failure) */
   //   Ap = SM_INDEXPTRS_S(A);
   //   Ai = SM_INDEXVALS_S(A);
-  //   Ax = SM_DATA_S(A);
+  //   Ax = SM_DATA_D(A);
   //   if ((Ap == NULL) || (Ai == NULL) || (Ax == NULL))
   //     return SUNMAT_MEM_FAIL;
 
@@ -624,11 +632,11 @@ extern "C"
   //     return SUNMAT_MEM_FAIL;
 
   //   /* initialize result */
-  //   for (i=0; i<SM_ROWS_S(A); i++)
+  //   for (i=0; i<SM_ROWS_D(A); i++)
   //     yd[i] = 0.0;
 
   //   /* iterate through matrix columns */
-  //   for (j=0; j<SM_COLS_S(A); j++) {
+  //   for (j=0; j<SM_COLUMNS_D(A); j++) {
 
   //     /* iterate down column of A, performing product */
   //     for (i=Ap[j]; i<Ap[j+1]; i++)
@@ -655,7 +663,7 @@ extern "C"
   // //   /* access data from CSR structure (return if failure) */
   // //   Ap = SM_INDEXPTRS_S(A);
   // //   Aj = SM_INDEXVALS_S(A);
-  // //   Ax = SM_DATA_S(A);
+  // //   Ax = SM_DATA_D(A);
   // //   if ((Ap == NULL) || (Aj == NULL) || (Ax == NULL))
   // //     return SUNMAT_MEM_FAIL;
 
@@ -666,11 +674,11 @@ extern "C"
   // //     return SUNMAT_MEM_FAIL;
 
   // //   /* initialize result */
-  // //   for (i=0; i<SM_ROWS_S(A); i++)
+  // //   for (i=0; i<SM_ROWS_D(A); i++)
   // //     yd[i] = 0.0;
 
   // //   /* iterate through matrix rows */
-  // //   for (i=0; i<SM_ROWS_S(A); i++) {
+  // //   for (i=0; i<SM_ROWS_D(A); i++) {
 
   // //     /* iterate along row of A, performing product */
   // //     for (j=Ap[i]; j<Ap[i+1]; j++)
@@ -698,14 +706,14 @@ extern "C"
 
   // //     Ap = SM_INDEXPTRS_S(A);
   // //     Aj = SM_INDEXVALS_S(A);
-  // //     Ax = SM_DATA_S(A);
+  // //     Ax = SM_DATA_D(A);
 
-  // //     n_row = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_ROWS_S(A) : SM_COLS_S(A);
-  // //     n_col = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_COLS_S(A) : SM_ROWS_S(A);
+  // //     n_row = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_ROWS_D(A) : SM_COLUMNS_D(A);
+  // //     n_col = (SM_DenseTYPE_S(A) == CSR_MAT) ? SM_COLUMNS_D(A) : SM_ROWS_D(A);
 
   // //     Bp = SM_INDEXPTRS_S(B);
   // //     Bi = SM_INDEXVALS_S(B);
-  // //     Bx = SM_DATA_S(B);
+  // //     Bx = SM_DATA_D(B);
 
   // //     nnz = Ap[n_row];
 
