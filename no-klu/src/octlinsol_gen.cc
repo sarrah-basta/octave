@@ -146,7 +146,9 @@ int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
     /* copy b into x */
     N_VScale(ONE, b, x);
 
-    ColumnVector *xv, *zv;
+    ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
+    ColumnVector *zv = new ColumnVector(NV_LENGTH_C(b));
+    
     xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
     zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
 

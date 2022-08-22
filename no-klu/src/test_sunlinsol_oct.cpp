@@ -30,6 +30,7 @@
 #include "nvector_octave.h"
 #include <sundials/sundials_math.h>
 #include "test_sunlinsol.h"
+#include "dMatrix.h"
 
 
 /* ----------------------------------------------------------------------
@@ -102,6 +103,7 @@ int main(int argc, char *argv[])
   xdata = N_VGetArrayPointer(x);
   for (i=0; i<N; i++)
     xdata[i] = (realtype) rand() / (realtype) RAND_MAX;
+
 
   /* Create sparse matrix from dense, and destroy B */
   A = OCTSparseFromDenseMatrix(B, ZERO, mattype);

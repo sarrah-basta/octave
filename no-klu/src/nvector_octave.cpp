@@ -428,7 +428,7 @@ void N_VDestroy_Octave(N_Vector v)
     //   free(NV_DATA_C(v));
     //   NV_DATA_C(v) = NULL;
     // }
-    free(v->content);
+    // free(v->content);
     v->content = NULL;
   }
 
@@ -586,7 +586,8 @@ void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z)
 
 void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
 {
-  ColumnVector *xv, *zv;
+  ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
+  ColumnVector *zv = new ColumnVector(NV_LENGTH_C(z));
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
 
@@ -610,6 +611,30 @@ void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
   }
 
   return;
+
+  // sunindextype i, N;
+  // realtype *xd, *zd;
+
+  // xd = zd = NULL;
+
+  // if (z == x) {  /* BLAS usage: scale x <- cx */
+  //   VScaleBy_Octave(c, x);
+  //   return;
+  // }
+
+  // if (c == ONE) {
+  //   VCopy_Octave(x, z);
+  // } else if (c == -ONE) {
+  //   VNeg_Octave(x, z);
+  // } else {
+  //   N  = NV_LENGTH_C(x);
+  //   xd = NV_DATA_C(x);
+  //   zd = NV_DATA_C(z);
+  //   for (i = 0; i < N; i++)
+  //     zd[i] = c*xd[i];
+  // }
+
+  // return;
 }
 
 /*
@@ -1452,6 +1477,22 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
 //  * private functions for special cases of vector operations
 //  * -----------------------------------------------------------------
 //  */
+
+static void VScaleBy_Octave(realtype a, N_Vector x)
+{
+  sunindextype i, N;
+  realtype *xd;
+
+  xd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+
+  for (i = 0; i < N; i++)
+    xd[i] *= a;
+
+  return;
+}
 
 static void VCopy_Octave(N_Vector x, N_Vector z) 
 // used in N_VScale and if just do (*zv)=(*xv) results in wrong answer.
