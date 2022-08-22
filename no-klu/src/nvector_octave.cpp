@@ -233,28 +233,34 @@ using namespace octave;
   }
   return (v);
 }
-//   /* ----------------------------------------------------------------------------
-//    * Function to create a serial N_Vector with user data component
-//    */
+  /* ----------------------------------------------------------------------------
+   * Function to create a serial N_Vector with existing ColumnVector component
+   */
 
-//   // N_Vector N_VMake_Octave(sunindextype length, double *v_data, SUNContext sunctx)
-//   // {
-//   //   N_Vector v;
+  N_Vector N_VMake_Octave(ColumnVector cv, SUNContext sunctx)
+  {
+    N_Vector v;
+    void *content;
 
-//   //   v = NULL;
-//   //   v = N_VNewEmpty_Octave(length, sunctx);
-//   //   if (v == NULL)
-//   //     return (NULL);
+    v = NULL;
+    v = N_VNewEmpty_Octave(sunctx);
+    if (v == NULL)
+      return (NULL);
 
-//   //   if (length > 0)
-//   //   {
-//   //     /* Attach data */
-//   //     NV_OWN_DATA_C(v) = SUNFALSE;
-//   //     NV_DATA_C(v) = v_data;
-//   //   }
+    sunindextype length = cv.numel();
+    content = NULL;
+    content = new ColumnVector(length);
+    content = &cv;
+    if (content == NULL)
+    {
+      N_VDestroy(v);
+      return (NULL);
+    }
+    /* Attach content */
+    v->content = content;
 
-//   //   return (v);
-//   // }
+    return (v);
+  }
 
 // /* ----------------------------------------------------------------------------
 //  * Function to create an array of new serial vectors.
