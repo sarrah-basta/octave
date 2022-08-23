@@ -1,6 +1,5 @@
-// #include <nvector/nvector_Octave.h>
+
 #include "nvector_octave.h"
-// #include <nvector/nvector_Octave.h>
 #include <vector>
 #include <iostream>
 #include <stdio.h>

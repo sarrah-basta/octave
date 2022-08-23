@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -g
-SOURCES1 = kry_example.c nvector_octave.cpp octmatrix_dense.cpp octlinsol_gen.cc
+SOURCES1 = kry_example.c nvector_octave.cpp
 SOURCES2 = test_nvector_octave.cpp test_nvector.cpp nvector_octave.cpp
 SOURCES3 = klu_example.c nvector_octave.cpp octmatrix_sparse.cpp octmatrix_dense.cpp octlinsol_gen.cc
 SOURCES4 = test_sunmatrix_octave.cpp test_sunmatrix.cpp octmatrix_sparse.cpp nvector_octave.cpp
