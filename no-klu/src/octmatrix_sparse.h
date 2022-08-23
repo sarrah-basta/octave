@@ -81,6 +81,8 @@ SUNDIALS_EXPORT SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
                                           sunindextype NNZ, int sparsetype,
                                           SUNContext sunctx);
 
+SUNDIALS_EXPORT SUNMatrix OCTSparseMatrix_Make(SparseMatrix sm, SUNContext sunctx);
+
 SUNDIALS_EXPORT SUNMatrix OCTSparseFromDenseMatrix(SUNMatrix A,
                                                    realtype droptol,
                                                    int sparsetype);

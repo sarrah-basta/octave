@@ -108,6 +108,48 @@ extern "C"
   }
 
   /* ----------------------------------------------------------------------------
+   * Function to create a serial N_Vector with existing ColumnVector component
+   */
+
+  SUNMatrix OCTSparseMatrix_Make(SparseMatrix sm, SUNContext sunctx)
+  {
+    SUNMatrix A;
+    void *content;
+
+    /* Create an empty matrix object */
+    A = NULL;
+    A = SUNMatNewEmpty(sunctx);
+    if (A == NULL)
+      return (NULL);
+
+    // /* Attach operations */
+    A->ops->getid = OCTMatGetID_Sparse;
+    A->ops->clone = OCTMatClone_Sparse;
+    A->ops->destroy = OCTMatDestroy_Sparse;
+    A->ops->zero = OCTMatZero_Sparse;
+    A->ops->copy = OCTMatCopy_Sparse;
+    A->ops->scaleadd = NULL;
+    A->ops->scaleaddi = OCTMatScaleAddI_Sparse;
+    A->ops->matvec = OCTMatMatvec_Sparse;
+    A->ops->space = OCTMatSpace_Sparse;
+
+    /* Create content */
+    content = NULL;
+    // creating a new SparseMatrix Octave data structure with rows and columns as specified
+    content = &sm;
+    if (content == NULL)
+    {
+      SUNMatDestroy(A);
+      return (NULL);
+    }
+
+    /* Attach content */
+    A->content = content;
+
+    //   /* Fill content */
+    return (A);
+  }
+  /* ----------------------------------------------------------------------------
    * Functions to access the contents of the sparse matrix structure
    */
 

@@ -35,7 +35,7 @@
  */
 
 /* ----------------------------------------------------------------------------
- * Function to create a new KLU linear solver
+ * Function to create a new General Octave linear solver
  */
 
 SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContext sunctx)

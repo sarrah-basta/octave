@@ -46,7 +46,7 @@ typedef struct _N_VectorContent_Octave *N_VectorContent_Octave;
 
 SUNDIALS_EXPORT N_Vector N_VNew_Octave(int vec_length, SUNContext sunctx);
 SUNDIALS_EXPORT N_Vector N_VNewEmpty_Octave (SUNContext sunctx);
-// SUNDIALS_EXPORT N_Vector N_VMake_Octave(sunindextype length, double *v_data, SUNContext sunctx);
+SUNDIALS_EXPORT N_Vector N_VMake_Octave(ColumnVector v, SUNContext sunctx);
 
 SUNDIALS_EXPORT N_Vector* N_VCloneVectorArray_Octave(int count, N_Vector w);
 
