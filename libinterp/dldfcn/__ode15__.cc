@@ -33,7 +33,9 @@
 #include "f77-fcn.h"
 #include "lo-utils.h"
 #include "../../no-klu/src/nvector_octave.h"
-#include "../../no-klu/src/sunmatrix_oct.h"
+#include "../../no-klu/src/octmatrix_sparse.h"
+#include "../../no-klu/src/octmatrix_dense.h"
+#include "../../no-klu/src/octlinsol_gen.h"
 
 #include "Cell.h"
 #include "defun-dld.h"
@@ -47,9 +49,9 @@
 
 #if defined (HAVE_SUNDIALS)
 
-#  if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
-#    include <nvector/nvector_serial.h>
-#  endif
+// #  if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
+// #    include <nvector/nvector_serial.h>
+// #  endif
 
 #  if defined (HAVE_IDA_IDA_H)
 #    include <ida/ida.h>
@@ -62,25 +64,25 @@
 #    include <ida_direct.h>
 #  endif
 
-#  if defined (HAVE_SUNLINSOL_SUNLINSOL_DENSE_H)
-#    include <sunlinsol/sunlinsol_dense.h>
-#  endif
+// #  if defined (HAVE_SUNLINSOL_SUNLINSOL_DENSE_H)
+// #    include <sunlinsol/sunlinsol_dense.h>
+// #  endif
 
-#  if defined (HAVE_SUNLINSOL_SUNLINSOL_KLU_H)
-#    if defined (HAVE_KLU_H)
-#      include <klu.h>
-#    endif
-#    if defined (HAVE_KLU_KLU_H)
-#      include <klu/klu.h>
-#    endif
-#    if defined (HAVE_SUITESPARSE_KLU_H)
-#      include <suitesparse/klu.h>
-#    endif
-#    if defined (HAVE_UFPARSE_KLU_H)
-#      include <ufsparse/klu.h>
-#    endif
-#    include <sunlinsol/sunlinsol_klu.h>
-#  endif
+// #  if defined (HAVE_SUNLINSOL_SUNLINSOL_KLU_H)
+// #    if defined (HAVE_KLU_H)
+// #      include <klu.h>
+// #    endif
+// #    if defined (HAVE_KLU_KLU_H)
+// #      include <klu/klu.h>
+// #    endif
+// #    if defined (HAVE_SUITESPARSE_KLU_H)
+// #      include <suitesparse/klu.h>
+// #    endif
+// #    if defined (HAVE_UFPARSE_KLU_H)
+// #      include <ufsparse/klu.h>
+// #    endif
+// #    include <sunlinsol/sunlinsol_klu.h>
+// #  endif
 
 #endif
 
@@ -104,26 +106,26 @@ OCTAVE_NAMESPACE_BEGIN
   }
 #  endif
 
-#  if ! defined (HAVE_SUNLINSOL_DENSE) && defined (HAVE_SUNDENSELINEARSOLVER)
-  static inline SUNLinearSolver
-  SUNLinSol_Dense (N_Vector y, SUNMatrix A)
-  {
-    return SUNDenseLinearSolver (y, A);
-  }
-#  endif
+// #  if ! defined (HAVE_SUNLINSOL_DENSE) && defined (HAVE_SUNDENSELINEARSOLVER)
+//   static inline SUNLinearSolver
+//   SUNLinSol_Dense (N_Vector y, SUNMatrix A)
+//   {
+//     return SUNDenseLinearSolver (y, A);
+//   }
+// #  endif
 
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-#    if ! defined (HAVE_SUNLINSOL_KLU) && defined (HAVE_SUNKLU)
-  static inline SUNLinearSolver
-  SUNLinSol_KLU (N_Vector y, SUNMatrix A)
-  {
-    return SUNKLU (y, A);
-  }
-#    endif
-#  endif
+// #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+// #    if ! defined (HAVE_SUNLINSOL_KLU) && defined (HAVE_SUNKLU)
+//   static inline SUNLinearSolver
+//   SUNLinSol_KLU (N_Vector y, SUNMatrix A)
+//   {
+//     return SUNKLU (y, A);
+//   }
+// #    endif
+// #  endif
 
   static inline realtype *
-  nv_data_s (N_Vector& v)
+  nv_data_c (N_Vector& v)
   {
 #  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
     // Disable warning from GCC about old-style casts in Sundials
@@ -133,7 +135,7 @@ OCTAVE_NAMESPACE_BEGIN
 #   pragma GCC diagnostic ignored "-Wold-style-cast"
 #  endif
 
-    return NV_DATA_S (v);
+    return NV_DATA_C (v);
 
 #  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
     // Restore prevailing warning state for remainder of the file.
@@ -401,7 +403,7 @@ OCTAVE_NAMESPACE_BEGIN
 
     ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
-    realtype *puntrr = nv_data_s (rr);
+    realtype *puntrr = nv_data_c (rr);
 
     for (octave_idx_type i = 0; i < m_num; i++)
       puntrr[i] = res(i);
@@ -420,25 +422,26 @@ OCTAVE_NAMESPACE_BEGIN
 
     if (m_havejacsparse)
       {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+/* FIXME : figure out correct way to add this ifdef */
+// #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+// #    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
-        m_sunJacMatrix = SUNOctMatrix (m_num, m_num, 0, CSC_MAT
+        m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
-#    else
-        octave_f77_int_type max_elems;
-        if (math::int_multiply_overflow (m_num, m_num, &max_elems))
-          error ("Unable to allocate memory for sparse Jacobian");
+// #    else
+//         octave_f77_int_type max_elems;
+//         if (math::int_multiply_overflow (m_num, m_num, &max_elems))
+//           error ("Unable to allocate memory for sparse Jacobian");
 
-        m_sunJacMatrix = SUNOctMatrix (m_num, m_num, max_elems, CSC_MAT
-                                          OCTAVE_SUNCONTEXT);
-#    endif
+//         m_sunJacMatrix = SUNOctMatrix (m_num, m_num, max_elems, CSC_MAT
+//                                           OCTAVE_SUNCONTEXT);
+// #    endif
         if (! m_sunJacMatrix)
           error ("Unable to create sparse Jacobian for Sundials");
 
-        m_sunLinearSolver = SUNLinSol_KLU (yy, m_sunJacMatrix
+        m_sunLinearSolver = OCTLinSol_Gen (yy, m_sunJacMatrix
                                            OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");
@@ -448,21 +451,21 @@ OCTAVE_NAMESPACE_BEGIN
 
         IDASetJacFn (m_mem, IDA::jacsparse);
 
-#  else
-        error ("SUNDIALS SUNLINSOL KLU was unavailable or disabled when "
-               "Octave was built");
+// #  else
+//         error ("SUNDIALS SUNLINSOL KLU was unavailable or disabled when "
+//                "Octave was built");
 
-#  endif
+// #  endif
 
       }
     else
       {
 
-        m_sunJacMatrix = SUNDenseMatrix (m_num, m_num OCTAVE_SUNCONTEXT);
+        m_sunJacMatrix = OCTDenseMatrix (m_num, m_num OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
           error ("Unable to create dense Jacobian for Sundials");
 
-        m_sunLinearSolver = SUNLinSol_Dense (yy, m_sunJacMatrix
+        m_sunLinearSolver = OCTLinSol_Gen (yy, m_sunJacMatrix
                                              OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create dense linear solver");
@@ -481,7 +484,7 @@ OCTAVE_NAMESPACE_BEGIN
                       N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ)
 
   {
-    octave_f77_int_type Neq = NV_LENGTH_S (yy);
+    octave_f77_int_type Neq = NV_LENGTH_C (yy);
 
     ColumnVector y = NVecToCol (yy, Neq);
 
@@ -497,10 +500,10 @@ OCTAVE_NAMESPACE_BEGIN
     octave_f77_int_type num_jac = to_f77_int (jac.numel ());
     std::copy (jac.fortran_vec (),
                jac.fortran_vec () + num_jac,
-               SUNDenseMatrix_Data (JJ));
+               OCTDenseMatrix_Data (JJ));
   }
 
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+// #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
   void
   IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
                        SUNMatrix& Jac)
@@ -517,57 +520,59 @@ OCTAVE_NAMESPACE_BEGIN
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
-#     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+/* FIXME : add way to check if reallocate defined */
+// #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
     octave_f77_int_type nnz = to_f77_int (jac.nnz ());
-    if (nnz > SUNSparseMatrix_NNZ (Jac))
+    if (nnz > OCTSparseMatrix_NNZ (Jac))
       {
         // Allocate memory for sparse Jacobian defined in user function.
         // This will always be required at least once since we set the number
         // of non-zero elements to zero initially.
-        if (SUNSparseMatrix_Reallocate (Jac, nnz))
+        if (OCTSparseMatrix_Reallocate (Jac, nnz))
           error ("Unable to allocate sufficient memory for IDA sparse matrix");
       }
-#     endif
+// #     endif
 
-    SUNMatZero_Sparse (Jac);
+    OCTMatZero_Sparse (Jac);
     // We have to use "sunindextype *" here but still need to check that
     // conversion of each element to "octave_f77_int_type" is save.
-    sunindextype *colptrs = SUNSparseMatrix_IndexPointers (Jac);
-    sunindextype *rowvals = SUNSparseMatrix_IndexValues (Jac);
+    sunindextype *colptrs = OCTSparseMatrix_IndexPointers (Jac);
+    sunindextype *rowvals = OCTSparseMatrix_IndexValues (Jac);
 
     for (octave_f77_int_type i = 0; i < m_num + 1; i++)
       colptrs[i] = to_f77_int (jac.cidx (i));
 
-    double *d = SUNSparseMatrix_Data (Jac);
+    double *d = OCTSparseMatrix_Data (Jac);
     for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
       {
         rowvals[i] = to_f77_int (jac.ridx (i));
         d[i] = jac.data (i);
       }
   }
-#  endif
+// #  endif
 
   ColumnVector
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   {
     ColumnVector data (n);
-    realtype *punt = nv_data_s (v);
+    realtype *punt = nv_data_c (v);
 
     for (octave_f77_int_type i = 0; i < n; i++)
       data(i) = punt[i];
 
+    // &data = static_cast <ColumnVector *> NV_CONTENT_C(v);
     return data;
   }
 
   N_Vector
   IDA::ColToNVec (const ColumnVector& data, octave_f77_int_type n)
   {
-    N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
+    N_Vector v = N_VMake_Octave (data OCTAVE_SUNCONTEXT);
 
-    realtype *punt = nv_data_s (v);
+    // realtype *punt = nv_data_c (v);
 
-    for (octave_f77_int_type i = 0; i < n; i++)
-      punt[i] = data(i);
+    // for (octave_f77_int_type i = 0; i < n; i++)
+    //   punt[i] = data(i);
 
     return v;
   }
@@ -611,7 +616,7 @@ OCTAVE_NAMESPACE_BEGIN
     if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
       error ("IDA: Tolerance not set");
 
-    N_VDestroy_Serial (abs_tol);
+    N_VDestroy_Octave (abs_tol);
   }
 
   void
@@ -754,7 +759,7 @@ OCTAVE_NAMESPACE_BEGIN
         if (status == 0)
           {
             // Interpolate in tend
-            N_Vector dky = N_VNew_Serial
+            N_Vector dky = N_VNew_Octave
        (m_num OCTAVE_SUNCONTEXT);
 
             if (IDAGetDky (m_mem, tend, 0, dky) != 0)
@@ -780,7 +785,7 @@ OCTAVE_NAMESPACE_BEGIN
                                        yold, num_event_args);
               }
 
-            N_VDestroy_Serial
+            N_VDestroy_Octave
        (dky);
           }
 
@@ -921,9 +926,9 @@ OCTAVE_NAMESPACE_BEGIN
     realtype h = 0, tcur = 0;
     bool status = 0;
 
-    N_Vector dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+    N_Vector dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
 
-    N_Vector dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+    N_Vector dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
 
     ColumnVector yout (m_num);
     ColumnVector ypout (m_num);
@@ -971,7 +976,7 @@ OCTAVE_NAMESPACE_BEGIN
                                tout(cont-1), yold, num_event_args);
       }
 
-    N_VDestroy_Serial (dky);
+    N_VDestroy_Octave (dky);
 
     return status;
   }

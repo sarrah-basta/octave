@@ -68,7 +68,7 @@ octlib_LTLIBRARIES += $(DLDFCN_LIBS)
 # %canon_reldir%_nvector_col_la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) $(SUNDIALS_XLIBS)
 # %canon_reldir%_nvector_col_la_DEPENDENCIES = $(OCT_LINK_DEPS) nvector_col.h
 
-%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/../../no-klu/src/nvector_octave.cpp %reldir%/../../no-klu/src/sunmatrix_oct.cpp
+%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/../../no-klu/src/nvector_octave.cpp %reldir%/../../no-klu/src/octmatrix_dense.cpp %reldir%/../../no-klu/src/octmatrix_sparse.cpp %reldir%/../../no-klu/src/octlinsol_gen.cc
 %canon_reldir%___ode15___la_CPPFLAGS = $(libinterp_liboctinterp_la_CPPFLAGS) $(SUNDIALS_XCPPFLAGS)
 %canon_reldir%___ode15___la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED_LDFLAG) $(SUNDIALS_XLDFLAGS) $(OCT_LINK_OPTS) $(WARN_LDFLAGS)
 %canon_reldir%___ode15___la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) $(SUNDIALS_XLIBS)
