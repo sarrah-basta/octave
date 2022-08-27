@@ -273,12 +273,13 @@ void N_VDestroy_Octave(N_Vector v)
 
   /* free content */
   if (v->content != NULL) {
-    v->content = NULL;
+    // v->content = NULL;
   }
 
   /* free ops and vector */
   if (v->ops != NULL) { free(v->ops); v->ops = NULL; }
-  free(v); v = NULL;
+  // free(v);
+   v = NULL;
 
   return;
 }

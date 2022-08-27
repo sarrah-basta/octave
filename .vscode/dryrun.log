@@ -1,0 +1,6 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory '/home/sarrah/1_data/gsoc/octave'
+make: Leaving directory '/home/sarrah/1_data/gsoc/octave'
+ 
+make: *** No targets specified and no makefile found.  Stop.
+

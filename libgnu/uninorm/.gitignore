@@ -1,0 +1,5 @@
+/decompose-internal.c
+/decompose-internal.h
+/normalize-internal.h
+/u-normalize-internal.h
+/u8-normalize.c

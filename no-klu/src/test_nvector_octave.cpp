@@ -64,9 +64,9 @@ int main(int argc, char *argv[])
     Test_Finalize();
     return(1);
   }
-  std::cout<<v_data<<" "<<NV_DATA_C(W)<<"\n";
+  // std::cout<<v_data<<" "<<NV_DATA_C(W)<<"\n";
   v_data=NV_DATA_C(W);
-  std::cout<<v_data<<" "<<NV_DATA_C(W)<<"\n";
+  // std::cout<<v_data<<" "<<NV_DATA_C(W)<<"\n";
   X = N_VNew_Octave(length, sunctx);
   if (X == NULL) {
     N_VDestroy(W);
