@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// #include <sunmatrix/sunmatrix_sparse.h>
+// #include <sunmatrix/SUNMATRIX_CUSTOM.h>
 #include "octmatrix_sparse.h"
 #include "octmatrix_dense.h"
 #include <sundials/sundials_nvector.h>
@@ -155,7 +155,7 @@ extern "C"
 
   sunindextype OCTSparseMatrix_Rows(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_ROWS_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -163,7 +163,7 @@ extern "C"
 
   sunindextype OCTSparseMatrix_Columns(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_COLUMNS_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -171,7 +171,7 @@ extern "C"
 
   sunindextype OCTSparseMatrix_NNZ(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_NNZ_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -179,7 +179,7 @@ extern "C"
 
   sunindextype OCTSparseMatrix_NP(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_NP_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -187,7 +187,7 @@ extern "C"
 
   int OCTSparseMatrix_SparseType(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_SPARSETYPE_S(A);
     else
       return SUNMAT_ILL_INPUT;
@@ -195,7 +195,7 @@ extern "C"
 
   realtype *OCTSparseMatrix_Data(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_DATA_S(A);
     else
       return NULL;
@@ -203,7 +203,7 @@ extern "C"
 
   sunindextype *OCTSparseMatrix_IndexValues(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_INDEXVALS_S(A);
     else
       return NULL;
@@ -211,7 +211,7 @@ extern "C"
 
   sunindextype *OCTSparseMatrix_IndexPointers(SUNMatrix A)
   {
-    if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
       return SM_INDEXPTRS_S(A);
     else
       return NULL;
@@ -302,7 +302,7 @@ extern "C"
 
   SUNMatrix_ID OCTMatGetID_Sparse(SUNMatrix A)
   {
-    return SUNMATRIX_SPARSE;
+    return SUNMATRIX_CUSTOM;
   }
 
   SUNMatrix OCTMatClone_Sparse(SUNMatrix A)
@@ -374,7 +374,7 @@ extern "C"
 int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
 {
   /* check for valid matrix type */
-  if (SUNMatGetID(A) != SUNMATRIX_SPARSE)  return SUNMAT_ILL_INPUT;
+  if (SUNMatGetID(A) != SUNMATRIX_CUSTOM)  return SUNMAT_ILL_INPUT;
 
   /* check for valid nnz */
   if (NNZ < 0)  return SUNMAT_ILL_INPUT;
@@ -384,7 +384,7 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
   // SM_DATA_S(A) = (realtype *) realloc(SM_DATA_S(A), NNZ*sizeof(realtype));
   // SM_NNZ_S(A) = NNZ;
 
-    SparseMatrix *am;
+    SparseMatrix *am = new SparseMatrix();
     am = static_cast <SparseMatrix *> SM_CONTENT_S(A);
 
     //Used change_capacity to directly remove memory
@@ -455,7 +455,7 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
 
     /* should not be called unless A is a sparse matrix;
        otherwise return immediately */
-    if (SUNMatGetID(A) != SUNMATRIX_SPARSE)
+    if (SUNMatGetID(A) != SUNMATRIX_CUSTOM)
       return;
 
     /* perform operation */
@@ -955,8 +955,8 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
   static booleantype SMCompatible_Sparse(SUNMatrix A, SUNMatrix B)
   {
     /* both matrices must be sparse */
-    if ((SUNMatGetID(A) != SUNMATRIX_SPARSE) ||
-        (SUNMatGetID(B) != SUNMATRIX_SPARSE))
+    if ((SUNMatGetID(A) != SUNMATRIX_CUSTOM) ||
+        (SUNMatGetID(B) != SUNMATRIX_CUSTOM))
       return SUNFALSE;
 
     /* both matrices must have the same shape and sparsity type */
@@ -991,7 +991,7 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
   }
 
   // /* -----------------------------------------------------------------
-  //  * Computes y=A*x, where A is a CSC SUNMatrix_Sparse of dimension MxN, x is a
+  //  * Computes y=A*x, where A is a CSC SUNMATRIX_CUSTOM of dimension MxN, x is a
   //  * compatible N_Vector object of length N, and y is a compatible
   //  * N_Vector object of length M.
   //  *
@@ -1034,7 +1034,7 @@ int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ)
   }
 
   // /* -----------------------------------------------------------------
-  //  * Computes y=A*x, where A is a CSR SUNMatrix_Sparse of dimension MxN, x is a
+  //  * Computes y=A*x, where A is a CSR SUNMATRIX_CUSTOM of dimension MxN, x is a
   //  * compatible N_Vector object of length N, and y is a compatible
   //  * N_Vector object of length M.
   //  *

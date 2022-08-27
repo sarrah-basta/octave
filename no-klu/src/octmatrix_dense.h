@@ -31,7 +31,6 @@
 
 
 #include <stdio.h>
-
 #include <dMatrix.h>
 #include <sundials/sundials_matrix.h>
 #include <dColVector.h>
@@ -67,14 +66,6 @@ extern "C" {
 SUNDIALS_EXPORT SUNMatrix OCTDenseMatrix(sunindextype M, sunindextype N,
                                         SUNContext sunctx);
 
-
-// SUNDIALS_EXPORT int OCTDenseMatrix_ToCSR(const SUNMatrix A, SUNMatrix* Bout);
-// SUNDIALS_EXPORT int OCTDenseMatrix_ToCSC(const SUNMatrix A, SUNMatrix* Bout);
-
-// SUNDIALS_EXPORT int OCTDenseMatrix_Realloc(SUNMatrix A);
-
-SUNDIALS_EXPORT int OCTDenseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
-
 SUNDIALS_EXPORT void OCTDenseMatrix_Print(SUNMatrix A, FILE* outfile);
 
 SUNDIALS_EXPORT sunindextype OCTDenseMatrix_Rows(SUNMatrix A);
@@ -90,7 +81,6 @@ SUNDIALS_EXPORT SUNMatrix OCTMatClone_Dense(SUNMatrix A);
 SUNDIALS_EXPORT void OCTMatDestroy_Dense (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatZero_Dense (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatCopy_Dense (SUNMatrix A, SUNMatrix B);
-// SUNDIALS_EXPORT int SUNMatScaleAdd_Dense(realtype c, SUNMatrix A, SUNMatrix B);
 SUNDIALS_EXPORT int OCTMatScaleAddI_Dense(realtype c, SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatMatvec_Dense(SUNMatrix A, N_Vector x, N_Vector y);
 SUNDIALS_EXPORT int OCTMatSpace_Dense(SUNMatrix A, long int *lenrw, long int *leniw);

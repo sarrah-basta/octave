@@ -44,7 +44,7 @@ extern "C"
    */
   N_Vector_ID N_VGetVectorID_Octave(N_Vector v)
   {
-    return SUNDIALS_NVEC_SERIAL;
+    return SUNDIALS_NVEC_CUSTOM;
   }
 
   /* ----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ extern "C"
     v->ops->nvdestroy         = N_VDestroy_Octave;
     v->ops->nvspace           = N_VSpace_Octave;
     v->ops->nvgetarraypointer = N_VGetArrayPointer_Octave;
-    v->ops->nvsetarraypointer = NULL;
+    v->ops->nvsetarraypointer = N_VSetArrayPointer_Octave;
     v->ops->nvgetlength       = N_VGetLength_Octave;
 
     /* standard vector operations */
@@ -167,7 +167,7 @@ extern "C"
    * Function to create a serial N_Vector with existing ColumnVector component
    */
 
-  N_Vector N_VMake_Octave(ColumnVector cv, SUNContext sunctx)
+  N_Vector N_VMake_Octave(ColumnVector cv, sunindextype length, SUNContext sunctx)
   {
     N_Vector v;
     void *content;
@@ -177,7 +177,7 @@ extern "C"
     if (v == NULL)
       return (NULL);
 
-    sunindextype length = cv.numel();
+    // sunindextype length = cv.numel();
     content = NULL;
     content = new ColumnVector(length);
     content = &cv;
@@ -253,10 +253,12 @@ N_Vector N_VClone_Octave(N_Vector w)
   /* Create vector */
   N_Vector v = N_VCloneEmpty_Octave(w);
   if (v == NULL) return(NULL);
-
+  std::cout<<NV_LENGTH_C(w);
   /* Create content */
   content = NULL;
   content = new ColumnVector(NV_LENGTH_C(w));
+
+  printf("in nvclone");
   if (content == NULL) { N_VDestroy(v); return(NULL); }
 
   /* Attach content */
@@ -283,15 +285,30 @@ void N_VDestroy_Octave(N_Vector v)
 
 void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw)
 {
+  printf("in nvspace");
   *lrw = NV_LENGTH_C(v);
   *liw = 1;
-
+  printf("after nvspace");
   return;
 }
 
 realtype *N_VGetArrayPointer_Octave(N_Vector v)
 {
   return((realtype *) NV_DATA_C(v));
+}
+
+void N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v)
+{
+  // if (NV_LENGTH_C(v) > 0) {
+    // NV_CONTENT_C(v)->data() = *v_data;
+    ColumnVector *nv;
+    // nv = static_cast <ColumnVector *> NV_CONTENT_C(v); 
+    // std::cout<<(*nv); 
+    // nv->fill(*v_data);
+    // nv->m_slice_data = v_data;
+    std::cout<<"done"<<(*nv);
+  // }
+  return;
 }
 
 /*
@@ -411,6 +428,7 @@ void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z)
 
 void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
 {
+  printf("in nvscale\n");
   ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
   ColumnVector *zv = new ColumnVector(NV_LENGTH_C(z));
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
@@ -575,7 +593,7 @@ void N_VCompare_Octave(realtype c, N_Vector x, N_Vector z)
 
 booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
 {
-  N_Vector y = N_VClone(x);
+  N_Vector y = N_VClone_Octave(x);
 
   ColumnVector *xv, *zv, *yv;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);

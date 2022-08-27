@@ -577,23 +577,3 @@ static int check_retval(void *returnvalue, const char *funcname, int opt)
   return(0);
 }
 
-
-// int main() {
-
-
-// int length = 7;
-// std::vector<double> ex = {2,3,4,5,6,8,4};
-// ColumnVector data (length);
-// for (octave_f77_int_type i = 0; i < length; i++)
-//       data(i) = i;
-
-// N_Vector v;
-// SUNContext ctx;
-
-// int retval = SUNContext_Create(NULL, &ctx);
-// v = N_VMake_Octave(length, ex.data(), ctx);
-// N_VPrint_Octave(v);
-// std::cout<<"built succesfully !!";
-
-// return 0;
-// }

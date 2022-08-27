@@ -36,6 +36,7 @@
  * IDACalcIC cost statistics only.)
  * -----------------------------------------------------------------*/
 
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -162,6 +163,7 @@ int main(void)
 
   retval = IDASetUserData(mem, data);
   if(check_retval(&retval, "IDASetUserData", 1)) return(1);
+  std::cout<<"length here is"<<NV_LENGTH_C(uu)<<"\n";
 
   /* Set which components are algebraic or differential */
   retval = IDASetId(mem, id);
@@ -183,7 +185,7 @@ int main(void)
   /* Create sparse SUNMatrix for use in linear solves */
   nnz = NEQ*NEQ;
   A = OCTSparseMatrix(NEQ, NEQ, nnz, CSC_MAT, ctx);
-  if(check_retval((void*)A, "OCTSparseMtarix", 0)) return(1);
+  if(check_retval((void*)A, "OCTSparseMatrix", 0)) return(1);
 
   /* Create KLU SUNLinearSolver object */
   LS = OCTLinSol_Gen(uu, A, ctx);

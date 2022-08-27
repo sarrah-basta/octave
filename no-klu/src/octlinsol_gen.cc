@@ -15,7 +15,7 @@
  * This is the implementation file for the KLU implementation of
  * the OCTLinSol package.
  * -----------------------------------------------------------------*/
-
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -137,46 +137,88 @@ SUNLinearSolver_ID OCTLinSolGetID_Gen(SUNLinearSolver S)
 int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
                        N_Vector b, realtype tol)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_SPARSE)
+  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
   {
     /* check for valid inputs */
     if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
       return(SUNLS_MEM_NULL);
-
-    /* copy b into x */
-    N_VScale(ONE, b, x);
-
-    ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
-    ColumnVector *zv = new ColumnVector(NV_LENGTH_C(b));
     
-    xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-    zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
+    std::cout<<"id "<<N_VGetVectorID(b)<<" len ";
+    sunindextype nx = N_VGetLength_Octave(x);
+    sunindextype nb = N_VGetLength_Octave(b);
+    /* copy b into x */
+    // N_VScale_Octave(ONE, b, x);
+    std::cout<<"151 id "<<N_VGetVectorID(b)<<" len "<<nx<<"\n";
+    ColumnVector *xv = new ColumnVector(nx);
+    ColumnVector *zv = new ColumnVector(nb);
 
+    xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+    zv = static_cast <ColumnVector *> NV_CONTENT_C(b);
+    
+    // realtype *puntx = NV_DATA_C(x);
+    // realtype *puntb = NV_DATA_C(b);
+
+    //   for (octave_f77_int_type i = 0; i < nx; i++){
+    //     std::cout<<puntx[i]<<" "<<puntb[i]<<"\n";
+    //     (*xv)(i) = puntx[i];
+    //     std::cout<<i<<" here";
+    //   }
+    //   for (octave_f77_int_type i = 0; i < nb; i++){
+    //     std::cout<<puntx[i]<<" "<<puntb[i]<<"\n";
+    //     (*zv)(i) = puntb[i];
+    //     std::cout<<i<<" here";
+    //   }
+
+      // std::cout<<"and now \n"<<(*xv)<<"done \n";
+    // ColumnVector xv = NVecToCol(x,NV_LENGTH_C(x));
+    // ColumnVector zv = NVecToCol(x,NV_LENGTH_C(b));
+    // std::cout<<"id "<<N_VGetVectorID(x)<<" len "<<nx<<"\n";
+    // N_VPrint(x);
+    // N_VPrint(b);
     SparseMatrix *am;
     am = static_cast<SparseMatrix *> SM_CONTENT_S(A);
+    std::cout<<"183 id "<<N_VGetVectorID(b)<<"\n";
+
+    printf("\n\n solving once over \n\n");
 
     (*xv) = am->solve((*zv));
+    // N_VPrint(x);
+    // N_VPrint(b);
+
+    return 1;
   }
-  else if ( SUNMatGetID(A) == SUNMATRIX_DENSE )
-  {
-    /* check for valid inputs */
-    if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
-      return(SUNLS_MEM_NULL);
+  // else if ( SUNMatGetID(A) == SUNMATRIX_DENSE )
+  // {
+  //   /* check for valid inputs */
+  //   if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
+  //     return(SUNLS_MEM_NULL);
 
-    /* copy b into x */
-    N_VScale(ONE, b, x);
+  //   /* copy b into x */
+  //   N_VScale_Octave(ONE, b, x);
 
-    ColumnVector *xv, *zv;
-    xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
-    zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
+  //   ColumnVector *xv, *zv;
+  //   xv = static_cast<ColumnVector *> NV_CONTENT_C(x);
+  //   zv = static_cast<ColumnVector *> NV_CONTENT_C(b);
 
-    Matrix *am;
-    am = static_cast<Matrix *> SM_CONTENT_D(A);
+  //   Matrix *am;
+  //   am = static_cast<Matrix *> SM_CONTENT_D(A);
 
-    (*xv) = am->solve((*zv));
-  }
+  //   (*xv) = am->solve((*zv));
+  // }
   
 }
+
+  ColumnVector NVecToCol (N_Vector& v, octave_f77_int_type n)
+    {
+      ColumnVector data (n);
+      realtype *punt = NV_DATA_C(v);
+
+      for (octave_f77_int_type i = 0; i < n; i++)
+        data(i) = punt[i];
+
+      // &data = static_cast <ColumnVector *> NV_CONTENT_C(v);
+      return data;
+    }
 
 int OCTLinSolFree_Gen(SUNLinearSolver S)
 {

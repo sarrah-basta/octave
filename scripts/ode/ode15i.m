@@ -138,7 +138,7 @@ function varargout = ode15i (fcn, trange, y0, yp0, varargin)
              'ode15i: "OutputFcn" must be a valid function handle');
     endif
   endif
-
+  
   if (! isempty (options.Events))
     if (ischar (options.Events))
       if (! exist (options.Events))
@@ -255,9 +255,10 @@ function varargout = ode15i (fcn, trange, y0, yp0, varargin)
   ## Events
   options.haveeventfunction = ! isempty (options.Events);
 
+
   ## 3 arguments in the event callback of ode15i
   [t, y, te, ye, ie] = __ode15__ (fcn, trange, y0, yp0, options, 3);
-
+  
   if (nargout == 2)
     varargout{1} = t;
     varargout{2} = y;
@@ -364,6 +365,12 @@ endfunction
 %!
 %!  direction = [1, 0];
 %!endfunction
+
+## Jacobian fcn sparse
+%!testif HAVE_SUNDIALS
+%! opt = odeset ("Jacobian", @jacfunsparse, "AbsTol", 1e-7, "RelTol", 1e-7);
+%! [t, y] = ode15i (@rob, [0, 100], [1; 0; 0], [-1e-4; 1e-4; 0], opt);
+%! assert ([t(end), y(end,:)], fref, 1e-3);
 
 ## anonymous function instead of real function
 %!testif HAVE_SUNDIALS
@@ -588,6 +595,8 @@ endfunction
 %!function ydot = fcn (t, y, yp)
 %!  ydot = [y - yp];
 %!endfunction
+
+added from here
 
 %!testif HAVE_SUNDIALS
 %! fail ("ode15i ()", "Invalid call to ode15i");

@@ -35,7 +35,7 @@ typedef struct _N_VectorContent_Octave *N_VectorContent_Octave;
 
 SUNDIALS_EXPORT N_Vector N_VNew_Octave(int vec_length, SUNContext sunctx);
 SUNDIALS_EXPORT N_Vector N_VNewEmpty_Octave (SUNContext sunctx);
-SUNDIALS_EXPORT N_Vector N_VMake_Octave(ColumnVector v, SUNContext sunctx);
+SUNDIALS_EXPORT N_Vector N_VMake_Octave(ColumnVector v, sunindextype length, SUNContext sunctx);
 
 SUNDIALS_EXPORT sunindextype N_VGetLength_Octave(N_Vector v);
 SUNDIALS_EXPORT void N_VPrint_Octave(N_Vector v);
@@ -45,6 +45,7 @@ SUNDIALS_EXPORT N_Vector N_VClone_Octave(N_Vector w);
 SUNDIALS_EXPORT void N_VDestroy_Octave(N_Vector v);
 SUNDIALS_EXPORT void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw);
 SUNDIALS_EXPORT double *N_VGetArrayPointer_Octave(N_Vector v);
+SUNDIALS_EXPORT void N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v);
 
 // /* standard vector operations */
 SUNDIALS_EXPORT void N_VLinearSum_Octave(double a, N_Vector x, double b, N_Vector y, N_Vector z);
