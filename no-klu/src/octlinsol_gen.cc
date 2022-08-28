@@ -176,7 +176,7 @@ int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
     // N_VPrint(x);
     // N_VPrint(b);
     SparseMatrix *am;
-    am = static_cast<SparseMatrix *> SM_CONTENT_S(A);
+    am = static_cast<SparseMatrix *> SM_CONTENT_O(A);
     std::cout<<"183 id "<<N_VGetVectorID(b)<<"\n";
 
     printf("\n\n solving once over \n\n");

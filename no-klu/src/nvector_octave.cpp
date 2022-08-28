@@ -150,7 +150,9 @@ extern "C"
     /* Allocate memory */
     /* Create content */
     content = NULL;
-    content = new ColumnVector(length);
+    ColumnVector data (length);
+    ColumnVector *ptr = &data;
+    content = ptr;
     if (content == NULL)
     {
       N_VDestroy(v);
@@ -167,20 +169,25 @@ extern "C"
    * Function to create a serial N_Vector with existing ColumnVector component
    */
 
-  N_Vector N_VMake_Octave(ColumnVector cv, sunindextype length, SUNContext sunctx)
+  N_Vector N_VMake_Octave(const ColumnVector& cv, sunindextype length, SUNContext sunctx)
   {
     N_Vector v;
     void *content;
+
+    std::cout<<"in make\n";
 
     v = NULL;
     v = N_VNewEmpty_Octave(sunctx);
     if (v == NULL)
       return (NULL);
 
+    std::cout<<"empty created \n";
+
     // sunindextype length = cv.numel();
     content = NULL;
-    content = new ColumnVector(length);
-    content = &cv;
+    // content = new ColumnVector(length);
+    content = const_cast<ColumnVector *> (&cv);
+    
     if (content == NULL)
     {
       N_VDestroy(v);
@@ -188,6 +195,8 @@ extern "C"
     }
     /* Attach content */
     v->content = content;
+    std::cout<<"\n in make entered data: "<<&cv<<" final data : "<< NV_CONTENT_C(v);
+    std::cout<<"content attached numel:"<<cv.numel()<<" length :"<<N_VGetLength(v)<<" \n";
 
     return (v);
   }
@@ -253,17 +262,18 @@ N_Vector N_VClone_Octave(N_Vector w)
   /* Create vector */
   N_Vector v = N_VCloneEmpty_Octave(w);
   if (v == NULL) return(NULL);
-  std::cout<<NV_LENGTH_C(w);
+  std::cout<<"\n in nv_clone length : \n"<<NV_LENGTH_C(w);
   /* Create content */
   content = NULL;
-  content = new ColumnVector(NV_LENGTH_C(w));
+  ColumnVector *data = new ColumnVector(NV_LENGTH_C(w));
+  content = data ;
 
   printf("in nvclone");
   if (content == NULL) { N_VDestroy(v); return(NULL); }
 
   /* Attach content */
-  v->content = content;
-
+  v->content = data;
+  // std::cout<<"\n in clone entered data: "<<NV_CONTENT_C(w)<<" final data : "<< NV_CONTENT_C(v);
   return(v);
 }
 
@@ -273,12 +283,12 @@ void N_VDestroy_Octave(N_Vector v)
 
   /* free content */
   if (v->content != NULL) {
-    // v->content = NULL;
+    v->content = NULL;
   }
 
   /* free ops and vector */
   if (v->ops != NULL) { free(v->ops); v->ops = NULL; }
-  // free(v);
+  free(v);
    v = NULL;
 
   return;
@@ -286,10 +296,13 @@ void N_VDestroy_Octave(N_Vector v)
 
 void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw)
 {
-  printf("in nvspace");
+  printf("in nvspace length : ");
+  std::cout<<NV_LENGTH_C(v)<<"\n";
   *lrw = NV_LENGTH_C(v);
   *liw = 1;
-  printf("after nvspace");
+  printf("after nvspace length ");
+
+  std::cout<<NV_LENGTH_C(v)<<"\n";
   return;
 }
 
@@ -430,10 +443,10 @@ void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z)
 void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
 {
   printf("in nvscale\n");
-  ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
-  ColumnVector *zv = new ColumnVector(NV_LENGTH_C(z));
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
+  // ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
+  // ColumnVector *zv = new ColumnVector(NV_LENGTH_C(z));
+  ColumnVector *xv = const_cast <ColumnVector *> NV_CONTENT_C(x);
+  ColumnVector *zv = const_cast <ColumnVector *> NV_CONTENT_C(z);
 
   // checks if both NVectors z and x
   // are stored in the same place
@@ -526,16 +539,34 @@ realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
 
 realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
 {
-  N_Vector prod = N_VClone_Octave(x);
-  ColumnVector *xv,*yv, *pv;
-  realtype sum;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
-  pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
+  // N_Vector prod = N_VClone_Octave(x);
+  // ColumnVector *xv,*yv, *pv;
+  // realtype sum;
+  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  // yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
+  // pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
 
-  (*pv) = product((*xv),(*yv));
-  octave_value_list ov = ovl((*pv));
-  sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
+  // (*pv) = product((*xv),(*yv));
+  // octave_value_list ov = ovl((*pv));
+  // sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
+
+  // return(sum);
+  sunindextype i, N;
+  realtype sum, prodi, *xd, *wd;
+
+  sum = ZERO;
+  xd = wd = NULL;
+
+  N  = NV_LENGTH_C(x);
+  xd = NV_DATA_C(x);
+  wd = NV_DATA_C(w);
+
+  for (i = 0; i < N; i++) {
+    prodi = xd[i]*wd[i];
+    sum += SUNSQR(prodi);
+  }
+
+  return(sum);
 
   return(sum);
 }

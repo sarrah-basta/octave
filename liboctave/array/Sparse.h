@@ -205,7 +205,7 @@ class SparseRep : public Alloc
 
       for (size_t i = 0; i < len; i++)
         T_Alloc_traits::destroy (alloc, data+i);
-      T_Alloc_traits::deallocate (alloc, data, len);
+      // T_Alloc_traits::deallocate (alloc, data, len);
     }
 
     idx_type_pointer idx_type_allocate (size_t len)
@@ -225,7 +225,7 @@ class SparseRep : public Alloc
 
       for (size_t i = 0; i < len; i++)
         idx_type_Alloc_traits::destroy (alloc, idx+i);
-      idx_type_Alloc_traits::deallocate (alloc, idx, len);
+      // idx_type_Alloc_traits::deallocate (alloc, idx, len);
     }
   };
 

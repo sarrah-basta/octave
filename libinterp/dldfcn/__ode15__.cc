@@ -364,6 +364,7 @@ OCTAVE_NAMESPACE_BEGIN
                void *user_data)
   {
     std::cout<<"\n ids in resfun "<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
+    std::cout<<"\n lengths in resfun "<<N_VGetLength(yy)<<N_VGetLength(yyp)<<"\n";
     IDA *self = static_cast <IDA *> (user_data);
     self->resfun_impl (t, yy, yyp, rr);
     return 0;
@@ -373,15 +374,19 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::resfun_impl (realtype t, N_Vector& yy,
                     N_Vector& yyp, N_Vector& rr)
   {
-    // ColumnVector y = IDA::NVecToCol (yy, m_num);
-    ColumnVector *y = new ColumnVector(m_num);
-    y = (ColumnVector *)NV_CONTENT_C(yy);
+    ColumnVector y = IDA::NVecToCol (yy, m_num);
+    // ColumnVector *y = new ColumnVector(m_num);
+    // y = (ColumnVector *)NV_CONTENT_C(yy);
 
-    // ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-    ColumnVector *yp = new ColumnVector(m_num);
-    yp = (ColumnVector *)NV_CONTENT_C(yyp);
+    std::cout<<"\nnumel of y at 381 : "<<y.numel();
 
-    ColumnVector res = (*m_fcn) (*y, *yp, t, m_ida_fcn);
+    ColumnVector yp = IDA::NVecToCol (yyp, m_num);
+    // ColumnVector *yp = new ColumnVector(m_num);
+    // yp = (ColumnVector *)NV_CONTENT_C(yyp);
+
+    std::cout<<"\nnumel of yp at 381 : "<<yp.numel();
+
+    ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
     realtype *puntrr = nv_data_c (rr);
 
@@ -492,9 +497,13 @@ OCTAVE_NAMESPACE_BEGIN
                        SUNMatrix& Jac)
 
   {
-    ColumnVector y = NVecToCol (yy, m_num);
+    ColumnVector y = IDA::NVecToCol (yy, m_num);
+    // ColumnVector *y = new ColumnVector(m_num);
+    // y = (ColumnVector *)NV_CONTENT_C(yy);
 
-    ColumnVector yp = NVecToCol (yyp, m_num);
+    ColumnVector yp = IDA::NVecToCol (yyp, m_num);
+    // ColumnVector *yp = new ColumnVector(m_num);
+    // yp = (ColumnVector *)NV_CONTENT_C(yyp);
 
     SparseMatrix jac;
 
@@ -503,15 +512,18 @@ OCTAVE_NAMESPACE_BEGIN
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
+    std::cout<<"in jacsparse nz : "<<jac.nnz()<<" nnz: "<<OCTSparseMatrix_NNZ (Jac);
+
 /* FIXME : add way to check if reallocate defined */
 // #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
-    octave_f77_int_type nnz = to_f77_int (jac.nnz ());
-    if (nnz > OCTSparseMatrix_NNZ (Jac))
+    octave_f77_int_type nz = to_f77_int (jac.nnz ());
+    if (nz > OCTSparseMatrix_NNZ (Jac))
       {
+        printf("\ntrying to reallocate memory for sparse matrix\n");
         // Allocate memory for sparse Jacobian defined in user function.
         // This will always be required at least once since we set the number
         // of non-zero elements to zero initially.
-        if (OCTSparseMatrix_Reallocate (Jac, nnz))
+        if (OCTSparseMatrix_Reallocate (Jac, nz))
           error ("Unable to allocate sufficient memory for IDA sparse matrix");
       }
 // #     endif
@@ -532,6 +544,7 @@ OCTAVE_NAMESPACE_BEGIN
         d[i] = jac.data (i);
       }
       printf("\n jacsparse impl run once\n");
+      std::cout<<"after jacsparse nnz : "<<OCTSparseMatrix_NNZ (Jac);
   }
 // #  endif
 
@@ -539,13 +552,19 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   {
     ColumnVector data (n);
-    realtype *punt = nv_data_c (v);
+    // ColumnVector *res = const_cast <ColumnVector *> NV_CONTENT_C(v);
+    // ColumnVector data (n);
+    // ColumnVector *ptr = &data;
+    // &data = res;
+    // realtype *punt = nv_data_c (v);
+    ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
 
-    for (octave_f77_int_type i = 0; i < n; i++)
-      data(i) = punt[i];
+    // for (octave_f77_int_type i = 0; i < n; i++)
+    //   data(i) = punt[i];
+    data = *punt;
     // ColumnVector *data = new ColumnVector(n);
     // data = (ColumnVector *)NV_CONTENT_C(v);
-
+    std::cout<<"\nthe colvec is "<<data;
     // &data = static_cast <ColumnVector *> NV_CONTENT_C(v);
     return data;
   }
@@ -553,16 +572,16 @@ OCTAVE_NAMESPACE_BEGIN
   N_Vector
   IDA::ColToNVec (const ColumnVector& data, octave_f77_int_type n)
   {
-    N_Vector v = N_VNew_Octave(n OCTAVE_SUNCONTEXT);
-    // N_Vector v = N_VMake_Octave (data, n OCTAVE_SUNCONTEXT);
-    std::cout<<"length"<<NV_LENGTH_C(v);
+    // N_Vector v = N_VNew_Octave(n OCTAVE_SUNCONTEXT);
+    N_Vector v = N_VMake_Octave (data, n OCTAVE_SUNCONTEXT);
+    // std::cout<<"length"<<NV_LENGTH_C(v);
 
-    realtype *punt = NV_DATA_C (v);
+    // realtype *punt = NV_DATA_C (v);
 
-    for (octave_f77_int_type i = 0; i < n; i++)
-      punt[i] = data(i);
+    // for (octave_f77_int_type i = 0; i < n; i++)
+      // punt[i] = data(i);
 
-    std::cout<<"line 580 length"<<NV_LENGTH_C(v)<<"\n";
+    // std::cout<<"line 580 length"<<N_VGetLength(v)<<"\n";
 
     return v;
   }
@@ -588,9 +607,18 @@ OCTAVE_NAMESPACE_BEGIN
     m_mem = IDACreate ();
 #  endif
 
-    N_Vector yy = ColToNVec (m_y0, m_num);
+    std::cout<<"in initialize 602\n";
 
-    N_Vector yyp = ColToNVec (m_yp0, m_num);
+    // N_Vector yy = ColToNVec (m_y0, m_num);
+    N_Vector yy = N_VMake_Octave(m_y0, m_num OCTAVE_SUNCONTEXT);
+
+    std::cout<<"\nlength yy 614"<<N_VGetLength(yy);
+    std::cout<<"\nentered data: "<<&m_y0<<" final data : "<< NV_CONTENT_C(yy);
+
+    N_Vector yyp = N_VMake_Octave(m_yp0, m_num OCTAVE_SUNCONTEXT);
+
+    std::cout<<"\nlength yyp 614"<<N_VGetLength(yyp);
+    std::cout<<"\nentered data: "<<&m_yp0<<" final data : "<< NV_CONTENT_C(yyp);
 
     IDA::set_userdata ();
     std::cout<<"\nids 614"<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";

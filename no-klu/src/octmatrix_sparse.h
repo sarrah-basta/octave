@@ -55,23 +55,23 @@ extern "C" {
  * Macros for access to SUNMATRIX_SPARSE
  * --------------------------------------- */
 
-#define SM_CONTENT_S(A)     ( (SparseMatrix *)(A->content) )
+#define SM_CONTENT_O(A)     ( (SparseMatrix *)(A->content) )
 
-#define SM_ROWS_S(A)        ( SM_CONTENT_S(A)->rows() )
+#define SM_ROWS_O(A)        ( SM_CONTENT_O(A)->rows() )
 
-#define SM_COLUMNS_S(A)     ( SM_CONTENT_S(A)->columns() )
+#define SM_COLUMNS_O(A)     ( SM_CONTENT_O(A)->columns() )
 
-#define SM_NNZ_S(A)         ( SM_CONTENT_S(A)->nnz() )
+#define SM_NNZ_O(A)         ( SM_CONTENT_O(A)->nnz() )
 
-#define SM_NP_S(A)          ( SM_CONTENT_S(A)->columns() ) //directly setting =N as we are only doing CSC Representation
+#define SM_NP_O(A)          ( SM_CONTENT_O(A)->columns() ) //directly setting =N as we are only doing CSC Representation
 
-#define SM_SPARSETYPE_S(A)  ( CSC_MAT ) 
+#define SM_SPARSETYPE_O(A)  ( CSC_MAT ) 
 
-#define SM_DATA_S(A)        ( SM_CONTENT_S(A)->data() )
+#define SM_DATA_O(A)        ( SM_CONTENT_O(A)->data() )
 
-#define SM_INDEXVALS_S(A)   ( SM_CONTENT_S(A)->ridx() )
+#define SM_INDEXVALS_O(A)   ( SM_CONTENT_O(A)->ridx() )
 
-#define SM_INDEXPTRS_S(A)   ( SM_CONTENT_S(A)->cidx() )
+#define SM_INDEXPTRS_O(A)   ( SM_CONTENT_O(A)->cidx() )
 
 /* ----------------------------------------
  * Exported Functions for SUNMATRIX_SPARSE
