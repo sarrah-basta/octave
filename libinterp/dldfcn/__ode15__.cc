@@ -375,14 +375,10 @@ OCTAVE_NAMESPACE_BEGIN
                     N_Vector& yyp, N_Vector& rr)
   {
     ColumnVector y = IDA::NVecToCol (yy, m_num);
-    // ColumnVector *y = new ColumnVector(m_num);
-    // y = (ColumnVector *)NV_CONTENT_C(yy);
 
     std::cout<<"\nnumel of y at 381 : "<<y.numel();
 
     ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-    // ColumnVector *yp = new ColumnVector(m_num);
-    // yp = (ColumnVector *)NV_CONTENT_C(yyp);
 
     std::cout<<"\nnumel of yp at 381 : "<<yp.numel();
 
@@ -498,12 +494,8 @@ OCTAVE_NAMESPACE_BEGIN
 
   {
     ColumnVector y = IDA::NVecToCol (yy, m_num);
-    // ColumnVector *y = new ColumnVector(m_num);
-    // y = (ColumnVector *)NV_CONTENT_C(yy);
 
     ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-    // ColumnVector *yp = new ColumnVector(m_num);
-    // yp = (ColumnVector *)NV_CONTENT_C(yyp);
 
     SparseMatrix jac;
 
@@ -552,36 +544,17 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   {
     ColumnVector data (n);
-    // ColumnVector *res = const_cast <ColumnVector *> NV_CONTENT_C(v);
-    // ColumnVector data (n);
-    // ColumnVector *ptr = &data;
-    // &data = res;
-    // realtype *punt = nv_data_c (v);
     ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
 
-    // for (octave_f77_int_type i = 0; i < n; i++)
-    //   data(i) = punt[i];
     data = *punt;
-    // ColumnVector *data = new ColumnVector(n);
-    // data = (ColumnVector *)NV_CONTENT_C(v);
     std::cout<<"\nthe colvec is "<<data;
-    // &data = static_cast <ColumnVector *> NV_CONTENT_C(v);
     return data;
   }
 
   N_Vector
   IDA::ColToNVec (const ColumnVector& data, octave_f77_int_type n)
   {
-    // N_Vector v = N_VNew_Octave(n OCTAVE_SUNCONTEXT);
     N_Vector v = N_VMake_Octave (data, n OCTAVE_SUNCONTEXT);
-    // std::cout<<"length"<<NV_LENGTH_C(v);
-
-    // realtype *punt = NV_DATA_C (v);
-
-    // for (octave_f77_int_type i = 0; i < n; i++)
-      // punt[i] = data(i);
-
-    // std::cout<<"line 580 length"<<N_VGetLength(v)<<"\n";
 
     return v;
   }
@@ -609,13 +582,12 @@ OCTAVE_NAMESPACE_BEGIN
 
     std::cout<<"in initialize 602\n";
 
-    // N_Vector yy = ColToNVec (m_y0, m_num);
-    N_Vector yy = N_VMake_Octave(m_y0, m_num OCTAVE_SUNCONTEXT);
+    N_Vector yy = ColToNVec (m_y0, m_num);
 
     std::cout<<"\nlength yy 614"<<N_VGetLength(yy);
     std::cout<<"\nentered data: "<<&m_y0<<" final data : "<< NV_CONTENT_C(yy);
 
-    N_Vector yyp = N_VMake_Octave(m_yp0, m_num OCTAVE_SUNCONTEXT);
+    N_Vector yyp = ColToNVec (m_yp0, m_num);
 
     std::cout<<"\nlength yyp 614"<<N_VGetLength(yyp);
     std::cout<<"\nentered data: "<<&m_yp0<<" final data : "<< NV_CONTENT_C(yyp);

@@ -313,6 +313,7 @@ realtype *N_VGetArrayPointer_Octave(N_Vector v)
 
 void N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v)
 {
+  /* FIXME : unimplemented as of now */
   // if (NV_LENGTH_C(v) > 0) {
     // NV_CONTENT_C(v)->data() = *v_data;
     ColumnVector *nv;
@@ -539,34 +540,16 @@ realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
 
 realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
 {
-  // N_Vector prod = N_VClone_Octave(x);
-  // ColumnVector *xv,*yv, *pv;
-  // realtype sum;
-  // xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  // yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
-  // pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
+  N_Vector prod = N_VClone_Octave(x);
+  ColumnVector *xv,*yv, *pv;
+  realtype sum;
+  xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
+  yv = static_cast <ColumnVector *> NV_CONTENT_C(w);
+  pv = static_cast <ColumnVector *> NV_CONTENT_C(prod);
 
-  // (*pv) = product((*xv),(*yv));
-  // octave_value_list ov = ovl((*pv));
-  // sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
-
-  // return(sum);
-  sunindextype i, N;
-  realtype sum, prodi, *xd, *wd;
-
-  sum = ZERO;
-  xd = wd = NULL;
-
-  N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  wd = NV_DATA_C(w);
-
-  for (i = 0; i < N; i++) {
-    prodi = xd[i]*wd[i];
-    sum += SUNSQR(prodi);
-  }
-
-  return(sum);
+  (*pv) = product((*xv),(*yv));
+  octave_value_list ov = ovl((*pv));
+  sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
 
   return(sum);
 }
