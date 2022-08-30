@@ -9,3 +9,4 @@ liboctave/operators/vx-op-src.mk-t
 autom4te.cache/requests
 .vscode/dryrun.log
 .vscode/targets.log
+autom4te.cache/requests
