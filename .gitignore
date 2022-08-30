@@ -7,3 +7,5 @@ liboctave/operators/smx-op-src.mk-t
 liboctave/operators/vx-op-inc.mk-t
 liboctave/operators/vx-op-src.mk-t
 autom4te.cache/requests
+.vscode/dryrun.log
+.vscode/targets.log
