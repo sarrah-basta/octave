@@ -373,15 +373,15 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::resfun_impl (realtype t, N_Vector& yy,
                     N_Vector& yyp, N_Vector& rr)
   {
-    // ColumnVector y = IDA::NVecToCol (yy, m_num);
-    ColumnVector *y = new ColumnVector(m_num);
-    y = (ColumnVector *)NV_CONTENT_C(yy);
+    ColumnVector y = IDA::NVecToCol (yy, m_num);
+    // ColumnVector *y = new ColumnVector(m_num);
+    // y = (ColumnVector *)NV_CONTENT_C(yy);
 
-    // ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-    ColumnVector *yp = new ColumnVector(m_num);
-    yp = (ColumnVector *)NV_CONTENT_C(yyp);
+    ColumnVector yp = IDA::NVecToCol (yyp, m_num);
+    // ColumnVector *yp = new ColumnVector(m_num);
+    // yp = (ColumnVector *)NV_CONTENT_C(yyp);
 
-    ColumnVector res = (*m_fcn) (*y, *yp, t, m_ida_fcn);
+    ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
     realtype *puntrr = nv_data_c (rr);
 
