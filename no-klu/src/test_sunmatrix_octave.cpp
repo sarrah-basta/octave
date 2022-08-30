@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include <sundials/sundials_types.h>
-// #include <sunmatrix/sunmatrix_sparse.h>
+#include <sunmatrix/sunmatrix_dense.h>
 #include "octmatrix_sparse.h"
 // #include <nvector/nvector_Octave.h>
 #include "nvector_octave.h"

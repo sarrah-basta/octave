@@ -257,6 +257,8 @@ extern "C"
     if (As == NULL)
       return NULL;
 
+    std::cout<<"in sparsefromdense : sunmatgetid" <<SUNMatGetID(As)<<"\n";
+
     /* copy nonzeros from Ad into As, based on CSR/CSC type */
     nnz = 0;
     if (sparsetype == CSC_MAT)

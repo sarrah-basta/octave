@@ -28,10 +28,10 @@ PT_LIB_PATH = /usr/lib/i386-linux-gnu
 KLU_LIB_PATH = /usr/lib/x86_64-linux-gnu
 SUN_LIB_PATH = /usr/local/lib
 OCT_LIB_PATH = /usr/lib/octave/8.0.0
-LDFLAGS = -I$(KLU_INC_PATH) -I$(SUN_INC_PATH) -I$(OCT_INC_PATH) -L$(KLU_LIB_PATH) -L$(SUN_LIB_PATH) -L$(OCT_LIB_PATH) -Wl,-Bsymbolic 
+LDFLAGS = -I$(SUN_INC_PATH) -I$(OCT_INC_PATH) -L$(SUN_LIB_PATH) -L$(OCT_LIB_PATH) -Wl,-Bsymbolic 
 # -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolspgmr -loctave
 
-LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -lklu -loctave -loctinterp -lm -lpthread
+LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -loctave -loctinterp -lm -lpthread
 
 app: $(EXECUTABLE1)
 	@echo Make of example has finished successfully.
@@ -70,7 +70,7 @@ $(EXECUTABLE6) : $(OBJECTS6)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(LIBS) -c $*.cpp 
 
 clean:
-	$(RM) *.o *~ $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4)
+	$(RM) *.o *~ $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6)
 
 # requires the 
 # export LD_LIBRARY_PATH=/usr/lib/octave/8.0.0 variable to be set on my device
