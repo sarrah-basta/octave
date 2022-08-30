@@ -3,7 +3,7 @@ CXXFLAGS = -g
 SOURCES1 = kry_example.c nvector_octave.cpp octmatrix_dense.cpp octlinsol_gen.cc
 SOURCES2 = test_nvector_octave.cpp test_nvector.cpp nvector_octave.cpp
 SOURCES3 = klu_example.c nvector_octave.cpp octmatrix_sparse.cpp octmatrix_dense.cpp octlinsol_gen.cc
-SOURCES4 = test_sunmatrix_octave.cpp test_sunmatrix.cpp octmatrix_sparse.cpp nvector_octave.cpp
+SOURCES4 = test_sunmatrix_octave.cpp test_sunmatrix.cpp octmatrix_sparse.cpp octmatrix_dense.cpp nvector_octave.cpp
 SOURCES5 = test_sunmatrix_octave_dense.cpp test_sunmatrix.cpp octmatrix_dense.cpp nvector_octave.cpp
 SOURCES6 = test_sunlinsol_oct.cpp test_sunlinsol.cpp octlinsol_gen.cc octmatrix_sparse.cpp octmatrix_dense.cpp nvector_octave.cpp
 OBJECTS1 = $(SOURCES1:.cpp=.o)
@@ -31,7 +31,7 @@ OCT_LIB_PATH = /usr/lib/octave/8.0.0
 LDFLAGS = -I$(KLU_INC_PATH) -I$(SUN_INC_PATH) -I$(OCT_INC_PATH) -L$(KLU_LIB_PATH) -L$(SUN_LIB_PATH) -L$(OCT_LIB_PATH) -Wl,-Bsymbolic 
 # -I/usr/local/include -I/usr/include/octave-8.0.0/octave -L/usr/local/lib -L/usr/lib/octave/8.0.0 -lsundials_generic -lsundials_nvecserial -lsundials_ida -lsundials_sunlinsolspgmr -loctave
 
-LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -lklu -lsundials_sunlinsolklu -loctave -loctinterp -lm -lpthread
+LIBS = -lsundials_generic -lsundials_nvecserial -lsundials_ida -lklu -loctave -loctinterp -lm -lpthread
 
 app: $(EXECUTABLE1)
 	@echo Make of example has finished successfully.

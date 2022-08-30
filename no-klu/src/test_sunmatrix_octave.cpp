@@ -24,6 +24,7 @@
 #include <sundials/sundials_types.h>
 // #include <sunmatrix/sunmatrix_sparse.h>
 #include "octmatrix_sparse.h"
+#include "octmatrix_dense.h"
 // #include <nvector/nvector_Octave.h>
 #include "nvector_octave.h"
 #include <sundials/sundials_math.h>
@@ -101,9 +102,9 @@ int main(int argc, char *argv[])
   I = NULL;
 
   /* check creating sparse matrix from dense matrix */
-  B = SUNDenseMatrix(5,6, sunctx);
+  B = OCTDenseMatrix(5,6, sunctx);
 
-  matdata = SUNDenseMatrix_Data(B);
+  matdata = OCTDenseMatrix_Data(B);
   matdata[2]  = RCONST(1.0);    /* [ 0 2 0 0 7 0 ] */
   matdata[5]  = RCONST(2.0);    /* [ 0 0 4 0 8 0 ] */
   matdata[9]  = RCONST(3.0);    /* [ 1 0 0 0 0 0 ] */
@@ -203,18 +204,18 @@ int main(int argc, char *argv[])
   }
 
   /* Create/fill random dense matrices, create sparse from them */
-  C = SUNDenseMatrix(matrows, matcols, sunctx);
-  D = SUNDenseMatrix(matrows, matcols, sunctx);
+  C = OCTDenseMatrix(matrows, matcols, sunctx);
+  D = OCTDenseMatrix(matrows, matcols, sunctx);
   for (k=0; k<3*matrows; k++) {
     i = rand() % matrows;
     j = rand() % matcols;
-    matdata = SUNDenseMatrix_Column(D,j);
+    matdata = OCTDenseMatrix_Column(D,j);
     matdata[i] = (realtype) rand() / (realtype) RAND_MAX;
   }
   for (k=0; k<matrows; k++) {
     i = rand() % matrows;
     j = rand() % matcols;
-    matdata = SUNDenseMatrix_Column(C,j);
+    matdata = OCTDenseMatrix_Column(C,j);
     matdata[i] = (realtype) rand() / (realtype) RAND_MAX;
   }
   A = OCTSparseFromDenseMatrix(C, ZERO, mattype);
