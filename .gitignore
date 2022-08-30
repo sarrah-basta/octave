@@ -1,0 +1,8 @@
+.vscode/dryrun.log
+.vscode/targets.log
+liboctave/operators/mx-op-inc.mk-t
+liboctave/operators/mx-op-src.mk-t
+liboctave/operators/smx-op-inc.mk-t
+liboctave/operators/smx-op-src.mk-t
+liboctave/operators/vx-op-inc.mk-t
+liboctave/operators/vx-op-src.mk-t
