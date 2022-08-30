@@ -49,10 +49,6 @@ typedef struct _OCTLinearSolverContent_GEN *OCTLinearSolverContent_GEN;
  ------------ */
 
 SUNDIALS_EXPORT SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContext sunctx);
-// SUNDIALS_EXPORT int OCTLinSol_GenReInit(SUNLinearSolver S, SUNMatrix A,
-//                                         sunindextype nnz, int reinit_type);
-// SUNDIALS_EXPORT int OCTLinSol_GenSetOrdering(SUNLinearSolver S,
-//                                              int ordering_choice);
 
 
 /* -----------------------------------------------
@@ -61,14 +57,8 @@ SUNDIALS_EXPORT SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A, SUNContex
 
 SUNDIALS_EXPORT SUNLinearSolver_Type OCTLinSolGetType_Gen(SUNLinearSolver S);
 SUNDIALS_EXPORT SUNLinearSolver_ID OCTLinSolGetID_Gen(SUNLinearSolver S);
-// SUNDIALS_EXPORT int OCTLinSolInitialize_GenOCTLinSol_Gen(SUNLinearSolver S);
-// SUNDIALS_EXPORT int OCTLinSolSetup_GenOCTLinSol_Gen(SUNLinearSolver S, SUNMatrix A);
 SUNDIALS_EXPORT int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A,
                                        N_Vector x, N_Vector b, realtype tol);
-// SUNDIALS_EXPORT sunindextype OCTLinSolLastFlag_GenOCTLinSol_Gen(SUNLinearSolver S);
-// SUNDIALS_EXPORT int OCTLinSolSpace_GenOCTLinSol_Gen(SUNLinearSolver S,
-                                      //  long int *lenrwLS,
-                                      //  long int *leniwLS);
 SUNDIALS_EXPORT int OCTLinSolFree_Gen(SUNLinearSolver S);
 
 

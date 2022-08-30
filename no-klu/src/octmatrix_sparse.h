@@ -34,7 +34,7 @@
 
 #include <dSparse.h>
 #include <sundials/sundials_matrix.h>
-#include "octmatrix_dense.h"
+// #include "octmatrix_dense.h"
 // #include <sunmatrix/sunmatrix_dense.h>
 // #include <sunmatrix/sunmatrix_band.h>
 
@@ -58,6 +58,8 @@ extern "C" {
 #define SM_CONTENT_O(A)     ( (SparseMatrix *)(A->content) )
 
 #define SM_ROWS_O(A)        ( SM_CONTENT_O(A)->rows() )
+
+#define SM_COLS_O(A)        ( SM_CONTENT_O(A)->cols() )
 
 #define SM_COLUMNS_O(A)     ( SM_CONTENT_O(A)->columns() )
 
@@ -83,22 +85,8 @@ SUNDIALS_EXPORT SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
 
 SUNDIALS_EXPORT SUNMatrix OCTSparseMatrix_Make(SparseMatrix sm, SUNContext sunctx);
 
-SUNDIALS_EXPORT SUNMatrix OCTSparseFromDenseMatrix(SUNMatrix A,
-                                                   realtype droptol,
-                                                   int sparsetype);
 
-SUNDIALS_EXPORT SUNMatrix OCTSparseFromBandMatrix(SUNMatrix A,
-                                                  realtype droptol,
-                                                  int sparsetype);
-
-// SUNDIALS_EXPORT int OCTSparseMatrix_ToCSR(const SUNMatrix A, SUNMatrix* Bout);
-// SUNDIALS_EXPORT int OCTSparseMatrix_ToCSC(const SUNMatrix A, SUNMatrix* Bout);
-
-// SUNDIALS_EXPORT int OCTSparseMatrix_Realloc(SUNMatrix A);
-
-SUNDIALS_EXPORT int OCTSparseMatrix_Reallocate(SUNMatrix A, sunindextype NNZ);
-
-SUNDIALS_EXPORT void OCTSparseMatrix_Print(SUNMatrix A, FILE* outfile);
+SUNDIALS_EXPORT void OCTSparseMatrix_Print(SUNMatrix A);
 
 SUNDIALS_EXPORT sunindextype OCTSparseMatrix_Rows(SUNMatrix A);
 SUNDIALS_EXPORT sunindextype OCTSparseMatrix_Columns(SUNMatrix A);
@@ -110,15 +98,8 @@ SUNDIALS_EXPORT sunindextype* OCTSparseMatrix_IndexValues(SUNMatrix A);
 SUNDIALS_EXPORT sunindextype* OCTSparseMatrix_IndexPointers(SUNMatrix A);
 
 SUNDIALS_EXPORT SUNMatrix_ID OCTMatGetID_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT SUNMatrix OCTMatClone_Sparse(SUNMatrix A);
 SUNDIALS_EXPORT void OCTMatDestroy_Sparse (SUNMatrix A);
 SUNDIALS_EXPORT int OCTMatZero_Sparse (SUNMatrix A);
-SUNDIALS_EXPORT int OCTMatCopy_Sparse (SUNMatrix A, SUNMatrix B);
-// SUNDIALS_EXPORT int SUNMatScaleAdd_Sparse(realtype c, SUNMatrix A, SUNMatrix B);
-SUNDIALS_EXPORT int OCTMatScaleAddI_Sparse(realtype c, SUNMatrix A);
-SUNDIALS_EXPORT int OCTMatMatvec_Sparse(SUNMatrix A, N_Vector x, N_Vector y);
-SUNDIALS_EXPORT int OCTMatSpace_Sparse(SUNMatrix A, long int *lenrw, long int *leniw);
-
 
 #ifdef __cplusplus
 }

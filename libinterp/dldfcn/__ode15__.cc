@@ -1,5 +1,3 @@
-////////////////////////////////////////////////////////////////////////
-//
 // Copyright (C) 2016-2022 The Octave Project Developers
 //
 // See the file COPYRIGHT.md in the top-level directory of this
@@ -509,15 +507,15 @@ OCTAVE_NAMESPACE_BEGIN
 /* FIXME : add way to check if reallocate defined */
 // #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
     octave_f77_int_type nz = to_f77_int (jac.nnz ());
-    if (nz > OCTSparseMatrix_NNZ (Jac))
-      {
-        printf("\ntrying to reallocate memory for sparse matrix\n");
-        // Allocate memory for sparse Jacobian defined in user function.
-        // This will always be required at least once since we set the number
-        // of non-zero elements to zero initially.
-        if (OCTSparseMatrix_Reallocate (Jac, nz))
-          error ("Unable to allocate sufficient memory for IDA sparse matrix");
-      }
+    // if (nz > OCTSparseMatrix_NNZ (Jac))
+    //   {
+    //     printf("\ntrying to reallocate memory for sparse matrix\n");
+    //     // Allocate memory for sparse Jacobian defined in user function.
+    //     // This will always be required at least once since we set the number
+    //     // of non-zero elements to zero initially.
+    //     if (OCTSparseMatrix_Reallocate (Jac, nz))
+    //       error ("Unable to allocate sufficient memory for IDA sparse matrix");
+    //   }
 // #     endif
 
     OCTMatZero_Sparse (Jac);

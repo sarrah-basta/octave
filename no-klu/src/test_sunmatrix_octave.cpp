@@ -100,93 +100,6 @@ int main(int argc, char *argv[])
   D = NULL;
   I = NULL;
 
-  /* check creating sparse matrix from dense matrix */
-  B = SUNDenseMatrix(5,6, sunctx);
-
-  matdata = SUNDenseMatrix_Data(B);
-  matdata[2]  = RCONST(1.0);    /* [ 0 2 0 0 7 0 ] */
-  matdata[5]  = RCONST(2.0);    /* [ 0 0 4 0 8 0 ] */
-  matdata[9]  = RCONST(3.0);    /* [ 1 0 0 0 0 0 ] */
-  matdata[11] = RCONST(4.0);    /* [ 0 0 5 6 0 0 ] */
-  matdata[13] = RCONST(5.0);    /* [ 0 3 0 0 0 9 ] */
-  matdata[18] = RCONST(6.0);
-  matdata[20] = RCONST(7.0);
-  matdata[21] = RCONST(8.0);
-  matdata[29] = RCONST(9.0);
-
-  if (mattype == CSR_MAT) {
-
-    /* Check CSR */
-    C = OCTSparseMatrix(5, 6, 9, CSR_MAT, sunctx);
-    rowptrs = OCTSparseMatrix_IndexPointers(C);
-    colindices = OCTSparseMatrix_IndexValues(C);
-    matdata = OCTSparseMatrix_Data(C);
-    rowptrs[0] = 0;
-    matdata[0] = RCONST(2.0);   colindices[0] = 1;
-    matdata[1] = RCONST(7.0);   colindices[1] = 4;
-    rowptrs[1] = 2;
-    matdata[2] = RCONST(4.0);   colindices[2] = 2;
-    matdata[3] = RCONST(8.0);   colindices[3] = 4;
-    rowptrs[2] = 4;
-    matdata[4] = RCONST(1.0);   colindices[4] = 0;
-    rowptrs[3] = 5;
-    matdata[5] = RCONST(5.0);   colindices[5] = 2;
-    matdata[6] = RCONST(6.0);   colindices[6] = 3;
-    rowptrs[4] = 7;
-    matdata[7] = RCONST(3.0);   colindices[7] = 1;
-    matdata[8] = RCONST(9.0);   colindices[8] = 5;
-    rowptrs[5] = 9;
-
-    A = OCTSparseFromDenseMatrix(B, ZERO, CSR_MAT);
-    fails += check_matrix(A, C, 1e-15);
-
-    if (fails) {
-      printf("FAIL: SUNMatrix SparseFromDense CSR conversion failed\n");
-      return(1);
-    }
-
-    SUNMatDestroy(A);
-    SUNMatDestroy(C);
-
-  } else {
-
-    /* Check CSC */
-    D = OCTSparseMatrix(5, 6, 9, CSC_MAT, sunctx);
-    colptrs = OCTSparseMatrix_IndexPointers(D);
-    rowindices = OCTSparseMatrix_IndexValues(D);
-    matdata = OCTSparseMatrix_Data(D);
-    colptrs[0] = 0;
-    matdata[0] = RCONST(1.0);   rowindices[0] = 2;
-    colptrs[1] = 1;
-    matdata[1] = RCONST(2.0);   rowindices[1] = 0;
-    matdata[2] = RCONST(3.0);   rowindices[2] = 4;
-    colptrs[2] = 3;
-    matdata[3] = RCONST(4.0);   rowindices[3] = 1;
-    matdata[4] = RCONST(5.0);   rowindices[4] = 3;
-    colptrs[3] = 5;
-    matdata[5] = RCONST(6.0);   rowindices[5] = 3;
-    colptrs[4] = 6;
-    matdata[6] = RCONST(7.0);   rowindices[6] = 0;
-    matdata[7] = RCONST(8.0);   rowindices[7] = 1;
-    colptrs[5] = 8;
-    matdata[8] = RCONST(9.0);   rowindices[8] = 4;
-    colptrs[6] = 9;
-
-    A = OCTSparseFromDenseMatrix(B, 1e-15, CSC_MAT);
-    fails += check_matrix(A, D, 1e-15);
-
-    if (fails) {
-      printf("FAIL: SUNMatrix SparseFromDense CSC conversion failed\n");
-      return(1);
-    }
-
-    SUNMatDestroy(A);
-    SUNMatDestroy(D);
-
-  }
-  SUNMatDestroy(B);
-
-
   /* Create/fill I matrix */
   I = NULL;
   if (square) {
@@ -203,22 +116,27 @@ int main(int argc, char *argv[])
   }
 
   /* Create/fill random dense matrices, create sparse from them */
-  C = SUNDenseMatrix(matrows, matcols, sunctx);
-  D = SUNDenseMatrix(matrows, matcols, sunctx);
-  for (k=0; k<3*matrows; k++) {
-    i = rand() % matrows;
-    j = rand() % matcols;
-    matdata = SUNDenseMatrix_Column(D,j);
+  A = OCTSparseMatrix(matrows, matcols,  matcols, mattype, sunctx);
+  matdata    = OCTSparseMatrix_Data(A);
+  colindices = OCTSparseMatrix_IndexValues(A);
+  rowptrs    = OCTSparseMatrix_IndexPointers(A);
+  for(i=0; i<matrows; i++) {
     matdata[i] = (realtype) rand() / (realtype) RAND_MAX;
+    colindices[i] = i;
+    rowptrs[i] = i;
   }
-  for (k=0; k<matrows; k++) {
-    i = rand() % matrows;
-    j = rand() % matcols;
-    matdata = SUNDenseMatrix_Column(C,j);
+  rowptrs[matrows] = matrows;
+  B = OCTSparseMatrix(matrows, matcols,  matcols, mattype, sunctx);
+  matdata    = OCTSparseMatrix_Data(B);
+  colindices = OCTSparseMatrix_IndexValues(B);
+  rowptrs    = OCTSparseMatrix_IndexPointers(B);
+  for(i=0; i<matrows; i++) {
     matdata[i] = (realtype) rand() / (realtype) RAND_MAX;
+    colindices[i] = i;
+    rowptrs[i] = i;
   }
-  A = OCTSparseFromDenseMatrix(C, ZERO, mattype);
-  B = OCTSparseFromDenseMatrix(D, ZERO, mattype);
+  rowptrs[matrows] = matrows;
+
 
   /* Create vectors and fill */
   x = N_VNew_Octave(matcols, sunctx);
@@ -227,38 +145,19 @@ int main(int argc, char *argv[])
   vecdata = N_VGetArrayPointer(x);
   for(i=0; i<matcols; i++)
     vecdata[i] = (realtype) rand() / (realtype) RAND_MAX;
-  if (SUNMatMatvec(C, x, y) != 0) {
-    printf("FAIL: SUNMatrix module Dense matvec failure \n \n");
-    SUNMatDestroy(A);  SUNMatDestroy(B);
-    SUNMatDestroy(C);  SUNMatDestroy(D);
-    N_VDestroy(x);  N_VDestroy(y);  N_VDestroy(z);
-    if (square)
-      SUNMatDestroy(I);
-    return(1);
-  }
-  if (SUNMatMatvec(D, x, z) != 0) {
-    printf("FAIL: SUNMatrix module Dense matvec failure \n \n");
-    SUNMatDestroy(A);  SUNMatDestroy(B);
-    SUNMatDestroy(C);  SUNMatDestroy(D);
-    N_VDestroy(x);  N_VDestroy(y);  N_VDestroy(z);
-    if (square)
-      SUNMatDestroy(I);
-    return(1);
-  }
 
   /* SUNMatrix Tests */
   fails += Test_SUNMatGetID(A, SUNMATRIX_SPARSE, 0);
-  fails += Test_SUNMatClone(A, 0);
-  fails += Test_SUNMatCopy(A, 0);
+  // fails += Test_SUNMatClone(A, 0);
+  // fails += Test_SUNMatCopy(A, 0);
   fails += Test_SUNMatZero(A, 0);
   // fails += Test_SUNMatScaleAdd(A, I, 0);
   // fails += Test_SUNMatScaleAdd2(A, B, x, y, z);
-  if (square) {
-    fails += Test_SUNMatScaleAddI(A, I, 0);
-  //   fails += Test_SUNMatScaleAddI2(A, x, y);
-  }
-  fails += Test_SUNMatMatvec(A, x, y, 0);
-  fails += Test_SUNMatSpace(A, 0);
+  // if (square) {
+  //   fails += Test_SUNMatScaleAddI(A, I, 0);
+  // //   fails += Test_SUNMatScaleAddI2(A, x, y);
+  // }
+  // fails += Test_SUNMatSpace(A, 0);
   // if (mattype == CSR_MAT) {
   //   fails += Test_OCTSparseMatrixToCSC(A);
   // } else {
@@ -292,8 +191,6 @@ int main(int argc, char *argv[])
   N_VDestroy(z);
   SUNMatDestroy(A);
   SUNMatDestroy(B);
-  SUNMatDestroy(C);
-  SUNMatDestroy(D);
   if (square)
     SUNMatDestroy(I);
 
