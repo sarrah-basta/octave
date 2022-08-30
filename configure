@@ -44619,6 +44619,9 @@ printf "%s\n" "#define STRERROR_R_CHAR_P 1" >>confdefs.h
 fi
 
 
+  XGETTEXT_EXTRA_OPTIONS=
+
+
 
 
 ac_fn_check_decl "$LINENO" "fchdir" "ac_cv_have_decl_fchdir" "$ac_includes_default" "$ac_c_undeclared_builtin_options" "CFLAGS"
@@ -48436,8 +48439,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:48439: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:48440: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:48442: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:48443: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -48463,7 +48466,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:48466: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:48469: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -48641,7 +48644,7 @@ fi
 
         fi
       fi
-      echo "$as_me:48644: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:48647: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -53819,8 +53822,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:53822: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:53823: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:53825: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:53826: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -53846,7 +53849,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:53849: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:53852: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -54024,7 +54027,7 @@ fi
 
         fi
       fi
-      echo "$as_me:54027: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:54030: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -54284,8 +54287,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:54287: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:54288: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:54290: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:54291: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -54311,7 +54314,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:54314: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:54317: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -54489,7 +54492,7 @@ fi
 
         fi
       fi
-      echo "$as_me:54492: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:54495: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -62641,6 +62644,13 @@ then :
 
 
 fi
+
+
+  XGETTEXT_EXTRA_OPTIONS="$XGETTEXT_EXTRA_OPTIONS --flag=error:3:c-format"
+
+
+
+  XGETTEXT_EXTRA_OPTIONS="$XGETTEXT_EXTRA_OPTIONS --flag=error_at_line:5:c-format"
 
 
 
@@ -77103,6 +77113,13 @@ printf "%s\n" "#define GNULIB_TEST_VASPRINTF 1" >>confdefs.h
 
 
 
+
+
+  XGETTEXT_EXTRA_OPTIONS="$XGETTEXT_EXTRA_OPTIONS --flag=asprintf:2:c-format"
+
+
+
+  XGETTEXT_EXTRA_OPTIONS="$XGETTEXT_EXTRA_OPTIONS --flag=vasprintf:2:c-format"
 
 
 

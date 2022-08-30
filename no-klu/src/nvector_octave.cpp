@@ -273,6 +273,7 @@ void N_VDestroy_Octave(N_Vector v)
 
   /* free content */
   if (v->content != NULL) {
+    delete (v->content);
     v->content = NULL;
   }
 
@@ -286,7 +287,6 @@ void N_VDestroy_Octave(N_Vector v)
 
 void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw)
 {
-  std::cout<<NV_LENGTH_C(v)<<"\n";
   *lrw = NV_LENGTH_C(v);
   *liw = 1;
 

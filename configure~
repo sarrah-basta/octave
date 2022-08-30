@@ -778,6 +778,8 @@ SUITESPARSECONFIG_CPPFLAGS
 QRUPDATE_LIBS
 QRUPDATE_LDFLAGS
 QRUPDATE_CPPFLAGS
+AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE
+AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE
 GL2PS_LIBS
 FLTK_LIBS
 FLTK_LDFLAGS
@@ -881,15 +883,15 @@ Z_LDFLAGS
 Z_CPPFLAGS
 READLINE_LIBS
 TERM_LIBS
-PCRE_LIBS
-PCRE_LDFLAGS
-PCRE_CPPFLAGS
 QHULL_LIBS
 QHULL_LDFLAGS
 QHULL_CPPFLAGS
 QHULL_R_LIBS
 QHULL_R_LDFLAGS
 QHULL_R_CPPFLAGS
+PCRE_LIBS
+PCRE_LDFLAGS
+PCRE_CPPFLAGS
 OCTAVE_UNICODE_EXE_LDFLAGS
 gltests_WITNESS
 GL_GNULIB_TOWCTRANS
@@ -2395,8 +2397,6 @@ CXXDEPMODE
 ac_ct_CXX
 CXXFLAGS
 CXX
-AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE
-AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE
 sepchar
 AMCOND_HAVE_ICON_TOOLS_FALSE
 AMCOND_HAVE_ICON_TOOLS_TRUE
@@ -2568,7 +2568,6 @@ enable_dependency_tracking
 with_pkgconfigdir
 with_sepchar
 with_shell
-with_system_freefont
 enable_std_pmr_polymorphic_allocator
 enable_largefile
 enable_year2038
@@ -2594,15 +2593,16 @@ enable_cross_guesses
 with_openssl
 enable_rpath
 with_libiconv_prefix
-with_qhull_r_includedir
-with_qhull_r_libdir
-with_qhull_r
+enable_command_line_push_parser
+enable_vm_evaluator
 with_pcre_includedir
 with_pcre_libdir
 with_pcre
+with_qhull_r_includedir
+with_qhull_r_libdir
+with_qhull_r
 enable_rapidjson
 enable_readline
-enable_command_line_push_parser
 with_z_includedir
 with_z_libdir
 with_z
@@ -2645,6 +2645,7 @@ with_qscintilla
 with_fltk
 with_fltk_prefix
 with_fltk_exec_prefix
+with_system_freefont
 with_qrupdate_includedir
 with_qrupdate_libdir
 with_qrupdate
@@ -3409,11 +3410,13 @@ Optional Features:
   --enable-cross-guesses={conservative|risky}
                           specify policy for cross-compilation guesses
   --disable-rpath         do not hardcode runtime library paths
-  --disable-rapidjson     disable rapidjson
-  --disable-readline      do not use readline library
   --disable-command-line-push-parser
                           don't use Bison's push parser interface in the
                           command line REPL
+  --disable-vm-evaluator  don't compile *experimental* virtual machine
+                          evaluator
+  --disable-rapidjson     disable rapidjson
+  --disable-readline      do not use readline library
   --disable-fftw-threads  disable Multi-threaded FFTW
   --disable-java          disable Java interface
   --disable-docs          don't build documentation files
@@ -3422,7 +3425,7 @@ Optional Features:
                           relocated
   --disable-hg-id         disable embedding of hg id in libraries
   --enable-install-build-logs
-                          install build logs (i.e. config.log) with Octave
+                          install build logs (i.e., config.log) with Octave
   --disable-lib-visibility-flags
                           don't build libraries with visibility flags (export
                           all symbols)
@@ -3445,9 +3448,6 @@ Optional Packages:
   --with-sepchar=<char>   use <char> as the path separation character
   --with-shell=SHELL      use SHELL as the shell interpreter (default:
                           /bin/sh)
-  --with-system-freefont=DIR
-                          use FreeSans fonts in DIR (default: install and use
-                          internal copy)
   --with-pic[=PKGS]       try to use only PIC/non-PIC objects [default=use
                           both]
   --with-aix-soname=aix|svr4|both
@@ -3472,15 +3472,15 @@ Optional Packages:
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
   --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+  --with-pcre-includedir=DIR
+                          look for PCRE include files in DIR
+  --with-pcre-libdir=DIR  look for PCRE libraries in DIR
+  --with-pcre=<lib>       use PCRE library <lib>
   --with-qhull_r-includedir=DIR
                           look for QHull include files in DIR
   --with-qhull_r-libdir=DIR
                           look for QHull libraries in DIR
   --without-qhull_r       don't use QHull library
-  --with-pcre-includedir=DIR
-                          look for PCRE include files in DIR
-  --with-pcre-libdir=DIR  look for PCRE libraries in DIR
-  --with-pcre=<lib>       use PCRE library <lib>
   --with-z-includedir=DIR look for ZLIB include files in DIR
   --with-z-libdir=DIR     look for ZLIB libraries in DIR
   --without-z             don't use ZLIB library
@@ -3544,6 +3544,9 @@ Optional Packages:
   --with-fltk-prefix=PFX  prefix where FLTK is installed (optional)
   --with-fltk-exec-prefix=PFX
                           exec prefix where FLTK is installed (optional)
+  --with-system-freefont=DIR
+                          use FreeSans fonts in DIR (default: install and use
+                          internal copy)
   --with-qrupdate-includedir=DIR
                           look for qrupdate include files in DIR
   --with-qrupdate-libdir=DIR
@@ -8534,7 +8537,7 @@ printf "%s\n" "defining octfiledir to be $octfiledir" >&6; }
 
 
 ## Directories that Octave should search for object files that will be
-## dynamically loaded and that are specific to this site (i.e. customizations),
+## dynamically loaded and that are specific to this site (i.e., customizations),
 ## before consulting ${octfiledir}.  This should be a colon-separated list of
 ## directories.
 
@@ -8577,7 +8580,7 @@ printf "%s\n" "defining fcnfiledir to be $fcnfiledir" >&6; }
 
 
 ## Directories that Octave should search for function files specific to this
-## site (i.e. customizations), before consulting ${fcnfiledir}.
+## site (i.e., customizations), before consulting ${fcnfiledir}.
 ## This should be a colon-separated list of directories.
 
   : ${localfcnfiledir='${datadir}/octave/site/m'}
@@ -10367,7 +10370,7 @@ else
 fi
 
 
-### Path separator.
+### Determine path separator.
 
 sepchar=':'
 
@@ -10400,9 +10403,6 @@ printf "%s\n" "#define SEPCHAR_STR \"$sepchar\"" >>confdefs.h
 
 
 ### Define the path to the shell on the host system.
-### Most systems will ensure /bin/sh is the default shell so this can be safely
-### ignored by almost everyone.  However, when building for Android, for
-### example, this will need to be set.
 SHELL_PATH=/bin/sh
 
 # Check whether --with-shell was given.
@@ -10423,46 +10423,6 @@ case $with_shell in
 esac
 
 printf "%s\n" "#define SHELL_PATH \"$SHELL_PATH\"" >>confdefs.h
-
-
-### Use the system-wide installation of GNU FreeFont if the user requests it.
-### By default, Octave includes its own copy of the FreeSans font, which it
-### installs in its own directory for use as a fallback default font.  If this
-### configuration option is used, then do not install our own copy of the fonts
-### and assume they can be found in the provided system directory.
-SYSTEM_FREEFONT_DIR=
-
-# Check whether --with-system-freefont was given.
-if test ${with_system_freefont+y}
-then :
-  withval=$with_system_freefont;
-fi
-
-case $with_system_freefont in
-  no | "")
-    SYSTEM_FREEFONT_DIR=
-    ;;
-  yes)
-    as_fn_error $? "directory argument required for --with-system-freefont" "$LINENO" 5
-    ;;
-  *)
-    SYSTEM_FREEFONT_DIR=$with_system_freefont
-    ;;
-esac
-if test -n "$SYSTEM_FREEFONT_DIR"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: configuring Octave to use system fonts in $SYSTEM_FREEFONT_DIR" >&5
-printf "%s\n" "$as_me: configuring Octave to use system fonts in $SYSTEM_FREEFONT_DIR" >&6;}
-
-printf "%s\n" "#define SYSTEM_FREEFONT_DIR \"$SYSTEM_FREEFONT_DIR\"" >>confdefs.h
-
-fi
- if test -z "$SYSTEM_FREEFONT_DIR"; then
-  AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE=
-  AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE='#'
-else
-  AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE='#'
-  AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE=
-fi
 
 
 ### Determine which C++ compiler to use (we expect to find g++).
@@ -11112,7 +11072,7 @@ then :
 fi
 
 
-### Check compiler capabilities.
+### Determine compiler capabilities.
 
 if test $ENABLE_STD_PMR_POLYMORPHIC_ALLOCATOR = yes; then
   ## Test for flags to fully support C++17.
@@ -17454,7 +17414,7 @@ then :
 fi
 
 
-### Determine the Fortran compiler and how to invoke it
+### Determine the Fortran compiler and how to invoke it.
 
 ## Prefer gfortran, but the user's F77 environment variable will override.
 ac_ext=f
@@ -18638,7 +18598,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-### Must appear after checks for Fortran compiler.
+## Must appear after checks for Fortran compiler.
 
   F77_TOLOWER=yes
   F77_APPEND_UNDERSCORE=yes
@@ -18921,7 +18881,7 @@ printf "%s\n" "$as_me: defining FFLAGS to be $FFLAGS" >&6;}
 
 
 
-### Must appear after checks for compilers.
+## Must appear after checks for all compilers.
 
   ### Set system-dependent options for building shared libraries.
   ### These are used by mkoctfile to create dynamically loadable
@@ -19239,7 +19199,7 @@ printf "%s\n" "#define OCTAVE_SIZEOF_IDX_TYPE $octave_sizeof_octave_idx_type" >>
 printf "%s\n" "#define OCTAVE_IDX_TYPE $OCTAVE_IDX_TYPE" >>confdefs.h
 
 
-### Check for pthread library
+### Check for pthread library.
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for a sed that does not truncate output" >&5
 printf %s "checking for a sed that does not truncate output... " >&6; }
@@ -20226,7 +20186,6 @@ else
 fi
 
 
-
 ### Test whether the compiler supports OpenMP.
 
 ENABLE_OPENMP=no
@@ -20425,7 +20384,7 @@ printf "%s\n" "#define OCTAVE_ENABLE_OPENMP 1" >>confdefs.h
 
 fi
 
-### Start determination of shared vs. static libraries
+### Start determination of shared vs. static libraries.
 
 ## Use -static if compiling on Alpha OSF/1 1.3 systems.
 case $canonical_host_type in
@@ -35031,7 +34990,6 @@ if test $STATIC_LIBS = no && test $SHARED_LIBS = no; then
   as_fn_error $? "You can't disable building both static AND shared libraries!" "$LINENO" 5
 fi
 
-
 ### More configure argument checking related to linking
 
 case $host_os in
@@ -35078,7 +35036,7 @@ else
 fi
 
 
-### Check for BLAS and LAPACK libraries:
+### Check for BLAS and LAPACK libraries.
 
 ## Need to adjust FFLAGS to include correct integer size.
 save_FFLAGS="$FFLAGS"
@@ -40264,8 +40222,7 @@ else
 fi
 
 
-### Dynamic linking is now enabled only if we are building shared
-### libs and some API for dynamic linking has been detected.
+### Set options for dynamic linking if enabled.
 
 
 RDYNAMIC_FLAG=
@@ -48479,8 +48436,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:48482: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:48483: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:48439: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:48440: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -48506,7 +48463,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:48509: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:48466: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -48684,7 +48641,7 @@ fi
 
         fi
       fi
-      echo "$as_me:48687: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:48644: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -53862,8 +53819,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:53865: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:53866: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:53822: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:53823: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -53889,7 +53846,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:53892: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:53849: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -54067,7 +54024,7 @@ fi
 
         fi
       fi
-      echo "$as_me:54070: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:54027: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -54327,8 +54284,8 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:54330: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:54331: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:54287: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:54288: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -54354,7 +54311,7 @@ rm -rf conftest*
 
           ;;
       esac
-      echo "$as_me:54357: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:54314: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -54532,7 +54489,7 @@ fi
 
         fi
       fi
-      echo "$as_me:54535: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:54492: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 printf %s "checking whether POSIX threads API is available... " >&6; }
@@ -78978,7 +78935,278 @@ fi
 printf "%s\n" "#define HAVE_DECL_SYS_SIGLIST $ac_have_decl" >>confdefs.h
 
 
-### Check for the Qhull library.
+### Configure Bison as push or pull parser.
+
+ENABLE_COMMAND_LINE_PUSH_PARSER=yes
+# Check whether --enable-command-line-push-parser was given.
+if test ${enable_command_line_push_parser+y}
+then :
+  enableval=$enable_command_line_push_parser; if test "$enableval" = no; then ENABLE_COMMAND_LINE_PUSH_PARSER=no; fi
+fi
+
+if test $ENABLE_COMMAND_LINE_PUSH_PARSER = yes; then
+
+printf "%s\n" "#define OCTAVE_ENABLE_COMMAND_LINE_PUSH_PARSER 1" >>confdefs.h
+
+fi
+
+### Configure compilation of *experimental* Virtual Machine evaluator.
+
+ENABLE_VM_EVALUATOR=yes
+# Check whether --enable-vm-evaluator was given.
+if test ${enable_vm_evaluator+y}
+then :
+  enableval=$enable_vm_evaluator; if test "$enableval" = no; then ENABLE_VM_EVALUATOR=no; fi
+fi
+
+if test $ENABLE_VM_EVALUATOR = yes; then
+
+printf "%s\n" "#define OCTAVE_ENABLE_VM_EVALUATOR 1" >>confdefs.h
+
+fi
+
+### Check for PCRE regex library.
+
+
+
+# Check whether --with-pcre-includedir was given.
+if test ${with_pcre_includedir+y}
+then :
+  withval=$with_pcre_includedir; PCRE_CPPFLAGS="-I$withval"
+fi
+
+
+
+
+# Check whether --with-pcre-libdir was given.
+if test ${with_pcre_libdir+y}
+then :
+  withval=$with_pcre_libdir; PCRE_LDFLAGS="-L$withval"
+fi
+
+
+
+
+# Check whether --with-pcre was given.
+if test ${with_pcre+y}
+then :
+  withval=$with_pcre; with_pcre=$withval
+else $as_nop
+  with_pcre=yes
+fi
+
+
+  ac_octave_pcre_pkg_check=no
+  PCRE_LIBS=
+  warn_pcre=""
+  case $with_pcre in
+    no)
+      as_fn_error $? "--without-pcre specified but PCRE is required." "$LINENO" 5
+    ;;
+    yes | "")
+      ac_octave_pcre_pkg_check=yes
+      PCRE_LIBS="-lpcre"
+    ;;
+    -* | */* | *.a | *.so | *.so.* | *.o)
+      PCRE_LIBS="$with_pcre"
+    ;;
+    *)
+      PCRE_LIBS="-l$with_pcre"
+    ;;
+  esac
+
+  if test $ac_octave_pcre_pkg_check = yes; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpcre\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libpcre") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+
+      if test -z "$PCRE_CPPFLAGS"; then
+        PCRE_CPPFLAGS="$($PKG_CONFIG --cflags-only-I libpcre | $SED -e 's/^ *$//')"
+      fi
+      if test -z "$PCRE_LDFLAGS"; then
+        PCRE_LDFLAGS="$($PKG_CONFIG --libs-only-L libpcre | $SED -e 's/^ *$//')"
+      fi
+      PCRE_LIBS="$($PKG_CONFIG --libs-only-l libpcre | $SED -e 's/^ *$//')"
+
+fi
+  fi
+
+  if test -n "$PCRE_LIBS"; then
+    ac_octave_save_CPPFLAGS="$CPPFLAGS"
+    ac_octave_save_LDFLAGS="$LDFLAGS"
+    ac_octave_save_LIBS="$LIBS"
+    CPPFLAGS="$PCRE_CPPFLAGS $CPPFLAGS"
+    LDFLAGS="$PCRE_LDFLAGS $LDFLAGS"
+    LIBS="$PCRE_LIBS $LIBS"
+
+    ac_octave_pcre_check_for_lib=no
+           for ac_header in pcre.h pcre/pcre.h
+do :
+  as_ac_Header=`printf "%s\n" "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"
+then :
+  cat >>confdefs.h <<_ACEOF
+#define `printf "%s\n" "HAVE_$ac_header" | $as_tr_cpp` 1
+_ACEOF
+ ac_octave_pcre_check_for_lib=yes; break
+fi
+
+done
+    if test $ac_octave_pcre_check_for_lib = yes; then
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcre_compile in $PCRE_LIBS" >&5
+printf %s "checking for pcre_compile in $PCRE_LIBS... " >&6; }
+if test ${octave_cv_lib_pcre+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char pcre_compile ();
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main (void)
+{
+return pcre_compile ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  octave_cv_lib_pcre=yes
+else $as_nop
+  octave_cv_lib_pcre=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $octave_cv_lib_pcre" >&5
+printf "%s\n" "$octave_cv_lib_pcre" >&6; }
+      if test "$octave_cv_lib_pcre" = yes; then
+
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether PCRE library was compiled with UTF support" >&5
+printf %s "checking whether PCRE library was compiled with UTF support... " >&6; }
+if test ${octave_cv_lib_pcre_ok+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+    if test "$cross_compiling" = yes
+then :
+  octave_cv_lib_pcre_ok=yes
+else $as_nop
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+        #include <stdio.h>
+        #if defined (HAVE_PCRE_H)
+        #  include <pcre.h>
+        #elif defined (HAVE_PCRE_PCRE_H)
+        #  include <pcre/pcre.h>
+        #endif
+
+#ifdef F77_DUMMY_MAIN
+
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+
+#endif
+int
+main (void)
+{
+
+        const char *pattern = "test";
+        const char *err;
+        int erroffset;
+        pcre *data = pcre_compile (pattern, PCRE_UTF8, &err, &erroffset, nullptr);
+        return (! data);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_run "$LINENO"
+then :
+  octave_cv_lib_pcre_ok=yes
+else $as_nop
+  octave_cv_lib_pcre_ok=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $octave_cv_lib_pcre_ok" >&5
+printf "%s\n" "$octave_cv_lib_pcre_ok" >&6; }
+  if test $octave_cv_lib_pcre_ok = yes; then
+
+    :
+  else
+    as_fn_error $? "PCRE library must be built with UTF support (--enable-utf)" "$LINENO" 5
+    :
+  fi
+
+
+      else
+        PCRE_LIBS=
+      fi
+    else
+      octave_cv_lib_pcre=no
+      PCRE_LIBS=
+    fi
+
+    CPPFLAGS="$ac_octave_save_CPPFLAGS"
+    LDFLAGS="$ac_octave_save_LDFLAGS"
+    LIBS="$ac_octave_save_LIBS"
+  else
+    octave_cv_lib_pcre=no
+  fi
+
+
+    if test $octave_cv_lib_pcre = no; then
+      as_fn_error $? "to build Octave, you must have the PCRE library and header files installed" "$LINENO" 5
+    fi
+
+  if test -n "$warn_pcre"; then
+
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: $warn_pcre" >&5
+printf "%s\n" "$as_me: WARNING: $warn_pcre" >&2;}
+
+
+  fi
+
+
+### Check for Qhull library.
 
 QHULL_CPPFLAGS=
 QHULL_LDFLAGS=
@@ -79290,248 +79518,7 @@ printf "%s\n" "$as_me: WARNING: $warn_qhull_r" >&2;}
 
 
 
-### Check for PCRE regex library.
-
-
-
-# Check whether --with-pcre-includedir was given.
-if test ${with_pcre_includedir+y}
-then :
-  withval=$with_pcre_includedir; PCRE_CPPFLAGS="-I$withval"
-fi
-
-
-
-
-# Check whether --with-pcre-libdir was given.
-if test ${with_pcre_libdir+y}
-then :
-  withval=$with_pcre_libdir; PCRE_LDFLAGS="-L$withval"
-fi
-
-
-
-
-# Check whether --with-pcre was given.
-if test ${with_pcre+y}
-then :
-  withval=$with_pcre; with_pcre=$withval
-else $as_nop
-  with_pcre=yes
-fi
-
-
-  ac_octave_pcre_pkg_check=no
-  PCRE_LIBS=
-  warn_pcre=""
-  case $with_pcre in
-    no)
-      as_fn_error $? "--without-pcre specified but PCRE is required." "$LINENO" 5
-    ;;
-    yes | "")
-      ac_octave_pcre_pkg_check=yes
-      PCRE_LIBS="-lpcre"
-    ;;
-    -* | */* | *.a | *.so | *.so.* | *.o)
-      PCRE_LIBS="$with_pcre"
-    ;;
-    *)
-      PCRE_LIBS="-l$with_pcre"
-    ;;
-  esac
-
-  if test $ac_octave_pcre_pkg_check = yes; then
-    if test -n "$PKG_CONFIG" && \
-    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libpcre\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libpcre") 2>&5
-  ac_status=$?
-  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-
-      if test -z "$PCRE_CPPFLAGS"; then
-        PCRE_CPPFLAGS="$($PKG_CONFIG --cflags-only-I libpcre | $SED -e 's/^ *$//')"
-      fi
-      if test -z "$PCRE_LDFLAGS"; then
-        PCRE_LDFLAGS="$($PKG_CONFIG --libs-only-L libpcre | $SED -e 's/^ *$//')"
-      fi
-      PCRE_LIBS="$($PKG_CONFIG --libs-only-l libpcre | $SED -e 's/^ *$//')"
-
-fi
-  fi
-
-  if test -n "$PCRE_LIBS"; then
-    ac_octave_save_CPPFLAGS="$CPPFLAGS"
-    ac_octave_save_LDFLAGS="$LDFLAGS"
-    ac_octave_save_LIBS="$LIBS"
-    CPPFLAGS="$PCRE_CPPFLAGS $CPPFLAGS"
-    LDFLAGS="$PCRE_LDFLAGS $LDFLAGS"
-    LIBS="$PCRE_LIBS $LIBS"
-
-    ac_octave_pcre_check_for_lib=no
-           for ac_header in pcre.h pcre/pcre.h
-do :
-  as_ac_Header=`printf "%s\n" "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_compile "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-if eval test \"x\$"$as_ac_Header"\" = x"yes"
-then :
-  cat >>confdefs.h <<_ACEOF
-#define `printf "%s\n" "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
- ac_octave_pcre_check_for_lib=yes; break
-fi
-
-done
-    if test $ac_octave_pcre_check_for_lib = yes; then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcre_compile in $PCRE_LIBS" >&5
-printf %s "checking for pcre_compile in $PCRE_LIBS... " >&6; }
-if test ${octave_cv_lib_pcre+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char pcre_compile ();
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main (void)
-{
-return pcre_compile ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  octave_cv_lib_pcre=yes
-else $as_nop
-  octave_cv_lib_pcre=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $octave_cv_lib_pcre" >&5
-printf "%s\n" "$octave_cv_lib_pcre" >&6; }
-      if test "$octave_cv_lib_pcre" = yes; then
-
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether PCRE library was compiled with UTF support" >&5
-printf %s "checking whether PCRE library was compiled with UTF support... " >&6; }
-if test ${octave_cv_lib_pcre_ok+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-    if test "$cross_compiling" = yes
-then :
-  octave_cv_lib_pcre_ok=yes
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-        #include <stdio.h>
-        #if defined (HAVE_PCRE_H)
-        #  include <pcre.h>
-        #elif defined (HAVE_PCRE_PCRE_H)
-        #  include <pcre/pcre.h>
-        #endif
-
-#ifdef F77_DUMMY_MAIN
-
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-
-#endif
-int
-main (void)
-{
-
-        const char *pattern = "test";
-        const char *err;
-        int erroffset;
-        pcre *data = pcre_compile (pattern, PCRE_UTF8, &err, &erroffset, nullptr);
-        return (! data);
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_run "$LINENO"
-then :
-  octave_cv_lib_pcre_ok=yes
-else $as_nop
-  octave_cv_lib_pcre_ok=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-    ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $octave_cv_lib_pcre_ok" >&5
-printf "%s\n" "$octave_cv_lib_pcre_ok" >&6; }
-  if test $octave_cv_lib_pcre_ok = yes; then
-
-    :
-  else
-    as_fn_error $? "PCRE library must be built with UTF support (--enable-utf)" "$LINENO" 5
-    :
-  fi
-
-
-      else
-        PCRE_LIBS=
-      fi
-    else
-      octave_cv_lib_pcre=no
-      PCRE_LIBS=
-    fi
-
-    CPPFLAGS="$ac_octave_save_CPPFLAGS"
-    LDFLAGS="$ac_octave_save_LDFLAGS"
-    LIBS="$ac_octave_save_LIBS"
-  else
-    octave_cv_lib_pcre=no
-  fi
-
-
-    if test $octave_cv_lib_pcre = no; then
-      as_fn_error $? "to build Octave, you must have the PCRE library and header files installed" "$LINENO" 5
-    fi
-
-  if test -n "$warn_pcre"; then
-
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: $warn_pcre" >&5
-printf "%s\n" "$as_me: WARNING: $warn_pcre" >&2;}
-
-
-  fi
-
-
-### Check for RapidJSON header only library.
+### Check for RapidJSON header-only library.
 
 check_for_rapidjson=yes
 # Check whether --enable-rapidjson was given.
@@ -79887,21 +79874,6 @@ printf "%s\n" "$as_me: WARNING: $warn_termlibs" >&2;}
 
 
 
-
-### Use push parser by default now.
-
-ENABLE_COMMAND_LINE_PUSH_PARSER=yes
-# Check whether --enable-command-line-push-parser was given.
-if test ${enable_command_line_push_parser+y}
-then :
-  enableval=$enable_command_line_push_parser; if test "$enableval" = no; then ENABLE_COMMAND_LINE_PUSH_PARSER=no; fi
-fi
-
-if test $ENABLE_COMMAND_LINE_PUSH_PARSER = yes; then
-
-printf "%s\n" "#define OCTAVE_ENABLE_COMMAND_LINE_PUSH_PARSER 1" >>confdefs.h
-
-fi
 
 ### Check for ZLIB library.
 
@@ -80607,7 +80579,6 @@ printf "%s\n" "#define HAVE_HDF5_INT2FLOAT_CONVERSIONS 1" >>confdefs.h
 fi
 
 ### Check for FFTW library.
-### Default to Fortran FFTPACK if it is not available.
 
 ## Check for FFTW header and library.
 
@@ -80961,7 +80932,7 @@ else
       build_fftw_threads=no
 fi
 
-## Check for the multithreaded FFTW library.
+## Check for multithreaded FFTW library.
 ## Fallback to singlethreaded if not found or disabled.
 if test $build_fftw_threads = yes; then
 
@@ -81426,7 +81397,7 @@ printf "%s\n" "$as_me: WARNING: $warn_glpk" >&2;}
 LIBS="$save_LIBS"
 CPPFLAGS="$save_CPPFLAGS"
 
-### Checks for cURL header and library.
+### Check for cURL library existence and functionality.
 
 save_CPPFLAGS="$CPPFLAGS"
 save_LIBS="$LIBS"
@@ -81853,7 +81824,7 @@ printf "%s\n" "$as_me: WARNING: $warn_sndfile" >&2;}
   fi
 
 
-### Check for PortAudio
+### Check for PortAudio library.
 
 
 
@@ -82016,7 +81987,7 @@ printf "%s\n" "$as_me: WARNING: $warn_portaudio" >&2;}
   fi
 
 
-### Check for either of Graphics/ImageMagick++ libraries.
+### Check for either of GraphicsMagick++/ImageMagick++ libraries.
 
 check_magick=yes
 use_magick=no
@@ -82150,7 +82121,7 @@ fi
 
 
 
-### Check for X11 libraries
+### Check for X11 libraries.
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for X" >&5
 printf %s "checking for X... " >&6; }
@@ -86854,7 +86825,7 @@ DEFAULT_TERMINAL_FONT_SIZE=10
 
 
 
-### Check for FLTK library
+### Check for FLTK library.
 
 check_fltk=yes
 build_fltk_graphics=no
@@ -87075,7 +87046,7 @@ fi
 
 
 
-### Final determination of whether OpenGL graphics can be built
+### Final determination of whether OpenGL graphics can be built.
 if test $build_qt_graphics = no && test $build_fltk_graphics = no; then
   opengl_graphics=no
 else
@@ -87120,7 +87091,43 @@ fi
 
 fi
 
-### Check for the qrupdate library
+### Use the system-wide installation of GNU FreeFont if the user requests it.
+SYSTEM_FREEFONT_DIR=
+
+# Check whether --with-system-freefont was given.
+if test ${with_system_freefont+y}
+then :
+  withval=$with_system_freefont;
+fi
+
+case $with_system_freefont in
+  no | "")
+    SYSTEM_FREEFONT_DIR=
+    ;;
+  yes)
+    as_fn_error $? "directory argument required for --with-system-freefont" "$LINENO" 5
+    ;;
+  *)
+    SYSTEM_FREEFONT_DIR=$with_system_freefont
+    ;;
+esac
+if test -n "$SYSTEM_FREEFONT_DIR"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: configuring Octave to use system fonts in $SYSTEM_FREEFONT_DIR" >&5
+printf "%s\n" "$as_me: configuring Octave to use system fonts in $SYSTEM_FREEFONT_DIR" >&6;}
+
+printf "%s\n" "#define SYSTEM_FREEFONT_DIR \"$SYSTEM_FREEFONT_DIR\"" >>confdefs.h
+
+fi
+ if test -z "$SYSTEM_FREEFONT_DIR"; then
+  AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE=
+  AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE='#'
+else
+  AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE='#'
+  AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE=
+fi
+
+
+### Check for qrupdate library.
 
 save_LIBS="$LIBS"
 LIBS="$LAPACK_LIBS $BLAS_LIBS $FLIBS $LIBS"
@@ -87486,11 +87493,11 @@ if test -n "$SUITESPARSECONFIG_LIBS" && test -n "$LIB_CLOCK_GETTIME"; then
   SUITESPARSECONFIG_LIBS="$SUITESPARSECONFIG_LIBS $LIB_CLOCK_GETTIME"
 fi
 
-### Reset below, after all checks for SuiteSparse libraries.
+## Save and restore LIBS after all checks for SuiteSparse libraries.
 suitesparse_save_LIBS="$LIBS"
 LIBS="$SUITESPARSECONFIG_LIBS $LIBS"
 
-### Check for AMD library
+### Check for AMD library.
 
 
 
@@ -87656,7 +87663,7 @@ printf "%s\n" "$as_me: WARNING: $warn_amd" >&2;}
   fi
 
 
-### Check for CAMD library
+### Check for CAMD library.
 
 
 
@@ -87822,7 +87829,7 @@ printf "%s\n" "$as_me: WARNING: $warn_camd" >&2;}
   fi
 
 
-### Check for COLAMD library
+### Check for COLAMD library.
 
 
 
@@ -87988,7 +87995,7 @@ printf "%s\n" "$as_me: WARNING: $warn_colamd" >&2;}
   fi
 
 
-### Check for CCOLAMD library
+### Check for CCOLAMD library.
 
 
 
@@ -88155,8 +88162,6 @@ printf "%s\n" "$as_me: WARNING: $warn_ccolamd" >&2;}
 
 
 ### Check for CHOLMOD library.
-### If your cholmod library requires cblas, then you will need to configure
-### with --with-cholmod="-lcholmod -lcblas".
 
 save_LIBS="$LIBS"
 LIBS="$COLAMD_LDFLAGS $COLAMD_LIBS $AMD_LDFLAGS $AMD_LIBS $LAPACK_LIBS $BLAS_LIBS $FLIBS $LIBS"
@@ -88325,7 +88330,7 @@ printf "%s\n" "$as_me: WARNING: $warn_cholmod" >&2;}
 
 LIBS="$save_LIBS"
 
-### Check for SPQR library
+### Check for SPQR library.
 
 save_LIBS="$LIBS"
 LIBS="$CHOLMOD_LIBS $LIBS"
@@ -88503,7 +88508,7 @@ printf "%s\n" "$as_me: WARNING: $warn_spqr" >&2;}
 
 LIBS="$save_LIBS"
 
-### Check for CXSparse library
+### Check for CXSparse library.
 
 
 
@@ -89261,7 +89266,7 @@ printf "%s\n" "$as_me: WARNING: $warn_klu" >&2;}
   fi
 
 
-### SUITESPARSECONFIG_LIBS added to LIBS above.
+## Restore LIBS after all suitesparse configuration tests
 LIBS="$suitesparse_save_LIBS"
 
 ## Collections of flags.
@@ -91124,7 +91129,7 @@ fi
       ## Under Win32 platform, we want JAVA_HOME to be in MSYS format; that is,
       ## without colon and backslashes, as it is also used as path separator.
       ## Use quoted paths as Java may be installed in a path with whitespaces
-      ## (e.g. C:\Program Files\Java\...).
+      ## (e.g., C:\Program Files\Java\...).
       if test -n "$JAVA_HOME"; then
         JAVA_HOME=`cd "$JAVA_HOME" && pwd`
       fi
@@ -91258,7 +91263,7 @@ printf "%s\n" "$octave_cv_java_version" >&6; }
   fi
 
   ## At this point Win32 systems have enough configuration data.
-  ## We assume that all appropriate variables (e.g. INCLUDE and LIB) already
+  ## We assume that all appropriate variables (e.g., INCLUDE and LIB) already
   ## contain the required paths to compile and link against JDK.
   case $host_os in
     msdosmsvc)
@@ -91574,7 +91579,7 @@ else
 fi
 
 
-### Determine whether libraries should be linked with visibility attributes
+### Determine whether libraries should be linked with visibility attributes.
 
 ENABLE_LIB_VISIBILITY_FLAGS=yes
 # Check whether --enable-lib-visibility-flags was given.
@@ -91622,7 +91627,7 @@ else
 fi
 
 
-### Set flags for symbol visibility
+### Set flags for symbol visibility.
 
 if test $ENABLE_LIB_VISIBILITY_FLAGS = yes; then
   EXTERNAL_DLL_DEFS="-DEXTERNAL_DLL"
@@ -92387,13 +92392,13 @@ printf "%s\n" "no" >&6; }
 
 fi
 
-### These are recommended by the gnulib bootstrap script:
+### Recommendations from the gnulib bootstrap script.
 
 GNULIB_LINK_DEPS="$FREXPF_LIBM $FREXP_LIBM $GETHOSTNAME_LIB $LIBSOCKET $LIB_CLOCK_GETTIME $LIB_CRYPTO $LIB_GETLOGIN $LIB_NANOSLEEP $LIB_SELECT $LTLIBICONV $LTLIBINTL $LTLIBTHREAD $INTL_MACOSX_LIBS"
 
-### FIXME: This is a kluge to transform $libdir/libiconv.dll.a to -liconv.
-### It would probably be better to fix gnulib to not give us an absolute
-### file name...
+## FIXME: This is a kluge to transform $libdir/libiconv.dll.a to -liconv.
+## It would probably be better to fix gnulib to not give us an absolute
+## file name...
 
 case $host_os in
   mingw*)
@@ -92410,6 +92415,8 @@ esac
 MKOCTFILE_GNULIB_LINK_DEPS="$FREXPF_LIBM $FREXP_LIBM $GETHOSTNAME_LIB $LIBSOCKET $LIB_CLOCK_GETTIME $LIB_CRYPTO $LIB_GETLOGIN $LIB_NANOSLEEP $LIB_SELECT $MKOCTFILE_LIBICONV $LIBINTL $LIBTHREAD $INTL_MACOSX_LIBS"
 
 
+
+### Set variables for link dependencies and options.
 
 BASE_LIBOCTAVE_LINK_DEPS="$CURL_LIBS $SPARSE_XLIBS $ARPACK_LIBS $QRUPDATE_LIBS $FFTW_XLIBS $LAPACK_LIBS $BLAS_LIBS $READLINE_LIBS $TERM_LIBS $LIBGLOB $PCRE_LIBS $DL_LIBS $PTHREAD_LIBS $FLIBS $LIBS"
 
@@ -92501,9 +92508,9 @@ fi
 
 
 ##############################################################################
-### Configuration tests done
+### Configuration tests done.
 
-### Restore original compilation flags
+### Restore original compilation flags.
 CFLAGS="$original_octave_configure_CFLAGS"
 CXXFLAGS="$original_octave_configure_CXXFLAGS"
 
@@ -92737,10 +92744,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${AMCOND_HAVE_ICON_TOOLS_TRUE}" && test -z "${AMCOND_HAVE_ICON_TOOLS_FALSE}"; then
   as_fn_error $? "conditional \"AMCOND_HAVE_ICON_TOOLS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE}" && test -z "${AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE}"; then
-  as_fn_error $? "conditional \"AMCOND_INSTALL_INTERNAL_FONT_FILES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCXX_TRUE}" && test -z "${am__fastdepCXX_FALSE}"; then
@@ -93067,6 +93070,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${WIN32_TERMINAL_TRUE}" && test -z "${WIN32_TERMINAL_FALSE}"; then
   as_fn_error $? "conditional \"WIN32_TERMINAL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${AMCOND_INSTALL_INTERNAL_FONT_FILES_TRUE}" && test -z "${AMCOND_INSTALL_INTERNAL_FONT_FILES_FALSE}"; then
+  as_fn_error $? "conditional \"AMCOND_INSTALL_INTERNAL_FONT_FILES\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${AMCOND_HAVE_JAVA_TRUE}" && test -z "${AMCOND_HAVE_JAVA_FALSE}"; then
@@ -96238,14 +96245,14 @@ printf "%s\n" "$as_me: WARNING: $warn_gcc_version" >&2;}
 printf "%s\n" "$as_me: WARNING: $warn_64_bit" >&2;}
       warn_msg_printed=true
     fi
-    if test -n "$warn_qhull_r"; then
-      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: $warn_qhull_r" >&5
-printf "%s\n" "$as_me: WARNING: $warn_qhull_r" >&2;}
-      warn_msg_printed=true
-    fi
     if test -n "$warn_pcre"; then
       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: $warn_pcre" >&5
 printf "%s\n" "$as_me: WARNING: $warn_pcre" >&2;}
+      warn_msg_printed=true
+    fi
+    if test -n "$warn_qhull_r"; then
+      { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: $warn_qhull_r" >&5
+printf "%s\n" "$as_me: WARNING: $warn_qhull_r" >&2;}
       warn_msg_printed=true
     fi
     if test -n "$warn_rapidjson"; then
