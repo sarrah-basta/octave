@@ -70,7 +70,7 @@ extern "C"
     v->ops->nvdestroy         = N_VDestroy_Octave;
     v->ops->nvspace           = N_VSpace_Octave;
     v->ops->nvgetarraypointer = N_VGetArrayPointer_Octave;
-    v->ops->nvsetarraypointer = N_VSetArrayPointer_Octave;
+    v->ops->nvsetarraypointer = NULL;
     v->ops->nvgetlength       = N_VGetLength_Octave;
 
     /* standard vector operations */
@@ -150,9 +150,12 @@ extern "C"
     /* Allocate memory */
     /* Create content */
     content = NULL;
-    ColumnVector data (length);
-    ColumnVector *ptr = &data;
-    content = ptr;
+    // ColumnVector data (length);
+    // ColumnVector *ptr = &data;
+    // content = ptr;
+
+    //required to call constructor with new for Sundials tests
+    content = new ColumnVector (length);
     if (content == NULL)
     {
       N_VDestroy(v);
@@ -174,18 +177,12 @@ extern "C"
     N_Vector v;
     void *content;
 
-    std::cout<<"in make\n";
-
     v = NULL;
     v = N_VNewEmpty_Octave(sunctx);
     if (v == NULL)
       return (NULL);
 
-    std::cout<<"empty created \n";
-
-    // sunindextype length = cv.numel();
     content = NULL;
-    // content = new ColumnVector(length);
     content = const_cast<ColumnVector *> (&cv);
     
     if (content == NULL)
@@ -195,9 +192,6 @@ extern "C"
     }
     /* Attach content */
     v->content = content;
-    std::cout<<"\n in make entered data: "<<&cv<<" final data : "<< NV_CONTENT_C(v);
-    std::cout<<"content attached numel:"<<cv.numel()<<" length :"<<N_VGetLength(v)<<" \n";
-
     return (v);
   }
 
@@ -265,16 +259,12 @@ N_Vector N_VClone_Octave(N_Vector w)
   std::cout<<"\n in nv_clone length : \n"<<NV_LENGTH_C(w);
   /* Create content */
   content = NULL;
-  ColumnVector *data = new ColumnVector(NV_LENGTH_C(w));
-  content = data ;
+  content = new ColumnVector (NV_LENGTH_C(w));
 
-  printf("in nvclone");
   if (content == NULL) { N_VDestroy(v); return(NULL); }
 
   /* Attach content */
-  v->content = data;
-  // std::cout<<"\n in clone entered data: "<<NV_CONTENT_C(w)<<" final data : "<< NV_CONTENT_C(v);
-  return(v);
+  v->content = content;return(v);
 }
 
 void N_VDestroy_Octave(N_Vector v)
@@ -296,34 +286,16 @@ void N_VDestroy_Octave(N_Vector v)
 
 void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw)
 {
-  printf("in nvspace length : ");
   std::cout<<NV_LENGTH_C(v)<<"\n";
   *lrw = NV_LENGTH_C(v);
   *liw = 1;
-  printf("after nvspace length ");
 
-  std::cout<<NV_LENGTH_C(v)<<"\n";
   return;
 }
 
 realtype *N_VGetArrayPointer_Octave(N_Vector v)
 {
   return((realtype *) NV_DATA_C(v));
-}
-
-void N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v)
-{
-  /* FIXME : unimplemented as of now */
-  // if (NV_LENGTH_C(v) > 0) {
-    // NV_CONTENT_C(v)->data() = *v_data;
-    ColumnVector *nv;
-    // nv = static_cast <ColumnVector *> NV_CONTENT_C(v); 
-    // std::cout<<(*nv); 
-    // nv->fill(*v_data);
-    // nv->m_slice_data = v_data;
-    std::cout<<"done"<<(*nv);
-  // }
-  return;
 }
 
 /*
@@ -397,7 +369,6 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
     (3) a,b == other, a !=b, a != -b */
 
   (*zv) = a * (*xv) + b * (*yv);
-  printf("exiting from linearsum \n");
   return;
 }
 
@@ -443,9 +414,6 @@ void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z)
 
 void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
 {
-  printf("in nvscale\n");
-  // ColumnVector *xv = new ColumnVector(NV_LENGTH_C(x));
-  // ColumnVector *zv = new ColumnVector(NV_LENGTH_C(z));
   ColumnVector *xv = const_cast <ColumnVector *> NV_CONTENT_C(x);
   ColumnVector *zv = const_cast <ColumnVector *> NV_CONTENT_C(z);
 
@@ -499,7 +467,7 @@ void N_VAddConst_Octave(N_Vector x, realtype b, N_Vector z)
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   zv = static_cast <ColumnVector *> NV_CONTENT_C(z);
 
-  (*zv) = (*xv) +b;
+  (*zv) = (*xv) + b;
   return;
 }
 
@@ -514,7 +482,6 @@ realtype N_VDotProd_Octave(N_Vector x, N_Vector y)
   yv = static_cast <ColumnVector *> NV_CONTENT_C(y);
   sum = (*xv).transpose() * (*yv);
   return(sum);
-
 }
 
 /*
@@ -535,7 +502,6 @@ realtype N_VMaxNorm_Octave(N_Vector x)
 realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
 {
   octave_value_list ov = ovl((N_VWSqrSumLocal_Octave(x, w)/(NV_LENGTH_C(x))));
-  printf("exiting from wrmsnorm \n");
   return((octave::Fsqrt(ov,1)(0)).double_value());
 }
 
@@ -551,7 +517,6 @@ realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
   (*pv) = product((*xv),(*yv));
   octave_value_list ov = ovl((*pv));
   sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
-  printf("exiting from wsqrsumlocal \n");
   return(sum);
 }
 
@@ -633,7 +598,7 @@ booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
   return no_zero_found;
 }
 
-
+/* FIXME : Same problem as Compare */
 booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
 {
   sunindextype i, N;
@@ -649,11 +614,6 @@ booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
   cd = xd = md = NULL;
 
   N  = NV_LENGTH_C(x);
-  xd = NV_DATA_C(x);
-  cd = NV_DATA_C(c);
-  md = NV_DATA_C(m);
-
-  temp = ZERO;
 
   for (sunindextype i = 0; i < N; i++) {
     (*mv)(i) = ZERO;
