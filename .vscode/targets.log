@@ -8,7 +8,7 @@ make: *** No rule to make target 'all'.  Stop.
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat Aug 27 01:37:52 2022
+# Make data base, printed on Mon Aug 29 17:52:31 2022
 
 # Variables
 
@@ -61,7 +61,7 @@ MAKEFLAGS = pqrR
 # makefile
 CURDIR := /home/sarrah/1_data/gsoc/octave
 # environment
-APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
 # environment
 LESSOPEN = | /usr/bin/lesspipe %s
 # automatic
@@ -83,13 +83,13 @@ MAKEFILE_LIST :=
 # automatic
 @F = $(notdir $@)
 # environment
-VSCODE_PID = 10778
+VSCODE_PID = 33736
 # environment
 XDG_SESSION_TYPE = x11
 # automatic
 ?D = $(patsubst %/,%,$(dir $?))
 # environment
-SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/3199,unix/pop-os:/tmp/.ICE-unix/3199
+SESSION_MANAGER = local/pop-os:@/tmp/.ICE-unix/3187,unix/pop-os:/tmp/.ICE-unix/3187
 # automatic
 *F = $(notdir $*)
 # environment
@@ -125,7 +125,7 @@ MAKEFILES :=
 # automatic
 ^F = $(notdir $^)
 # environment
-INVOCATION_ID = dc7c53a12f054b6497c115af4831fd9e
+INVOCATION_ID = 04caad3155c5422a9a3a013f4a556ea1
 # environment
 USERNAME = sarrah
 # environment
@@ -153,7 +153,7 @@ GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
 # makefile
 .DEFAULT_GOAL := 
 # environment
-SYSTEMD_EXEC_PID = 3222
+SYSTEMD_EXEC_PID = 3208
 # environment
 DISPLAY = :1
 # environment
@@ -163,9 +163,9 @@ GTK_MODULES = gail:atk-bridge:appmenu-gtk-module
 # default
 MAKE_VERSION := 4.3
 # environment
-MANAGERPID = 2953
+MANAGERPID = 2943
 # environment
-GIO_LAUNCHED_DESKTOP_FILE_PID = 10778
+GIO_LAUNCHED_DESKTOP_FILE_PID = 33736
 # environment
 _ = /usr/share/code/code
 # environment
@@ -173,7 +173,7 @@ XDG_RUNTIME_DIR = /run/user/1000
 # environment
 GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
 # environment
-JOURNAL_STREAM = 8:39750
+JOURNAL_STREAM = 8:50157
 # environment
 XDG_SESSION_CLASS = user
 # environment
@@ -252,7 +252,6 @@ GNUmakefile:
 #  Failed to be updated.
 
 # files hash-table stats:
- 
 # Load=6/1024=1%, Rehash=0, Collisions=0/15=0%
 # VPATH Search Paths
 
@@ -266,6 +265,6 @@ GNUmakefile:
 # strcache performance: lookups = 55 / hit rate = 5%
 # hash-table stats:
 # Load=52/8192=1%, Rehash=0, Collisions=0/55=0%
-# Finished Make data base on Sat Aug 27 01:37:52 2022
+# Finished Make data base on Mon Aug 29 17:52:31 2022
 
  

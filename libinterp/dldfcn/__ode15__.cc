@@ -664,9 +664,7 @@ OCTAVE_NAMESPACE_BEGIN
 
         for (octave_idx_type i = 0; i < m_num; i++)
           output.elem (0, i) = y.elem (i);
-
-        
-        printf("here line 685 succesfully\n");  
+        std::cout<<"here line 685 succesfully\n";  
 
         //Main loop
         for (octave_idx_type j = 1; j < numt && status == 0; j++)

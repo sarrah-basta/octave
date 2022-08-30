@@ -184,6 +184,7 @@ int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
     (*xv) = am->solve((*zv));
     // N_VPrint(x);
     // N_VPrint(b);
+    std::cout<<(*xv);
 
     return 1;
   }

@@ -397,7 +397,7 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
     (3) a,b == other, a !=b, a != -b */
 
   (*zv) = a * (*xv) + b * (*yv);
-
+  printf("exiting from linearsum \n");
   return;
 }
 
@@ -535,6 +535,7 @@ realtype N_VMaxNorm_Octave(N_Vector x)
 realtype N_VWrmsNorm_Octave(N_Vector x, N_Vector w)
 {
   octave_value_list ov = ovl((N_VWSqrSumLocal_Octave(x, w)/(NV_LENGTH_C(x))));
+  printf("exiting from wrmsnorm \n");
   return((octave::Fsqrt(ov,1)(0)).double_value());
 }
 
@@ -550,7 +551,7 @@ realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
   (*pv) = product((*xv),(*yv));
   octave_value_list ov = ovl((*pv));
   sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
-
+  printf("exiting from wsqrsumlocal \n");
   return(sum);
 }
 
