@@ -25,6 +25,8 @@
 #  include "config.h"
 #endif
 
+#define HAVE_SUNDIALS_SUNCONTEXT 1
+
 #include <iostream>
 #include "dColVector.h"
 #include "dMatrix.h"
@@ -361,8 +363,6 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::resfun (realtype t, N_Vector yy, N_Vector yyp, N_Vector rr,
                void *user_data)
   {
-    std::cout<<"\n ids in resfun "<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
-    std::cout<<"\n lengths in resfun "<<N_VGetLength(yy)<<N_VGetLength(yyp)<<"\n";
     IDA *self = static_cast <IDA *> (user_data);
     self->resfun_impl (t, yy, yyp, rr);
     return 0;
@@ -374,18 +374,13 @@ OCTAVE_NAMESPACE_BEGIN
   {
     ColumnVector y = IDA::NVecToCol (yy, m_num);
 
-    std::cout<<"\nnumel of y at 381 : "<<y.numel();
-
     ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-
-    std::cout<<"\nnumel of yp at 381 : "<<yp.numel();
 
     ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
     realtype *puntrr = nv_data_c (rr);
 
     for (octave_idx_type i = 0; i < m_num; i++){
-      std::cout<<"\n in resfun_imp i :"<<i<<"\n";
       puntrr[i] = res(i);
     }
 
@@ -401,7 +396,6 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::set_up (const ColumnVector& y)
   {
     N_Vector yy = ColToNVec (y, m_num);
-    std::cout<<"in set_up id of yy"<<N_VGetVectorID(yy);
 
     if (m_havejacsparse)
       {
@@ -502,8 +496,6 @@ OCTAVE_NAMESPACE_BEGIN
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
-    std::cout<<"in jacsparse nz : "<<jac.nnz()<<" nnz: "<<OCTSparseMatrix_NNZ (Jac);
-
 /* FIXME : add way to check if reallocate defined */
 // #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
     octave_f77_int_type nz = to_f77_int (jac.nnz ());
@@ -534,7 +526,6 @@ OCTAVE_NAMESPACE_BEGIN
         d[i] = jac.data (i);
       }
       printf("\n jacsparse impl run once\n");
-      std::cout<<"after jacsparse nnz : "<<OCTSparseMatrix_NNZ (Jac);
   }
 // #  endif
 
@@ -545,7 +536,6 @@ OCTAVE_NAMESPACE_BEGIN
     ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
 
     data = *punt;
-    std::cout<<"\nthe colvec is "<<data;
     return data;
   }
 
@@ -578,25 +568,13 @@ OCTAVE_NAMESPACE_BEGIN
     m_mem = IDACreate ();
 #  endif
 
-    std::cout<<"in initialize 602\n";
 
     N_Vector yy = ColToNVec (m_y0, m_num);
-
-    std::cout<<"\nlength yy 614"<<N_VGetLength(yy);
-    std::cout<<"\nentered data: "<<&m_y0<<" final data : "<< NV_CONTENT_C(yy);
-
     N_Vector yyp = ColToNVec (m_yp0, m_num);
 
-    std::cout<<"\nlength yyp 614"<<N_VGetLength(yyp);
-    std::cout<<"\nentered data: "<<&m_yp0<<" final data : "<< NV_CONTENT_C(yyp);
-
     IDA::set_userdata ();
-    std::cout<<"\nids 614"<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
-
     if (IDAInit (m_mem, IDA::resfun, m_t0, yy, yyp) != 0)
       error ("IDA not initialized");
-    std::cout<<"\nids 618"<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
-
   }
 
   void
@@ -652,7 +630,6 @@ OCTAVE_NAMESPACE_BEGIN
       status = IDA::event (event_fcn, te, ye, ie, tsol, y,
                            "init", yp, oldval, oldisterminal,
                            olddir, cont, temp, tsol, yold, num_event_args);
-    std::cout<<"in integrate";
     if (numt > 2)
       {
         // First output value
@@ -662,13 +639,11 @@ OCTAVE_NAMESPACE_BEGIN
 
         for (octave_idx_type i = 0; i < m_num; i++)
           output.elem (0, i) = y.elem (i);
-        std::cout<<"here line 685 succesfully\n";  
 
         //Main loop
         for (octave_idx_type j = 1; j < numt && status == 0; j++)
           {
             // IDANORMAL already interpolates tspan(j)
-            std::cout<<"\nids "<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
             if (IDASolve (m_mem, tspan (j), &tsol, yy, yyp, IDA_NORMAL) != 0)
               error ("IDASolve failed");
 
@@ -715,7 +690,6 @@ OCTAVE_NAMESPACE_BEGIN
                || (posdirection == 0 && tsol > tend))
                && status == 0)
           {
-            std::cout<<"\n ids "<<N_VGetVectorID(yy)<<N_VGetVectorID(yyp)<<"\n";
             if (IDASolve (m_mem, tend, &tsol, yy, yyp, IDA_ONE_STEP) != 0)
               error ("IDASolve failed");
 
@@ -1191,8 +1165,6 @@ OCTAVE_NAMESPACE_BEGIN
 
     // Initialize IDA
     dae.initialize ();
-    printf("initialized IDA succesfully here");
-    std::cout<<"ida_dfdy"<<ida_dfdy<<"\n";
 
     // Set tolerances
     realtype rel_tol = options.getfield ("RelTol").double_value ();

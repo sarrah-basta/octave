@@ -51,13 +51,13 @@ extern "C"
    * Function to create a new empty Col vector
    */
 
-    N_Vector N_VNewEmpty_Octave(SUNContext sunctx)
+    N_Vector N_VNewEmpty_Octave(SP_ARG_SUNCONTEXT)
   {
     N_Vector v;
 
     /* Create an empty vector object */
     v = NULL;
-    v = N_VNewEmpty(sunctx);
+    v = N_VNewEmpty(SP_OCTAVE_SUNCONTEXT);
     if (v == NULL)
       return (NULL);
 
@@ -130,17 +130,19 @@ extern "C"
     return(v);
   }
 
-  N_Vector N_VNew_Octave(int length, SUNContext sunctx)
+  N_Vector N_VNew_Octave(int length ARG_SUNCONTEXT)
   {
     N_Vector v;
     void *content;
-
-    if (sunctx == NULL)
+    #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+    if (nv_sunContext == NULL)
       return (NULL);
+    #endif
+    
 
     /* Create an empty vector object */
     v = NULL;
-    v = N_VNewEmpty_Octave(sunctx);
+    v = N_VNewEmpty_Octave(SP_OCTAVE_SUNCONTEXT);
     if (v == NULL)
       return (NULL);
 
@@ -150,12 +152,12 @@ extern "C"
     /* Allocate memory */
     /* Create content */
     content = NULL;
-    // ColumnVector data (length);
-    // ColumnVector *ptr = &data;
-    // content = ptr;
+    ColumnVector data (length);
+    ColumnVector *ptr = &data;
+    content = ptr;
 
     //required to call constructor with new for Sundials tests
-    content = new ColumnVector (length);
+    // content = new ColumnVector (length);
     if (content == NULL)
     {
       N_VDestroy(v);
@@ -172,13 +174,13 @@ extern "C"
    * Function to create a serial N_Vector with existing ColumnVector component
    */
 
-  N_Vector N_VMake_Octave(const ColumnVector& cv, sunindextype length, SUNContext sunctx)
+  N_Vector N_VMake_Octave(const ColumnVector& cv, sunindextype length ARG_SUNCONTEXT)
   {
     N_Vector v;
     void *content;
 
     v = NULL;
-    v = N_VNewEmpty_Octave(sunctx);
+    v = N_VNewEmpty_Octave(SP_OCTAVE_SUNCONTEXT);
     if (v == NULL)
       return (NULL);
 
@@ -239,7 +241,11 @@ N_Vector N_VCloneEmpty_Octave(N_Vector w)
 
   /* Create vector */
   v = NULL;
-  v = N_VNewEmpty_Octave(w->sunctx);
+  #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+    v = N_VNewEmpty_Octave(w->sunctx);
+  #else
+    v = N_VNewEmpty_Octave();
+  #endif
   if (v == NULL) return(NULL);
 
   /* Attach operations */
@@ -256,7 +262,6 @@ N_Vector N_VClone_Octave(N_Vector w)
   /* Create vector */
   N_Vector v = N_VCloneEmpty_Octave(w);
   if (v == NULL) return(NULL);
-  std::cout<<"\n in nv_clone length : \n"<<NV_LENGTH_C(w);
   /* Create content */
   content = NULL;
   content = new ColumnVector (NV_LENGTH_C(w));
@@ -592,7 +597,6 @@ booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
     (*yv) = (octave::Fisfinite(ov,1)(0)).column_vector_value();
     const octave_value_list ov2 = octave_value_list({(*yv),(*zv),(*yv)});
     (*zv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
-    std::cout<<(*zv)<<" "<<(*yv);
   }
 
   return no_zero_found;

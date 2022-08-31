@@ -10,3 +10,8 @@ autom4te.cache/requests
 .vscode/dryrun.log
 .vscode/targets.log
 autom4te.cache/requests
+autom4te.cache/output.8
+autom4te.cache/requests
+autom4te.cache/traces.8
+configure
+configure~

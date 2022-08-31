@@ -11,7 +11,23 @@
 #include <ov.h>
 #include <ovl.h>
 
+#define HAVE_SUNDIALS_SUNCONTEXT 1
 
+// #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+//     SUNContext nv_sunContext;
+// #endif
+
+#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+#    define SP_ARG_SUNCONTEXT SUNContext nv_sunContext
+#    define ARG_SUNCONTEXT , SUNContext nv_sunContext
+#    define OCTAVE_SUNCONTEXT , nv_sunContext
+#    define SP_OCTAVE_SUNCONTEXT  nv_sunContext
+#  else
+#    define ARG_SUNCONTEXT 
+#    define OCTAVE_SUNCONTEXT
+#    define SP_ARG_SUNCONTEXT 
+#    define SP_OCTAVE_SUNCONTEXT
+#  endif
 
 #ifdef __cplusplus  /* wrapper to enable C++ usage */
 extern "C" {
@@ -25,7 +41,6 @@ extern "C" {
  */
 
 #define NV_CONTENT_C(v)  ( (ColumnVector *)(v->content) )
-#define NV_STCONTENT_C(v) ( (ColumnVector)(v->))
 
 #define NV_LENGTH_C(v)   ( NV_CONTENT_C(v)->numel() )
 
@@ -33,9 +48,9 @@ extern "C" {
 #define NV_Ith_C(v,i)     ( NV_DATA_C(v)[i])
 typedef struct _N_VectorContent_Octave *N_VectorContent_Octave;
 
-SUNDIALS_EXPORT N_Vector N_VNew_Octave(int vec_length, SUNContext sunctx);
-SUNDIALS_EXPORT N_Vector N_VNewEmpty_Octave (SUNContext sunctx);
-SUNDIALS_EXPORT N_Vector N_VMake_Octave(const ColumnVector& v, sunindextype length, SUNContext sunctx);
+SUNDIALS_EXPORT N_Vector N_VNew_Octave(int vec_length ARG_SUNCONTEXT );
+SUNDIALS_EXPORT N_Vector N_VNewEmpty_Octave ( SP_ARG_SUNCONTEXT );
+SUNDIALS_EXPORT N_Vector N_VMake_Octave(const ColumnVector& v, sunindextype length ARG_SUNCONTEXT );
 
 SUNDIALS_EXPORT sunindextype N_VGetLength_Octave(N_Vector v);
 SUNDIALS_EXPORT void N_VPrint_Octave(N_Vector v);
