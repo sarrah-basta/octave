@@ -383,6 +383,7 @@ OCTAVE_NAMESPACE_BEGIN
     for (octave_idx_type i = 0; i < m_num; i++){
       puntrr[i] = res(i);
     }
+    printf("\n resfun impl run once\n");
 
   }
 

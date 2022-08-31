@@ -152,12 +152,12 @@ extern "C"
     /* Allocate memory */
     /* Create content */
     content = NULL;
-    ColumnVector data (length);
-    ColumnVector *ptr = &data;
-    content = ptr;
+    // ColumnVector data (length);
+    // ColumnVector *ptr = &data;
+    // content = ptr;
 
     //required to call constructor with new for Sundials tests
-    // content = new ColumnVector (length);
+    content = new ColumnVector (length);
     if (content == NULL)
     {
       N_VDestroy(v);

@@ -16,4 +16,4 @@ function [DFDY, DFDYP] = jacfunsparse (t, y, yp)
 endfunction
 
 opt = odeset ("Jacobian", @jacfunsparse, "AbsTol", 1e-7, "RelTol", 1e-7);
-[t, y] = ode15i (@rob, [0, 100], [1; 0; 0], [-1e-4; 1e-4; 0], opt);
+ode15i (@rob, [0, 100], [1; 0; 0], [-1e-4; 1e-4; 0], opt)
