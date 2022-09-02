@@ -25,8 +25,6 @@
 #  include "config.h"
 #endif
 
-#define HAVE_SUNDIALS_SUNCONTEXT 1
-
 #include <iostream>
 #include "dColVector.h"
 #include "dMatrix.h"
