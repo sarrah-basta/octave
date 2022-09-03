@@ -105,7 +105,12 @@ int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
   /* check for valid inputs */
   if ( (A == NULL) || (S == NULL) || (x == NULL) || (b == NULL) )
     return(SUNLS_MEM_NULL);
-
+  std::cout<<"The Matrix is : \n";
+  OCTSparseMatrix_Print(A);
+  std::cout<<"The solved vector x is : \n";
+  N_VPrint(x);
+  std::cout<<"The RHS b is : \n";
+  N_VPrint(b);
   ColumnVector *xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
   ColumnVector *zv = static_cast <ColumnVector *> NV_CONTENT_C(b);
 

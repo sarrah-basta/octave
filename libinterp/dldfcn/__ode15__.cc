@@ -484,14 +484,16 @@ OCTAVE_NAMESPACE_BEGIN
                        SUNMatrix& Jac)
 
   {
-    ColumnVector y = IDA::NVecToCol (yy, m_num);
+    // ColumnVector y = IDA::NVecToCol (yy, m_num);
+    ColumnVector *y = const_cast <ColumnVector *> NV_CONTENT_C(yy);
 
-    ColumnVector yp = IDA::NVecToCol (yyp, m_num);
+    // ColumnVector yp = IDA::NVecToCol (yyp, m_num);
+    ColumnVector *yp = const_cast <ColumnVector *> NV_CONTENT_C(yyp);
 
     SparseMatrix jac;
 
     if (m_havejacfcn)
-      jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
+      jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
@@ -508,22 +510,29 @@ OCTAVE_NAMESPACE_BEGIN
     //       error ("Unable to allocate sufficient memory for IDA sparse matrix");
     //   }
 // #     endif
-
+    
     OCTMatZero_Sparse (Jac);
     // We have to use "sunindextype *" here but still need to check that
     // conversion of each element to "octave_f77_int_type" is save.
-    sunindextype *colptrs = OCTSparseMatrix_IndexPointers (Jac);
-    sunindextype *rowvals = OCTSparseMatrix_IndexValues (Jac);
 
-    for (octave_f77_int_type i = 0; i < m_num + 1; i++)
-      colptrs[i] = to_f77_int (jac.cidx (i));
+    SparseMatrix *jnew = new SparseMatrix();
+    *jnew = jac;
+    SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
+    Jac->content = content;
+    // sunindextype *colptrs = OCTSparseMatrix_IndexPointers (Jac);
+    // sunindextype *rowvals = OCTSparseMatrix_IndexValues (Jac);
 
-    double *d = OCTSparseMatrix_Data (Jac);
-    for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
-      {
-        rowvals[i] = to_f77_int (jac.ridx (i));
-        d[i] = jac.data (i);
-      }
+    // for (octave_f77_int_type i = 0; i < m_num + 1; i++)
+    //   colptrs[i] = to_f77_int (jac.cidx (i));
+
+    // double *d = OCTSparseMatrix_Data (Jac);
+    // std::cout<<jac.nnz()<<"\n";
+    // for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
+    //   {
+    //     rowvals[i] = to_f77_int (jac.ridx (i));
+    //     d[i] = jac.data (i);
+    //   }
+    // std::cout<<(&jac)<<SM_CONTENT_O(Jac);
       printf("\n jacsparse impl run once\n");
   }
 // #  endif
