@@ -596,8 +596,6 @@ endfunction
 %!  ydot = [y - yp];
 %!endfunction
 
-added from here
-
 %!testif HAVE_SUNDIALS
 %! fail ("ode15i ()", "Invalid call to ode15i");
 

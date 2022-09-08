@@ -21,6 +21,11 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
+// a set of flags that would be detected by configure but I 
+// need to manually set to check all parts of the code 
+// on my system
+
+
 #if defined (HAVE_CONFIG_H)
 #  include "config.h"
 #endif
@@ -31,10 +36,6 @@
 #include "dSparse.h"
 #include "f77-fcn.h"
 #include "lo-utils.h"
-#include "../../no-klu/src/nvector_octave.h"
-#include "../../no-klu/src/octmatrix_sparse.h"
-// #include "../../no-klu/src/octmatrix_dense.h"
-#include "../../no-klu/src/octlinsol_gen.h"
 
 #include "Cell.h"
 #include "defun-dld.h"
@@ -48,9 +49,9 @@
 
 #if defined (HAVE_SUNDIALS)
 
-//   if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
-//     include <nvector/nvector_serial.h>
-//   endif
+  #if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
+    #include <nvector/nvector_serial.h>
+  #endif
 
 #  if defined (HAVE_IDA_IDA_H)
 #    include <ida/ida.h>
@@ -67,6 +68,25 @@
 #    include <sunlinsol/sunlinsol_dense.h>
 #  endif
 
+#  if defined (HAVE_SUNLINSOL_SUNLINSOL_KLU_H)
+#    if defined (HAVE_KLU_H)
+#      include <klu.h>
+#    endif
+#    if defined (HAVE_KLU_KLU_H)
+#      include <klu/klu.h>
+#    endif
+#    if defined (HAVE_SUITESPARSE_KLU_H)
+#      include <suitesparse/klu.h>
+#    endif
+#    if defined (HAVE_UFPARSE_KLU_H)
+#      include <ufsparse/klu.h>
+#    endif
+#    include <sunlinsol/sunlinsol_klu.h>
+#   else
+#    include "../../no-klu/src/nvector_octave.h"
+#    include "../../no-klu/src/octmatrix_sparse.h"
+#    include "../../no-klu/src/octlinsol_gen.h"
+#  endif
 
 #endif
 
@@ -96,6 +116,16 @@ OCTAVE_NAMESPACE_BEGIN
   {
     return SUNDenseLinearSolver (y, A);
   }
+#  endif
+
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#    if ! defined (HAVE_SUNLINSOL_KLU) && defined (HAVE_SUNKLU)
+  static inline SUNLinearSolver
+  SUNLinSol_KLU (N_Vector y, SUNMatrix A)
+  {
+    return SUNKLU (y, A);
+  }
+#    endif
 #  endif
 
   static inline realtype *
@@ -235,9 +265,11 @@ OCTAVE_NAMESPACE_BEGIN
     static ColumnVector NVecToCol (N_Vector& v, octave_f77_int_type n);
 
 #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-    N_Vector ColToNVec (const ColumnVector& data, octave_f77_int_type n);
+    N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
+    N_Vector ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n);
 #  else
-    static N_Vector ColToNVec (const ColumnVector& data, octave_f77_int_type n);
+    static N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
+    static N_Vector ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n);
 #  endif
 
     void
@@ -370,13 +402,19 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::resfun_impl (realtype t, N_Vector& yy,
                     N_Vector& yyp, N_Vector& rr)
   {
+
+            std::cout<<"called at 404";
     ColumnVector y = IDA::NVecToCol (yy, m_num);
 
     ColumnVector yp = IDA::NVecToCol (yyp, m_num);
 
     ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
-    realtype *puntrr = nv_data_c (rr);
+    realtype *puntrr;
+    if(N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
+    puntrr = nv_data_c (rr);
+    else
+    puntrr = NV_DATA_S (rr);
 
     for (octave_idx_type i = 0; i < m_num; i++){
       puntrr[i] = res(i);
@@ -394,26 +432,29 @@ OCTAVE_NAMESPACE_BEGIN
   void
   IDA::set_up (const ColumnVector& y)
   {
-    N_Vector yy = ColToNVec (y, m_num);
-
     if (m_havejacsparse)
       {
 /* FIXME : figure out correct way to add this ifdef */
-// if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-// if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
+        N_Vector yy = ColToNVec_Serial (y, m_num);
+        m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
+                                          OCTAVE_SUNCONTEXT);
+#    endif     
+        if (! m_sunJacMatrix)
+          error ("Unable to create sparse Jacobian for Sundials");
+
+        m_sunLinearSolver = SUNLinSol_KLU (yy, m_sunJacMatrix
+                                           OCTAVE_SUNCONTEXT);
+        if (! m_sunLinearSolver)
+          error ("Unable to create KLU sparse solver");  
+#   else
+        N_Vector yy = ColToNVec_Octave (y, m_num);
         m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
-//   else
-//         octave_f77_int_type max_elems;
-//         if (math::int_multiply_overflow (m_num, m_num, &max_elems))
-//           error ("Unable to allocate memory for sparse Jacobian");
-
-//         m_sunJacMatrix = SUNOctMatrix (m_num, m_num, max_elems, CSC_MAT
-//                                           OCTAVE_SUNCONTEXT);
-//   endif
         if (! m_sunJacMatrix)
           error ("Unable to create sparse Jacobian for Sundials");
 
@@ -421,7 +462,7 @@ OCTAVE_NAMESPACE_BEGIN
                                            OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");
-
+#   endif
         if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
           error ("Unable to set sparse linear solver");
 
@@ -435,6 +476,7 @@ OCTAVE_NAMESPACE_BEGIN
       }
     else
       {
+        N_Vector yy = ColToNVec_Serial (y, m_num);
 
         m_sunJacMatrix = SUNDenseMatrix (m_num, m_num OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
@@ -459,8 +501,9 @@ OCTAVE_NAMESPACE_BEGIN
                       N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ)
 
   {
-    octave_f77_int_type Neq = NV_LENGTH_C (yy);
+    octave_f77_int_type Neq = N_VGetLength(yy);
 
+            std::cout<<"called at 506";
     ColumnVector y = NVecToCol (yy, Neq);
 
     ColumnVector yp = NVecToCol (yyp, Neq);
@@ -541,16 +584,39 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   {
     ColumnVector data (n);
-    ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
+    if(N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
+    {
+      ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
+      data = *punt;
+    }
+    else
+    {
+      printf("in else for nvectocol n is : %d", n);
+      realtype *punt = NV_DATA_S (v);
 
-    data = *punt;
+      for (octave_f77_int_type i = 0; i < n; i++)
+        data(i) = punt[i];
+    }  
     return data;
   }
 
   N_Vector
-  IDA::ColToNVec (const ColumnVector& data, octave_f77_int_type n)
+  IDA::ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n)
   {
     N_Vector v = N_VMake_Octave (data, n OCTAVE_SUNCONTEXT);
+
+    return v;
+  }
+
+  N_Vector
+  IDA::ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n)
+  {
+    N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
+
+    realtype *punt = NV_DATA_S (v);
+
+    for (octave_f77_int_type i = 0; i < n; i++)
+      punt[i] = data(i);
 
     return v;
   }
@@ -575,10 +641,24 @@ OCTAVE_NAMESPACE_BEGIN
 #  else
     m_mem = IDACreate ();
 #  endif
-
-
-    N_Vector yy = ColToNVec (m_y0, m_num);
-    N_Vector yyp = ColToNVec (m_yp0, m_num);
+    N_Vector yy,yyp;
+    if (m_havejacsparse){
+#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    printf("at 639");
+    yy = ColToNVec_Serial (m_y0, m_num);
+    yyp = ColToNVec_Serial (m_yp0, m_num);
+#   else
+    printf("at 643");
+    yy = ColToNVec_Octave (m_y0, m_num);
+    yyp = ColToNVec_Octave (m_yp0, m_num);
+#   endif
+    }
+    else
+    {
+      printf("at 650");
+      yy = ColToNVec_Serial (m_y0, m_num);
+      yyp = ColToNVec_Serial (m_yp0, m_num);
+    }
 
     IDA::set_userdata ();
     if (IDAInit (m_mem, IDA::resfun, m_t0, yy, yyp) != 0)
@@ -588,12 +668,23 @@ OCTAVE_NAMESPACE_BEGIN
   void
   IDA::set_tolerance (ColumnVector& abstol, realtype reltol)
   {
-    N_Vector abs_tol = ColToNVec (abstol, m_num);
+    N_Vector abs_tol;
+    if (m_havejacsparse){
+#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    abs_tol = ColToNVec_Serial (abstol, m_num);
+#   else
+    abs_tol = ColToNVec_Octave (abstol, m_num);
+#   endif
+    }
+    else
+    {
+      abs_tol = ColToNVec_Serial (abstol, m_num);
+    }    
 
     if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
       error ("IDA: Tolerance not set");
-
-    N_VDestroy_Octave (abs_tol);
+    
+    N_VDestroy (abs_tol);
   }
 
   void
@@ -623,10 +714,24 @@ OCTAVE_NAMESPACE_BEGIN
 
     realtype tsol = tspan(0);
     realtype tend = tspan(numt-1);
-
-    N_Vector yyp = ColToNVec (yp, m_num);
-
-    N_Vector yy = ColToNVec (y, m_num);
+    N_Vector yy, yyp;
+    if (m_havejacsparse){
+#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    printf("at 708");
+    yy = ColToNVec_Serial (y, m_num);
+    yyp = ColToNVec_Serial (yp, m_num);
+#   else
+    printf("at 711");
+    yy = ColToNVec_Octave (y, m_num);
+    yyp = ColToNVec_Octave (yp, m_num);
+#   endif
+    }
+    else
+    {
+      printf("at 719");
+      yy = ColToNVec_Serial (y, m_num);
+      yyp = ColToNVec_Serial (yp, m_num);
+    }
 
     // Initialize OutputFcn
     if (haveoutputfcn)
@@ -654,7 +759,7 @@ OCTAVE_NAMESPACE_BEGIN
             // IDANORMAL already interpolates tspan(j)
             if (IDASolve (m_mem, tspan (j), &tsol, yy, yyp, IDA_NORMAL) != 0)
               error ("IDASolve failed");
-
+            std::cout<<"called at 759";
             yout = NVecToCol (yy, m_num);
             ypout = NVecToCol (yyp, m_num);
             tout(j) = tsol;
@@ -710,11 +815,14 @@ OCTAVE_NAMESPACE_BEGIN
                                          olddir, temp, yold,
                                          num_event_args);
 
+            std::cout<<"called at 815";
             ypout = NVecToCol (yyp, m_num);
             cont += 1;
             output.resize (cont + 1, m_num); // This may be not efficient
             tout.resize (cont + 1);
             tout(cont) = tsol;
+
+            std::cout<<"called at 822";
             yout = NVecToCol (yy, m_num);
 
             for (octave_idx_type i = 0; i < m_num; i++)
@@ -734,13 +842,27 @@ OCTAVE_NAMESPACE_BEGIN
         if (status == 0)
           {
             // Interpolate in tend
-            N_Vector dky = N_VNew_Octave
-       (m_num OCTAVE_SUNCONTEXT);
+            N_Vector dky;
+            if (m_havejacsparse){
+        #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+            printf("at 708");
+            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+        #   else
+            printf("at 711");
+            dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+        #   endif
+            }
+            else
+            {
+              dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+            }
 
             if (IDAGetDky (m_mem, tend, 0, dky) != 0)
               error ("IDA failed to interpolate y");
 
             tout(cont) = tend;
+
+            std::cout<<"called at 862";
             yout = NVecToCol (dky, m_num);
 
             for (octave_idx_type i = 0; i < m_num; i++)
@@ -760,8 +882,7 @@ OCTAVE_NAMESPACE_BEGIN
                                        yold, num_event_args);
               }
 
-            N_VDestroy_Octave
-       (dky);
+            N_VDestroy(dky);
           }
 
         // Cleanup plotter
@@ -901,9 +1022,23 @@ OCTAVE_NAMESPACE_BEGIN
     realtype h = 0, tcur = 0;
     bool status = 0;
 
-    N_Vector dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-
-    N_Vector dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+    N_Vector dky, dkyp;
+    if (m_havejacsparse){
+#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    printf("at 708");
+    dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+    dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#   else
+    printf("at 711");
+    dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+    dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+#   endif
+    }
+    else
+    {
+      dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+      dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+    }
 
     ColumnVector yout (m_num);
     ColumnVector ypout (m_num);
@@ -934,6 +1069,7 @@ OCTAVE_NAMESPACE_BEGIN
         tout.resize (cont + 1);
 
         tout(cont) = tin + step * i;
+            std::cout<<"called at 1069";
         yout = NVecToCol (dky, m_num);
         ypout = NVecToCol (dkyp, m_num);
 
@@ -951,7 +1087,7 @@ OCTAVE_NAMESPACE_BEGIN
                                tout(cont-1), yold, num_event_args);
       }
 
-    N_VDestroy_Octave (dky);
+    N_VDestroy(dky);
 
     return status;
   }
