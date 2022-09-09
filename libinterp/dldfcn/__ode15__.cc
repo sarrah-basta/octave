@@ -147,6 +147,63 @@ OCTAVE_NAMESPACE_BEGIN
 #  endif
   }
 
+  static inline realtype *
+  nv_data_s (N_Vector& v)
+  {
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Disable warning from GCC about old-style casts in Sundials
+    // macro expansions.  Do this in a function so that this
+    // diagnostic may still be enabled for the rest of the file.
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wold-style-cast"
+#  endif
+
+    return NV_DATA_S (v);
+
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Restore prevailing warning state for remainder of the file.
+#   pragma GCC diagnostic pop
+#  endif
+  }
+
+  static inline _N_VectorContent_Serial*
+  nv_content_s (N_Vector& v)
+  {
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Disable warning from GCC about old-style casts in Sundials
+    // macro expansions.  Do this in a function so that this
+    // diagnostic may still be enabled for the rest of the file.
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wold-style-cast"
+#  endif
+
+    return NV_CONTENT_S (v);
+
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Restore prevailing warning state for remainder of the file.
+#   pragma GCC diagnostic pop
+#  endif
+  }
+
+  static inline ColumnVector *
+  nv_content_c (N_Vector& v)
+  {
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Disable warning from GCC about old-style casts in Sundials
+    // macro expansions.  Do this in a function so that this
+    // diagnostic may still be enabled for the rest of the file.
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wold-style-cast"
+#  endif
+
+    return NV_CONTENT_C (v);
+
+#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
+    // Restore prevailing warning state for remainder of the file.
+#   pragma GCC diagnostic pop
+#  endif
+  }
+
   class IDA
   {
   public:
@@ -402,8 +459,6 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::resfun_impl (realtype t, N_Vector& yy,
                     N_Vector& yyp, N_Vector& rr)
   {
-
-            std::cout<<"called at 404";
     ColumnVector y = IDA::NVecToCol (yy, m_num);
 
     ColumnVector yp = IDA::NVecToCol (yyp, m_num);
@@ -412,14 +467,16 @@ OCTAVE_NAMESPACE_BEGIN
 
     realtype *puntrr;
     if(N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
-    puntrr = nv_data_c (rr);
-    else
-    puntrr = NV_DATA_S (rr);
-
-    for (octave_idx_type i = 0; i < m_num; i++){
-      puntrr[i] = res(i);
+    {
+      ColumnVector *rest = const_cast <ColumnVector *> (nv_content_c(rr));
+      *rest = res;
     }
-    printf("\n resfun impl run once\n");
+    else
+    {
+      puntrr = NV_DATA_S (rr);
+      for (octave_idx_type i = 0; i < m_num; i++)
+        puntrr[i] = res(i);
+    }
 
   }
 
@@ -440,6 +497,7 @@ OCTAVE_NAMESPACE_BEGIN
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
+        std::cout<<"Setting up using KLU solvers";
         N_Vector yy = ColToNVec_Serial (y, m_num);
         m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
@@ -452,6 +510,7 @@ OCTAVE_NAMESPACE_BEGIN
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");  
 #   else
+        std::cout<<"Setting up using Octave solvers";
         N_Vector yy = ColToNVec_Octave (y, m_num);
         m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
@@ -502,8 +561,6 @@ OCTAVE_NAMESPACE_BEGIN
 
   {
     octave_f77_int_type Neq = N_VGetLength(yy);
-
-            std::cout<<"called at 506";
     ColumnVector y = NVecToCol (yy, Neq);
 
     ColumnVector yp = NVecToCol (yyp, Neq);
@@ -527,10 +584,8 @@ OCTAVE_NAMESPACE_BEGIN
                        SUNMatrix& Jac)
 
   {
-    // ColumnVector y = IDA::NVecToCol (yy, m_num);
     ColumnVector *y = const_cast <ColumnVector *> NV_CONTENT_C(yy);
 
-    // ColumnVector yp = IDA::NVecToCol (yyp, m_num);
     ColumnVector *yp = const_cast <ColumnVector *> NV_CONTENT_C(yyp);
 
     SparseMatrix jac;
@@ -540,19 +595,7 @@ OCTAVE_NAMESPACE_BEGIN
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
-/* FIXME : add way to check if reallocate defined */
-// #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
     octave_f77_int_type nz = to_f77_int (jac.nnz ());
-    // if (nz > OCTSparseMatrix_NNZ (Jac))
-    //   {
-    //     printf("\ntrying to reallocate memory for sparse matrix\n");
-    //     // Allocate memory for sparse Jacobian defined in user function.
-    //     // This will always be required at least once since we set the number
-    //     // of non-zero elements to zero initially.
-    //     if (OCTSparseMatrix_Reallocate (Jac, nz))
-    //       error ("Unable to allocate sufficient memory for IDA sparse matrix");
-    //   }
-// #     endif
     
     OCTMatZero_Sparse (Jac);
     // We have to use "sunindextype *" here but still need to check that
@@ -562,23 +605,7 @@ OCTAVE_NAMESPACE_BEGIN
     *jnew = jac;
     SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
     Jac->content = content;
-    // sunindextype *colptrs = OCTSparseMatrix_IndexPointers (Jac);
-    // sunindextype *rowvals = OCTSparseMatrix_IndexValues (Jac);
-
-    // for (octave_f77_int_type i = 0; i < m_num + 1; i++)
-    //   colptrs[i] = to_f77_int (jac.cidx (i));
-
-    // double *d = OCTSparseMatrix_Data (Jac);
-    // std::cout<<jac.nnz()<<"\n";
-    // for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
-    //   {
-    //     rowvals[i] = to_f77_int (jac.ridx (i));
-    //     d[i] = jac.data (i);
-    //   }
-    // std::cout<<(&jac)<<SM_CONTENT_O(Jac);
-      printf("\n jacsparse impl run once\n");
   }
-// #  endif
 
   ColumnVector
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
@@ -591,7 +618,6 @@ OCTAVE_NAMESPACE_BEGIN
     }
     else
     {
-      printf("in else for nvectocol n is : %d", n);
       realtype *punt = NV_DATA_S (v);
 
       for (octave_f77_int_type i = 0; i < n; i++)
@@ -644,18 +670,15 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector yy,yyp;
     if (m_havejacsparse){
 #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    printf("at 639");
     yy = ColToNVec_Serial (m_y0, m_num);
     yyp = ColToNVec_Serial (m_yp0, m_num);
 #   else
-    printf("at 643");
     yy = ColToNVec_Octave (m_y0, m_num);
     yyp = ColToNVec_Octave (m_yp0, m_num);
 #   endif
     }
     else
     {
-      printf("at 650");
       yy = ColToNVec_Serial (m_y0, m_num);
       yyp = ColToNVec_Serial (m_yp0, m_num);
     }
@@ -717,18 +740,15 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector yy, yyp;
     if (m_havejacsparse){
 #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    printf("at 708");
     yy = ColToNVec_Serial (y, m_num);
     yyp = ColToNVec_Serial (yp, m_num);
 #   else
-    printf("at 711");
     yy = ColToNVec_Octave (y, m_num);
     yyp = ColToNVec_Octave (yp, m_num);
 #   endif
     }
     else
     {
-      printf("at 719");
       yy = ColToNVec_Serial (y, m_num);
       yyp = ColToNVec_Serial (yp, m_num);
     }
@@ -759,7 +779,6 @@ OCTAVE_NAMESPACE_BEGIN
             // IDANORMAL already interpolates tspan(j)
             if (IDASolve (m_mem, tspan (j), &tsol, yy, yyp, IDA_NORMAL) != 0)
               error ("IDASolve failed");
-            std::cout<<"called at 759";
             yout = NVecToCol (yy, m_num);
             ypout = NVecToCol (yyp, m_num);
             tout(j) = tsol;
@@ -815,14 +834,12 @@ OCTAVE_NAMESPACE_BEGIN
                                          olddir, temp, yold,
                                          num_event_args);
 
-            std::cout<<"called at 815";
             ypout = NVecToCol (yyp, m_num);
             cont += 1;
             output.resize (cont + 1, m_num); // This may be not efficient
             tout.resize (cont + 1);
             tout(cont) = tsol;
 
-            std::cout<<"called at 822";
             yout = NVecToCol (yy, m_num);
 
             for (octave_idx_type i = 0; i < m_num; i++)
@@ -845,10 +862,8 @@ OCTAVE_NAMESPACE_BEGIN
             N_Vector dky;
             if (m_havejacsparse){
         #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-            printf("at 708");
             dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
         #   else
-            printf("at 711");
             dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
         #   endif
             }
@@ -862,7 +877,6 @@ OCTAVE_NAMESPACE_BEGIN
 
             tout(cont) = tend;
 
-            std::cout<<"called at 862";
             yout = NVecToCol (dky, m_num);
 
             for (octave_idx_type i = 0; i < m_num; i++)
@@ -1025,11 +1039,9 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector dky, dkyp;
     if (m_havejacsparse){
 #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    printf("at 708");
     dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
     dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
 #   else
-    printf("at 711");
     dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
     dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
 #   endif
@@ -1069,7 +1081,6 @@ OCTAVE_NAMESPACE_BEGIN
         tout.resize (cont + 1);
 
         tout(cont) = tin + step * i;
-            std::cout<<"called at 1069";
         yout = NVecToCol (dky, m_num);
         ypout = NVecToCol (dkyp, m_num);
 
