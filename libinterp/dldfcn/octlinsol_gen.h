@@ -29,7 +29,6 @@
 #include <sundials/sundials_nvector.h>
 // #include <sunmatrix/sunmatrix_sparse.h>
 #include "octmatrix_sparse.h"
-#include "octmatrix_dense.h"
 #include "nvector_octave.h"
 #include <dSparse.h>
 #include <dMatrix.h>

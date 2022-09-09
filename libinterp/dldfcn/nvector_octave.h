@@ -17,7 +17,7 @@
 //     SUNContext nv_sunContext;
 // #endif
 
-#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+#  if (HAVE_SUNDIALS_SUNCONTEXT)
 #    define SP_ARG_SUNCONTEXT SUNContext nv_sunContext
 #    define ARG_SUNCONTEXT , SUNContext nv_sunContext
 #    define OCTAVE_SUNCONTEXT , nv_sunContext

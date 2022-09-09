@@ -68,8 +68,16 @@ BEGIN {
     basename = files[i];
     sub (/\.cc$/, "", basename);
     print "";
-    printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/%s\n",
+    if (i==6)
+    {
+      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/__ode15__.cc %%reldir%%/nvector_octave.cpp %%reldir%%/octmatrix_sparse.cpp %%reldir%%/octlinsol_gen.cc\n",
+            basename);
+    }
+    else
+    {
+      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/%s\n",
             basename, files[i]);
+    }
     if (cppflags[i])
       {
         printf ("%%canon_reldir%%_%s_la_CPPFLAGS = $(libinterp_liboctinterp_la_CPPFLAGS) %s\n",

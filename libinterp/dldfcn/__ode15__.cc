@@ -597,7 +597,7 @@ OCTAVE_NAMESPACE_BEGIN
 
     octave_f77_int_type nz = to_f77_int (jac.nnz ());
     
-    OCTMatZero_Sparse (Jac);
+    SUNMatZero(Jac);
     // We have to use "sunindextype *" here but still need to check that
     // conversion of each element to "octave_f77_int_type" is save.
 
