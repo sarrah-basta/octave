@@ -26,10 +26,6 @@
 // on my system
 
 
-#if defined (HAVE_CONFIG_H)
-#  include "config.h"
-#endif
-
 #include <iostream>
 #include "dColVector.h"
 #include "dMatrix.h"
@@ -46,6 +42,11 @@
 #include "ovl.h"
 #include "pager.h"
 #include "parse.h"
+
+#if defined (HAVE_CONFIG_H)
+#  include "config.h"
+#  define CONFIG_H_INC 1 
+#endif
 
 #if defined (HAVE_SUNDIALS)
 
@@ -82,11 +83,10 @@
 #      include <ufsparse/klu.h>
 #    endif
 #    include <sunlinsol/sunlinsol_klu.h>
-#   else
-#    include "../../no-klu/src/nvector_octave.h"
-#    include "../../no-klu/src/octmatrix_sparse.h"
-#    include "../../no-klu/src/octlinsol_gen.h"
-#  endif
+#   endif
+
+#    include "octmatrix_sparse.h"
+#    include "octlinsol_gen.h"
 
 #endif
 
@@ -203,6 +203,7 @@ OCTAVE_NAMESPACE_BEGIN
 #   pragma GCC diagnostic pop
 #  endif
   }
+
 
   class IDA
   {
@@ -584,6 +585,46 @@ OCTAVE_NAMESPACE_BEGIN
                        SUNMatrix& Jac)
 
   {
+#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    ColumnVector y = NVecToCol (yy, m_num);
+
+    ColumnVector yp = NVecToCol (yyp, m_num);
+
+    SparseMatrix jac;
+
+    if (m_havejacfcn)
+      jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
+    else
+      jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
+
+#     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+    octave_f77_int_type nnz = to_f77_int (jac.nnz ());
+    if (nnz > SUNSparseMatrix_NNZ (Jac))
+      {
+        // Allocate memory for sparse Jacobian defined in user function.
+        // This will always be required at least once since we set the number
+        // of non-zero elements to zero initially.
+        if (SUNSparseMatrix_Reallocate (Jac, nnz))
+          error ("Unable to allocate sufficient memory for IDA sparse matrix");
+      }
+#     endif
+
+    SUNMatZero_Sparse (Jac);
+    // We have to use "sunindextype *" here but still need to check that
+    // conversion of each element to "octave_f77_int_type" is save.
+    sunindextype *colptrs = SUNSparseMatrix_IndexPointers (Jac);
+    sunindextype *rowvals = SUNSparseMatrix_IndexValues (Jac);
+
+    for (octave_f77_int_type i = 0; i < m_num + 1; i++)
+      colptrs[i] = to_f77_int (jac.cidx (i));
+
+    double *d = SUNSparseMatrix_Data (Jac);
+    for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
+      {
+        rowvals[i] = to_f77_int (jac.ridx (i));
+        d[i] = jac.data (i);
+      }
+#   else
     ColumnVector *y = const_cast <ColumnVector *> NV_CONTENT_C(yy);
 
     ColumnVector *yp = const_cast <ColumnVector *> NV_CONTENT_C(yyp);
@@ -605,6 +646,7 @@ OCTAVE_NAMESPACE_BEGIN
     *jnew = jac;
     SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
     Jac->content = content;
+#   endif   
   }
 
   ColumnVector
