@@ -2189,7 +2189,9 @@ fi
 ### Check for KLU library and header.
 
 OCTAVE_CHECK_LIB(klu, KLU,
-  [KLU library not found.  This will result in some lack of functionality for sparse matrices.],
+  [KLU library not found.  This will result in some lack of functionality for sparse matrices.
+  Sparse computations in ode15{i,s} solvers will still be supported but will suffer a hit in
+  time taken.],
   [klu.h suitesparse/klu.h klu/klu.h], [klu_solve],
   [], [don't use KLU library, disable some sparse matrix functionality])
 
@@ -2232,7 +2234,9 @@ fi
 ### Check for SUNDIALS NVECTOR serial library and header.
 
 OCTAVE_CHECK_LIB(sundials_nvecserial, [SUNDIALS NVECTOR],
-  [SUNDIALS NVECTOR serial library not found.  The solvers ode15i and ode15s will be disabled.],
+  [SUNDIALS NVECTOR serial library not found.  The solvers ode15i and ode15s will only be 
+  able to perform sparse computations with Octave's solvers instead of KLU,
+  and full computations will not be supported.],
   [nvector_serial.h nvector/nvector_serial.h], [N_VNew_Serial],
   [], [don't use SUNDIALS NVECTOR library, disable solvers ode15i and ode15s])
 
