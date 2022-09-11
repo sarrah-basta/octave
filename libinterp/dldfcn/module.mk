@@ -60,7 +60,7 @@ octlib_LTLIBRARIES += $(DLDFCN_LIBS)
 %canon_reldir%___init_gnuplot___la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) 
 %canon_reldir%___init_gnuplot___la_DEPENDENCIES = $(OCT_LINK_DEPS)
 
-%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/nvector_octave.cpp %reldir%/octmatrix_sparse.cpp %reldir%/octlinsol_gen.cc
+%canon_reldir%___ode15___la_SOURCES = %reldir%/__ode15__.cc %reldir%/oct-sundials.cc 
 %canon_reldir%___ode15___la_CPPFLAGS = $(libinterp_liboctinterp_la_CPPFLAGS) $(SUNDIALS_XCPPFLAGS)
 %canon_reldir%___ode15___la_LDFLAGS = -avoid-version -module $(NO_UNDEFINED_LDFLAG) $(SUNDIALS_XLDFLAGS) $(OCT_LINK_OPTS) $(WARN_LDFLAGS)
 %canon_reldir%___ode15___la_LIBADD = $(DLD_LIBOCTINTERP_LIBADD) $(SUNDIALS_XLIBS)

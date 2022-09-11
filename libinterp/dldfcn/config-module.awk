@@ -68,9 +68,9 @@ BEGIN {
     basename = files[i];
     sub (/\.cc$/, "", basename);
     print "";
-    if (i==6)
+    if (files[i] == "__ode15__.cc")
     {
-      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/__ode15__.cc %%reldir%%/nvector_octave.cpp %%reldir%%/octmatrix_sparse.cpp %%reldir%%/octlinsol_gen.cc\n",
+      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/__ode15__.cc %%reldir%%/oct-sundials.cc \n",
             basename);
     }
     else

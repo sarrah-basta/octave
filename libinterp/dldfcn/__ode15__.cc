@@ -21,18 +21,18 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-// a set of flags that would be detected by configure but I 
-// need to manually set to check all parts of the code 
-// on my system
-
+/* include guards so that files included 
+  in dependencies are not included again */
+#ifndef __CONFIG_H_INCLUDE_GUARD
+#define __CONFIG_H_INCLUDE_GUARD
+#if defined (HAVE_CONFIG_H)
+#  include "config.h"
+#endif
+#endif
 
 #include <iostream>
-#include "dColVector.h"
-#include "dMatrix.h"
-#include "dSparse.h"
 #include "f77-fcn.h"
 #include "lo-utils.h"
-
 #include "Cell.h"
 #include "defun-dld.h"
 #include "error.h"
@@ -43,12 +43,10 @@
 #include "pager.h"
 #include "parse.h"
 
-#if defined (HAVE_CONFIG_H)
-#  include "config.h"
-#  define CONFIG_H_INC 1 
-#endif
 
 #if defined (HAVE_SUNDIALS)
+
+#   include "oct-sundials.h"
 
   #if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
     #include <nvector/nvector_serial.h>
@@ -85,8 +83,6 @@
 #    include <sunlinsol/sunlinsol_klu.h>
 #   endif
 
-#    include "octmatrix_sparse.h"
-#    include "octlinsol_gen.h"
 
 #endif
 
@@ -474,18 +470,12 @@ OCTAVE_NAMESPACE_BEGIN
     }
     else
     {
-      puntrr = NV_DATA_S (rr);
+      puntrr = nv_data_s (rr);
       for (octave_idx_type i = 0; i < m_num; i++)
         puntrr[i] = res(i);
     }
 
   }
-
-#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-#    define OCTAVE_SUNCONTEXT , m_sunContext
-#  else
-#    define OCTAVE_SUNCONTEXT
-#  endif
 
   void
   IDA::set_up (const ColumnVector& y)
@@ -498,7 +488,7 @@ OCTAVE_NAMESPACE_BEGIN
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
-        std::cout<<"Setting up using KLU solvers";
+        std::cout<<"Setting up using KLU solvers \n";
         N_Vector yy = ColToNVec_Serial (y, m_num);
         m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
@@ -511,10 +501,9 @@ OCTAVE_NAMESPACE_BEGIN
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");  
 #   else
-        std::cout<<"Setting up using Octave solvers";
+        std::cout<<"Setting up using Octave solvers \n";
         N_Vector yy = ColToNVec_Octave (y, m_num);
-        m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0, CSC_MAT
-                                          OCTAVE_SUNCONTEXT);
+        m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
           error ("Unable to create sparse Jacobian for Sundials");
 
@@ -579,7 +568,6 @@ OCTAVE_NAMESPACE_BEGIN
                SUNDenseMatrix_Data (JJ));
   }
 
-// if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
   void
   IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
                        SUNMatrix& Jac)
@@ -625,9 +613,9 @@ OCTAVE_NAMESPACE_BEGIN
         d[i] = jac.data (i);
       }
 #   else
-    ColumnVector *y = const_cast <ColumnVector *> NV_CONTENT_C(yy);
+    ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
 
-    ColumnVector *yp = const_cast <ColumnVector *> NV_CONTENT_C(yyp);
+    ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
 
     SparseMatrix jac;
 
@@ -635,8 +623,6 @@ OCTAVE_NAMESPACE_BEGIN
       jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
     else
       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
-
-    octave_f77_int_type nz = to_f77_int (jac.nnz ());
     
     SUNMatZero(Jac);
     // We have to use "sunindextype *" here but still need to check that
@@ -655,12 +641,12 @@ OCTAVE_NAMESPACE_BEGIN
     ColumnVector data (n);
     if(N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
     {
-      ColumnVector *punt = const_cast <ColumnVector *> NV_CONTENT_C(v);
+      ColumnVector *punt = const_cast <ColumnVector *> (nv_content_c(v));
       data = *punt;
     }
     else
     {
-      realtype *punt = NV_DATA_S (v);
+      realtype *punt = nv_data_s (v);
 
       for (octave_f77_int_type i = 0; i < n; i++)
         data(i) = punt[i];
@@ -671,7 +657,7 @@ OCTAVE_NAMESPACE_BEGIN
   N_Vector
   IDA::ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n)
   {
-    N_Vector v = N_VMake_Octave (data, n OCTAVE_SUNCONTEXT);
+    N_Vector v = N_VMake_Octave (data OCTAVE_SUNCONTEXT);
 
     return v;
   }
@@ -681,7 +667,7 @@ OCTAVE_NAMESPACE_BEGIN
   {
     N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
 
-    realtype *punt = NV_DATA_S (v);
+    realtype *punt = nv_data_s (v);
 
     for (octave_f77_int_type i = 0; i < n; i++)
       punt[i] = data(i);
