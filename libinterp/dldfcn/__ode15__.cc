@@ -482,13 +482,12 @@ OCTAVE_NAMESPACE_BEGIN
   {
     if (m_havejacsparse)
       {
-/* FIXME : figure out correct way to add this ifdef */
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
 #    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
         // Initially allocate memory for 0 entries. We will reallocate when we
         // get the Jacobian matrix from the user and know the actual number of
         // entries.
-        std::cout<<"Setting up using KLU solvers \n";
+        std::cout<<"Setting up using KLU sparse solver \n";
         N_Vector yy = ColToNVec_Serial (y, m_num);
         m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
                                           OCTAVE_SUNCONTEXT);
@@ -501,7 +500,7 @@ OCTAVE_NAMESPACE_BEGIN
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");  
 #   else
-        std::cout<<"Setting up using Octave solvers \n";
+        std::cout<<"Setting up using Octave sparse solver \n";
         N_Vector yy = ColToNVec_Octave (y, m_num);
         m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
@@ -516,11 +515,6 @@ OCTAVE_NAMESPACE_BEGIN
           error ("Unable to set sparse linear solver");
 
         IDASetJacFn (m_mem, IDA::jacsparse);
-
-// else
-//         error ("SUNDIALS SUNLINSOL KLU was unavailable or disabled when "
-//                "Octave was built");
-// endif
 
       }
     else
@@ -552,9 +546,7 @@ OCTAVE_NAMESPACE_BEGIN
   {
     octave_f77_int_type Neq = N_VGetLength(yy);
     ColumnVector y = NVecToCol (yy, Neq);
-
     ColumnVector yp = NVecToCol (yyp, Neq);
-
     Matrix jac;
 
     if (m_havejacfcn)
@@ -575,9 +567,7 @@ OCTAVE_NAMESPACE_BEGIN
   {
 #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
     ColumnVector y = NVecToCol (yy, m_num);
-
     ColumnVector yp = NVecToCol (yyp, m_num);
-
     SparseMatrix jac;
 
     if (m_havejacfcn)
@@ -614,9 +604,7 @@ OCTAVE_NAMESPACE_BEGIN
       }
 #   else
     ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
-
     ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
-
     SparseMatrix jac;
 
     if (m_havejacfcn)
@@ -658,7 +646,6 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n)
   {
     N_Vector v = N_VMake_Octave (data OCTAVE_SUNCONTEXT);
-
     return v;
   }
 
@@ -666,7 +653,6 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n)
   {
     N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
-
     realtype *punt = nv_data_s (v);
 
     for (octave_f77_int_type i = 0; i < n; i++)
