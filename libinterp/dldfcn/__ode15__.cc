@@ -25,16 +25,13 @@
 
 /* include guards so that files included 
   in dependencies are not included again */
-#ifndef __CONFIG_H_INCLUDE_GUARD
-#define __CONFIG_H_INCLUDE_GUARD
 #if defined (HAVE_CONFIG_H)
 #  include "config.h"
 #endif
-#endif
 
-#include <iostream>
 #include "f77-fcn.h"
 #include "lo-utils.h"
+
 #include "Cell.h"
 #include "defun-dld.h"
 #include "error.h"
@@ -50,9 +47,9 @@
 
 #   include "oct-sundials.h"
 
-  #if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
-    #include <nvector/nvector_serial.h>
-  #endif
+#  if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
+#    include <nvector/nvector_serial.h>
+#  endif
 
 #  if defined (HAVE_IDA_IDA_H)
 #    include <ida/ida.h>
@@ -84,7 +81,6 @@
 #    endif
 #    include <sunlinsol/sunlinsol_klu.h>
 #   endif
-
 
 #endif
 
@@ -466,17 +462,16 @@ OCTAVE_NAMESPACE_BEGIN
 
     realtype *puntrr;
     if(N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
-    {
-      ColumnVector *rest = const_cast <ColumnVector *> (nv_content_c(rr));
-      *rest = res;
-    }
+      {
+        ColumnVector *rest = const_cast <ColumnVector *> (nv_content_c(rr));
+        *rest = res;
+      }
     else
-    {
-      puntrr = nv_data_s (rr);
-      for (octave_idx_type i = 0; i < m_num; i++)
-        puntrr[i] = res(i);
-    }
-
+      {
+        puntrr = nv_data_s (rr);
+        for (octave_idx_type i = 0; i < m_num; i++)
+          puntrr[i] = res(i);
+      }
   }
 
   void
@@ -501,7 +496,7 @@ OCTAVE_NAMESPACE_BEGIN
                                            OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");  
-#   else
+#  else
         std::cout<<"Setting up using Octave sparse solver \n";
         N_Vector yy = ColToNVec_Octave (y, m_num);
         m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
@@ -512,7 +507,7 @@ OCTAVE_NAMESPACE_BEGIN
                                            OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");
-#   endif
+#  endif
         if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
           error ("Unable to set sparse linear solver");
 
@@ -568,60 +563,60 @@ OCTAVE_NAMESPACE_BEGIN
 
   {
 #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    ColumnVector y = NVecToCol (yy, m_num);
-    ColumnVector yp = NVecToCol (yyp, m_num);
-    SparseMatrix jac;
+     ColumnVector y = NVecToCol (yy, m_num);
+     ColumnVector yp = NVecToCol (yyp, m_num);
+     SparseMatrix jac;
 
-    if (m_havejacfcn)
-      jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
-    else
-      jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
+     if (m_havejacfcn)
+       jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
+     else
+       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
 #     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
-    octave_f77_int_type nnz = to_f77_int (jac.nnz ());
-    if (nnz > SUNSparseMatrix_NNZ (Jac))
-      {
-        // Allocate memory for sparse Jacobian defined in user function.
-        // This will always be required at least once since we set the number
-        // of non-zero elements to zero initially.
-        if (SUNSparseMatrix_Reallocate (Jac, nnz))
-          error ("Unable to allocate sufficient memory for IDA sparse matrix");
-      }
+       octave_f77_int_type nnz = to_f77_int (jac.nnz ());
+       if (nnz > SUNSparseMatrix_NNZ (Jac))
+        {
+          // Allocate memory for sparse Jacobian defined in user function.
+          // This will always be required at least once since we set the number
+          // of non-zero elements to zero initially.
+          if (SUNSparseMatrix_Reallocate (Jac, nnz))
+            error ("Unable to allocate sufficient memory for IDA sparse matrix");
+        }
 #     endif
 
-    SUNMatZero_Sparse (Jac);
-    // We have to use "sunindextype *" here but still need to check that
-    // conversion of each element to "octave_f77_int_type" is save.
-    sunindextype *colptrs = SUNSparseMatrix_IndexPointers (Jac);
-    sunindextype *rowvals = SUNSparseMatrix_IndexValues (Jac);
+       SUNMatZero_Sparse (Jac);
+       // We have to use "sunindextype *" here but still need to check that
+       // conversion of each element to "octave_f77_int_type" is save.
+       sunindextype *colptrs = SUNSparseMatrix_IndexPointers (Jac);
+       sunindextype *rowvals = SUNSparseMatrix_IndexValues (Jac);
 
-    for (octave_f77_int_type i = 0; i < m_num + 1; i++)
-      colptrs[i] = to_f77_int (jac.cidx (i));
+       for (octave_f77_int_type i = 0; i < m_num + 1; i++)
+         colptrs[i] = to_f77_int (jac.cidx (i));
 
-    double *d = SUNSparseMatrix_Data (Jac);
-    for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
-      {
-        rowvals[i] = to_f77_int (jac.ridx (i));
-        d[i] = jac.data (i);
-      }
+       double *d = SUNSparseMatrix_Data (Jac); 
+       for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
+         {
+           rowvals[i] = to_f77_int (jac.ridx (i));
+           d[i] = jac.data (i);
+         }
 #   else
-    ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
-    ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
-    SparseMatrix jac;
+     ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
+     ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
+     SparseMatrix jac;
 
-    if (m_havejacfcn)
-      jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
-    else
-      jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
+     if (m_havejacfcn)
+       jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
+     else
+       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
     
-    SUNMatZero(Jac);
-    // We have to use "sunindextype *" here but still need to check that
-    // conversion of each element to "octave_f77_int_type" is save.
+     SUNMatZero(Jac);
+     // We have to use "sunindextype *" here but still need to check that
+     // conversion of each element to "octave_f77_int_type" is save.
 
-    SparseMatrix *jnew = new SparseMatrix();
-    *jnew = jac;
-    SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
-    Jac->content = content;
+     SparseMatrix *jnew = new SparseMatrix();
+     *jnew = jac;
+     SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
+     Jac->content = content;
 #   endif   
   }
 
@@ -630,17 +625,17 @@ OCTAVE_NAMESPACE_BEGIN
   {
     ColumnVector data (n);
     if(N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
-    {
-      ColumnVector *punt = const_cast <ColumnVector *> (nv_content_c(v));
-      data = *punt;
-    }
+      {
+        ColumnVector *punt = const_cast <ColumnVector *> (nv_content_c(v));
+        data = *punt;
+      }
     else
-    {
-      realtype *punt = nv_data_s (v);
+      {
+        realtype *punt = nv_data_s (v);
 
-      for (octave_f77_int_type i = 0; i < n; i++)
-        data(i) = punt[i];
-    }  
+        for (octave_f77_int_type i = 0; i < n; i++)
+          data(i) = punt[i];
+      }  
     return data;
   }
 
@@ -684,20 +679,21 @@ OCTAVE_NAMESPACE_BEGIN
     m_mem = IDACreate ();
 #  endif
     N_Vector yy,yyp;
-    if (m_havejacsparse){
-#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    yy = ColToNVec_Serial (m_y0, m_num);
-    yyp = ColToNVec_Serial (m_yp0, m_num);
-#   else
-    yy = ColToNVec_Octave (m_y0, m_num);
-    yyp = ColToNVec_Octave (m_yp0, m_num);
-#   endif
-    }
+    if (m_havejacsparse)
+      {
+#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+         yy = ColToNVec_Serial (m_y0, m_num);
+         yyp = ColToNVec_Serial (m_yp0, m_num);
+#       else
+         yy = ColToNVec_Octave (m_y0, m_num);
+         yyp = ColToNVec_Octave (m_yp0, m_num);
+#       endif
+      }
     else
-    {
-      yy = ColToNVec_Serial (m_y0, m_num);
-      yyp = ColToNVec_Serial (m_yp0, m_num);
-    }
+      {
+        yy = ColToNVec_Serial (m_y0, m_num);
+        yyp = ColToNVec_Serial (m_yp0, m_num);
+      }
 
     IDA::set_userdata ();
     if (IDAInit (m_mem, IDA::resfun, m_t0, yy, yyp) != 0)
@@ -708,17 +704,18 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::set_tolerance (ColumnVector& abstol, realtype reltol)
   {
     N_Vector abs_tol;
-    if (m_havejacsparse){
-#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    abs_tol = ColToNVec_Serial (abstol, m_num);
-#   else
-    abs_tol = ColToNVec_Octave (abstol, m_num);
-#   endif
-    }
+    if (m_havejacsparse)
+      {
+#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+         abs_tol = ColToNVec_Serial (abstol, m_num);
+#       else
+         abs_tol = ColToNVec_Octave (abstol, m_num);
+#       endif
+      }
     else
-    {
-      abs_tol = ColToNVec_Serial (abstol, m_num);
-    }    
+      {
+        abs_tol = ColToNVec_Serial (abstol, m_num);
+      }    
 
     if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
       error ("IDA: Tolerance not set");
@@ -754,20 +751,21 @@ OCTAVE_NAMESPACE_BEGIN
     realtype tsol = tspan(0);
     realtype tend = tspan(numt-1);
     N_Vector yy, yyp;
-    if (m_havejacsparse){
-#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    yy = ColToNVec_Serial (y, m_num);
-    yyp = ColToNVec_Serial (yp, m_num);
-#   else
-    yy = ColToNVec_Octave (y, m_num);
-    yyp = ColToNVec_Octave (yp, m_num);
-#   endif
-    }
+    if (m_havejacsparse)
+      {
+#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+         yy = ColToNVec_Serial (y, m_num);
+         yyp = ColToNVec_Serial (yp, m_num);
+#       else
+         yy = ColToNVec_Octave (y, m_num);
+         yyp = ColToNVec_Octave (yp, m_num);
+#       endif
+      }
     else
-    {
-      yy = ColToNVec_Serial (y, m_num);
-      yyp = ColToNVec_Serial (yp, m_num);
-    }
+      {
+        yy = ColToNVec_Serial (y, m_num);
+        yyp = ColToNVec_Serial (yp, m_num);
+      }
 
     // Initialize OutputFcn
     if (haveoutputfcn)
@@ -876,17 +874,18 @@ OCTAVE_NAMESPACE_BEGIN
           {
             // Interpolate in tend
             N_Vector dky;
-            if (m_havejacsparse){
-        #   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-        #   else
-            dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-        #   endif
-            }
+            if (m_havejacsparse)
+              {
+#               if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+                 dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#               else
+                 dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+#               endif
+              }
             else
-            {
-              dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-            }
+              {
+                dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+              }
 
             if (IDAGetDky (m_mem, tend, 0, dky) != 0)
               error ("IDA failed to interpolate y");
@@ -1053,20 +1052,21 @@ OCTAVE_NAMESPACE_BEGIN
     bool status = 0;
 
     N_Vector dky, dkyp;
-    if (m_havejacsparse){
-#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-    dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-#   else
-    dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-    dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-#   endif
-    }
+    if (m_havejacsparse)
+      {
+#     if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+       dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+       dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#     else
+       dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+       dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+#     endif
+      }
     else
-    {
-      dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-      dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-    }
+      {
+        dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+        dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+      }
 
     ColumnVector yout (m_num);
     ColumnVector ypout (m_num);

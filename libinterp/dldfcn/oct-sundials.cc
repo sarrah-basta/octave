@@ -1,3 +1,7 @@
+#if defined (HAVE_CONFIG_H)
+#  include "config.h"
+#endif
+
 # include "oct-sundials.h"
 
 #ifdef __cplusplus
@@ -10,7 +14,7 @@ using namespace octave;
  * Utility functions
  * -------------------------------------------------------------------------- */
 /* Private functions for special cases of vector operations */
-static void VCopy_Octave(N_Vector x, N_Vector z); 
+static void VCopy_Octave(N_Vector x, N_Vector z);
 
 /* --------------------------------------------------------------------------
  * Constructors
@@ -73,7 +77,7 @@ N_Vector_ID N_VGetVectorID_Octave([[maybe_unused]] N_Vector v)
   v->ops->nvscaleaddmulti = N_VScaleAddMulti_Octave;
   v->ops->nvdotprodmulti = NULL;
 
-  // /* vector array operations (optional) */
+  /* vector array operations (optional) */
   v->ops->nvlinearsumvectorarray = N_VLinearSumVectorArray_Octave;
   v->ops->nvscalevectorarray = N_VScaleVectorArray_Octave;
   v->ops->nvconstvectorarray = NULL;
@@ -114,7 +118,7 @@ N_Vector N_VNew_Octave(int length ARG_SUNCONTEXT)
   if (m_sunContext == NULL)
     return (NULL);
   #endif
-  
+
   /* Create an empty vector object */
   v = NULL;
   v = N_VNewEmpty_Octave(SP_OCTAVE_SUNCONTEXT);
@@ -125,16 +129,20 @@ N_Vector N_VNew_Octave(int length ARG_SUNCONTEXT)
   if (length > 0) {
 
   /* Allocate memory & Create content */
-  content = NULL;  
+  content = NULL;
   content = new ColumnVector (length);
   if (content == NULL)
-  {
-    N_VDestroy(v);
-    return (NULL);
-  }
+    {
+      N_VDestroy(v);
+      return (NULL);
+    }
   /* Attach content */
   v->content = content;
-  if(NV_DATA_C(v) == NULL) { N_VDestroy_Octave(v); return(NULL); }
+  if(NV_DATA_C(v) == NULL)
+    {
+      N_VDestroy_Octave(v);
+      return(NULL);
+    }
 
 }
 return (v);
@@ -156,12 +164,12 @@ N_Vector N_VMake_Octave(const ColumnVector& cv ARG_SUNCONTEXT)
   /* Create content to point to allocated memory */
   content = NULL;
   content = const_cast<ColumnVector *> (&cv);
-  
+
   if (content == NULL)
-  {
-    N_VDestroy(v);
-    return (NULL);
-  }
+    {
+      N_VDestroy(v);
+      return (NULL);
+    }
 
   /* Attach content */
   v->content = content;
@@ -199,7 +207,8 @@ N_Vector N_VCloneEmpty_Octave(N_Vector w)
   N_Vector v;
 
   /* Check input */
-  if (w == NULL) return(NULL);
+  if (w == NULL)
+    return(NULL);
 
   /* Create vector */
   v = NULL;
@@ -208,14 +217,15 @@ N_Vector N_VCloneEmpty_Octave(N_Vector w)
   #else
     v = N_VNewEmpty_Octave();
   #endif
-  if (v == NULL) return(NULL);
+  if (v == NULL)
+    return(NULL);
 
   /* Attach operations */
-  if (N_VCopyOps(w, v)) 
-  { 
-    N_VDestroy(v); 
-    return(NULL); 
-  }
+  if (N_VCopyOps(w, v))
+    {
+      N_VDestroy(v);
+      return(NULL);
+    }
 
   return(v);
 }
@@ -225,36 +235,48 @@ N_Vector N_VClone_Octave(N_Vector w)
   void* content;
 
   /* check inputs */
-  if (w == NULL) return(NULL);
+  if (w == NULL)
+    return(NULL);
 
   /* Create an empty clone vector */
   N_Vector v = N_VCloneEmpty_Octave(w);
-  if (v == NULL) return(NULL);
+  if (v == NULL)
+   return(NULL);
   /* Create content */
   content = NULL;
   content = new ColumnVector (NV_LENGTH_C(w));
 
-  if (content == NULL) { N_VDestroy(v); return(NULL); }
+  if (content == NULL)
+   {
+      N_VDestroy(v);
+      return(NULL);
+    }
 
   /* Attach content */
   v->content = content;
-  
+
   return(v);
 }
 
 void N_VDestroy_Octave(N_Vector v)
 {
-  if (v == NULL) return;
+  if (v == NULL)
+   return;
 
   /* free content */
-  if (v->content != NULL) {
-    // our ColumnVector was created with 'new', so use 'delete' to destroy it.
-    delete NV_CONTENT_C(v);
-    v->content = NULL;
-  }
+  if (v->content != NULL)
+   {
+      // our ColumnVector was created with 'new', so use 'delete' to destroy it.
+      delete NV_CONTENT_C(v);
+      v->content = NULL;
+    }
 
   /* free ops and vector */
-  if (v->ops != NULL) { free(v->ops); v->ops = NULL; }
+  if (v->ops != NULL)
+   {
+    free(v->ops);
+    v->ops = NULL;
+    }
   free(v);
    v = NULL;
 
@@ -288,56 +310,63 @@ void N_VLinearSum_Octave(realtype a, N_Vector x, realtype b, N_Vector y, N_Vecto
 
   /* Case: a == b == 1.0 */
 
-  if ((a == ONE) && (b == ONE)) {
-    (*zv) = (*xv) + (*yv);
-    return;
-  }
+  if ((a == ONE) && (b == ONE))
+    {
+      (*zv) = (*xv) + (*yv);
+      return;
+    }
 
   /* Cases: (1) a == 1.0, b = -1.0, (2) a == -1.0, b == 1.0 */
 
-  if ((test = ((a == ONE) && (b == -ONE))) || ((a == -ONE) && (b == ONE))) {
-    if(test == 0)
-    (*zv) = (*yv) - (*xv);
-    else
-    (*zv) = (*xv) - (*yv);
-    return;
-  }
+  if ((test = ((a == ONE) && (b == -ONE)))
+      || ((a == -ONE) && (b == ONE)))
+    {
+      if(test == 0)
+        (*zv) = (*yv) - (*xv);
+      else
+        (*zv) = (*xv) - (*yv);
+      return;
+    }
 
   /* Cases: (1) a == 1.0, b == other or 0.0, (2) a == other or 0.0, b == 1.0 */
   /* if a or b is 0.0, then user should have called N_VScale */
 
-  if ((test = (a == ONE)) || (b == ONE)) {
-    if(test == 1)
-    (*zv) = (*xv) + b * (*yv);
-    else
-    (*zv) = a * (*xv) + (*yv);
-    return;
-  }
+  if ((test = (a == ONE)) || (b == ONE))
+   {
+      if(test == 1)
+        (*zv) = (*xv) + b * (*yv);
+      else
+        (*zv) = a * (*xv) + (*yv);
+      return;
+    }
 
   /* Cases: (1) a == -1.0, b != 1.0, (2) a != 1.0, b == -1.0 */
 
-  if ((test = (a == -ONE)) || (b == -ONE)) {
-    if(test == 1)
-    (*zv) = b * (*yv) - (*xv);
-    else
-    (*zv) = a * (*xv) - (*yv);
-    return;
-  }
+  if ((test = (a == -ONE)) || (b == -ONE))
+   {
+      if(test == 1)
+        (*zv) = b * (*yv) - (*xv);
+      else
+        (*zv) = a * (*xv) - (*yv);
+      return;
+    }
 
   /* Case: a == b */
   /* catches case both a and b are 0.0 - user should have called N_VConst */
 
-  if (a == b) {
-    (*zv) = a * ((*yv) + (*xv));
-    return;
-  }
+  if (a == b)
+    {
+      (*zv) = a * ((*yv) + (*xv));
+      return;
+    }
 
   /* Case: a == -b */
 
-  if (a == -b) {
-    (*zv) = b * ((*yv) - (*xv));
-    return;
-  }
+  if (a == -b)
+   {
+      (*zv) = b * ((*yv) - (*xv));
+      return;
+    }
 
   /* Do all cases not handled above:
     (1) a == other, b == 0.0 - user should have called N_VScale
@@ -401,19 +430,19 @@ void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
 
   // checks if both NVectors z and x
   // are stored in the same place
-  if (zv == xv) {  /* BLAS usage: scale x <- cx */
-    (*xv) *= c;
-    // Not using this results in poor iterative
-    // algorthm performance
-    return;
-  }
-  if (c == ONE) {
+  if (zv == xv)
+   {  /* BLAS usage: scale x <- cx */
+      (*xv) *= c;
+      // Not using this results in poor iterative
+      // algorthm performance
+      return;
+    }
+  if (c == ONE)
     VCopy_Octave(x, z);  // substituting with (*zv) = (*xv) leads to wrong results.
-  } else if (c == -ONE) {
-    (*zv) -= (*xv);
-  } else {
+  else if (c == -ONE)
+    (*zv) -= (*xv)
+  else
     (*zv) = c * (*xv);
-  }
 
   return;
 
@@ -480,10 +509,10 @@ realtype N_VMaxNorm_Octave(N_Vector x)
   ColumnVector *xv, abret;
   realtype ret;
   xv = static_cast <ColumnVector *> NV_CONTENT_C(x);
-  abret = static_cast <ColumnVector> (xv->abs()); 
+  abret = static_cast <ColumnVector> (xv->abs());
   ColumnVector *abp = &(abret);
   ret = abp->max();
-  
+
   return(ret);
 }
 
@@ -510,7 +539,7 @@ realtype N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w)
 
   (*pv) = product((*xv),(*yv));
   octave_value_list ov = ovl((*pv));
-  sum = (octave::Fsumsq(ov,1)(0)).double_value(); 
+  sum = (octave::Fsumsq(ov,1)(0)).double_value();
   return(sum);
 }
 
@@ -594,13 +623,14 @@ booleantype N_VInvTest_Octave(N_Vector x, N_Vector z)
     no_zero_found = SUNFALSE;
   if(no_zero_found==SUNTRUE)
     (*zv) = ONE /(*xv);
-  else {
-    (*yv) = (*zv);
-    const octave_value_list ov = ovl((*zv));
-    (*yv) = (octave::Fisfinite(ov,1)(0)).column_vector_value();
-    const octave_value_list ov2 = octave_value_list({(*yv),(*zv),(*yv)});
-    (*zv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
-  }
+  else
+   {
+      (*yv) = (*zv);
+      const octave_value_list ov = ovl((*zv));
+      (*yv) = (octave::Fisfinite(ov,1)(0)).column_vector_value();
+      const octave_value_list ov2 = octave_value_list({(*yv),(*zv),(*yv)});
+      (*zv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
+    }
 
   return no_zero_found;
 }
@@ -624,11 +654,12 @@ booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m)
       continue;
 
     /* Check if a set constraint has been violated */
-    test = ((cv->abs())(i) > ONEPT5 && (*xv)(i)*(*cv)(i) <= ZERO) ||
-           ((cv->abs())(i)  > HALF   && (*xv)(i)*(*cv)(i) <  ZERO);
-    if (test) {
-      temp = (*mv)(i) = ONE;
-    }
+    test = ((cv->abs())(i) > ONEPT5 && (*xv)(i)*(*cv)(i) <= ZERO)
+             || ((cv->abs())(i)  > HALF && (*xv)(i)*(*cv)(i) <  ZERO);
+    if (test)
+     {
+        temp = (*mv)(i) = ONE;
+      }
   }
 
   /* Return false if any constraint was violated */
@@ -663,19 +694,22 @@ realtype N_VMinQuotient_Octave(N_Vector num, N_Vector denom)
 int N_VLinearCombination_Octave(int nvec, realtype* c, N_Vector* X, N_Vector z)
 {
   /* invalid number of vectors */
-  if (nvec < 1) return(-1);
+  if (nvec < 1)
+    return(-1);
 
   /* should have called N_VScale */
-  if (nvec == 1) {
-    N_VScale_Octave(c[0], X[0], z);
-    return(0);
-  }
+  if (nvec == 1)
+   {
+      N_VScale_Octave(c[0], X[0], z);
+      return(0);
+    }
 
   /* should have called N_VLinearSum */
-  if (nvec == 2) {
-    N_VLinearSum_Octave(c[0], X[0], c[1], X[1], z);
-    return(0);
-  }
+  if (nvec == 2)
+   {
+      N_VLinearSum_Octave(c[0], X[0], c[1], X[1], z);
+      return(0);
+    }
 
   ColumnVector *xv, *zv;
 
@@ -697,10 +731,11 @@ int N_VScaleAddMulti_Octave(int nvec, realtype* a, N_Vector x, N_Vector* Y, N_Ve
   if (nvec < 1) return(-1);
 
   /* should have called N_VLinearSum */
-  if (nvec == 1) {
-    N_VLinearSum_Octave(a[0], x, ONE, Y[0], Z[0]);
-    return(0);
-  }
+  if (nvec == 1)
+   {
+      N_VLinearSum_Octave(a[0], x, ONE, Y[0], Z[0]);
+      return(0);
+    }
 
   ColumnVector *xv, *zv, *yv;
 
@@ -731,20 +766,23 @@ int N_VLinearSumVectorArray_Octave(int nvec,
   int          i;
 
   /* invalid number of vectors */
-  if (nvec < 1) return(-1);
+  if (nvec < 1)
+   return(-1);
 
   /* should have called N_VLinearSum */
-  if (nvec == 1) {
-    N_VLinearSum_Octave(a, X[0], b, Y[0], Z[0]);
-    return(0);
-  }                   
+  if (nvec == 1)
+   {
+      N_VLinearSum_Octave(a, X[0], b, Y[0], Z[0]);
+      return(0);
+    }
 
-  for (i=0; i<nvec; i++) { 
-    yv = static_cast<ColumnVector *> NV_CONTENT_C(Y[i]);
-    zv = static_cast<ColumnVector *> NV_CONTENT_C(Z[i]);
-    xv = static_cast<ColumnVector *> NV_CONTENT_C(X[i]);
-    (*zv) = a * (*xv) + b * (*yv);
-  }
+  for (i=0; i<nvec; i++)
+   {
+      yv = static_cast<ColumnVector *> NV_CONTENT_C(Y[i]);
+      zv = static_cast<ColumnVector *> NV_CONTENT_C(Z[i]);
+      xv = static_cast<ColumnVector *> NV_CONTENT_C(X[i]);
+      (*zv) = a * (*xv) + b * (*yv);
+    }
 
   return(0);
 }
@@ -763,32 +801,34 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   if (nvec < 1) return(-1);
 
   /* should have called N_VScale */
-  if (nvec == 1) {
-    N_VScale_Octave(c[0], X[0], Z[0]);
-    return(0);
-  }
+  if (nvec == 1)
+   {
+      N_VScale_Octave(c[0], X[0], Z[0]);
+      return(0);
+    }
 
   /*
    * X[i] *= c[i]
    */
-  /* only checking if NVectors X and Z 
+  /* only checking if NVectors X and Z
    are stored in the same address */
-  if (xv == zv) { 
-    // (*xv) *= (*c); //this should work but doesn't, in both N_VScale
-    //                // instead results in convergence failures and wrong answer
-    for (i=0; i<nvec; i++) {
-      xd = NV_DATA_C(X[i]);
-      for (j=0; j<(zv)->numel(); j++) {
-        xd[j] *= c[i];
-      }
+  if (xv == zv)
+   {
+      // (*xv) *= (*c); //this should work but doesn't, in both N_VScale
+      //                // instead results in convergence failures and wrong answer
+      for (i=0; i<nvec; i++)
+       {
+          xd = NV_DATA_C(X[i]);
+          for (j=0; j<(zv)->numel(); j++)
+            xd[j] *= c[i];
+        }
+      return(0);
     }
-    return(0);
-  }
 
   /*
    * Z[i] = c[i] * X[i]
    */
-  (*zv) = (*c) * (*xv); 
+  (*zv) = (*c) * (*xv);
   return(0);
 }
 
@@ -799,7 +839,7 @@ int N_VScaleVectorArray_Octave(int nvec, realtype* c, N_Vector* X, N_Vector* Z)
  */
 
 
-static void VCopy_Octave(N_Vector x, N_Vector z) 
+static void VCopy_Octave(N_Vector x, N_Vector z)
 // used in N_VScale and if just do (*zv)=(*xv) results in wrong answer.
 {
   ColumnVector *xv, *zv;
@@ -827,33 +867,36 @@ int N_VEnableFusedOps_Octave(N_Vector v, booleantype tf)
   /* check that ops structure is non-NULL */
   if (v->ops == NULL) return(-1);
 
-   if (tf) {
-    /* enable all fused vector operations */
-    v->ops->nvlinearcombination = NULL;
-    v->ops->nvscaleaddmulti     = N_VScaleAddMulti_Octave;
-    v->ops->nvdotprodmulti      = NULL;
-    /* enable all vector array operations */
-    v->ops->nvlinearsumvectorarray         = N_VLinearSumVectorArray_Octave;
-    v->ops->nvscalevectorarray             = N_VScaleVectorArray_Octave;
-    v->ops->nvconstvectorarray             = NULL;
-    v->ops->nvwrmsnormvectorarray          = NULL;
-    v->ops->nvwrmsnormmaskvectorarray      = NULL;
-    v->ops->nvscaleaddmultivectorarray     = NULL;
-    v->ops->nvlinearcombinationvectorarray = NULL;
-  } else {
-    /* disable all fused vector operations */
-    v->ops->nvlinearcombination = NULL;
-    v->ops->nvscaleaddmulti     = NULL;
-    v->ops->nvdotprodmulti      = NULL;
-    /* disable all vector array operations */
-    v->ops->nvlinearsumvectorarray         = NULL;
-    v->ops->nvscalevectorarray             = NULL;
-    v->ops->nvconstvectorarray             = NULL;
-    v->ops->nvwrmsnormvectorarray          = NULL;
-    v->ops->nvwrmsnormmaskvectorarray      = NULL;
-    v->ops->nvscaleaddmultivectorarray     = NULL;
-    v->ops->nvlinearcombinationvectorarray = NULL;
-  }
+   if (tf)
+    {
+      /* enable all fused vector operations */
+      v->ops->nvlinearcombination = NULL;
+      v->ops->nvscaleaddmulti     = N_VScaleAddMulti_Octave;
+      v->ops->nvdotprodmulti      = NULL;
+      /* enable all vector array operations */
+      v->ops->nvlinearsumvectorarray         = N_VLinearSumVectorArray_Octave;
+      v->ops->nvscalevectorarray             = N_VScaleVectorArray_Octave;
+      v->ops->nvconstvectorarray             = NULL;
+      v->ops->nvwrmsnormvectorarray          = NULL;
+      v->ops->nvwrmsnormmaskvectorarray      = NULL;
+      v->ops->nvscaleaddmultivectorarray     = NULL;
+      v->ops->nvlinearcombinationvectorarray = NULL;
+    }
+  else
+   {
+      /* disable all fused vector operations */
+      v->ops->nvlinearcombination = NULL;
+      v->ops->nvscaleaddmulti     = NULL;
+      v->ops->nvdotprodmulti      = NULL;
+      /* disable all vector array operations */
+      v->ops->nvlinearsumvectorarray         = NULL;
+      v->ops->nvscalevectorarray             = NULL;
+      v->ops->nvconstvectorarray             = NULL;
+      v->ops->nvwrmsnormvectorarray          = NULL;
+      v->ops->nvwrmsnormmaskvectorarray      = NULL;
+      v->ops->nvscaleaddmultivectorarray     = NULL;
+      v->ops->nvlinearcombinationvectorarray = NULL;
+    }
 
   /* return success */
   return(0);
@@ -901,10 +944,10 @@ SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
   // creating a new SparseMatrix Octave data structure with rows and columns as specified
   content = new SparseMatrix(M, N, NNZ);
   if (content == NULL)
-  {
-    SUNMatDestroy(A);
-    return (NULL);
-  }
+    {
+      SUNMatDestroy(A);
+      return (NULL);
+    }
 
   /* Attach content */
   A->content = content;
@@ -912,7 +955,7 @@ SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
   return (A);
 }
 
-/* Functions to access the contents 
+/* Functions to access the contents
   of the sparse matrix structure */
 
 sunindextype OCTSparseMatrix_Rows(SUNMatrix A)
@@ -997,18 +1040,18 @@ void OCTMatDestroy_Sparse(SUNMatrix A)
 
   //   /* free content */
   if (A->content != NULL)
-  { 
-    /* deleting object created using new */
-    delete SM_CONTENT_O(A);
-  }
+    {
+      /* deleting object created using new */
+      delete SM_CONTENT_O(A);
+    }
   A->content = NULL;
 
   /* free ops and matrix */
   if (A->ops)
-  {
-    free(A->ops);
-    A->ops = NULL;
-  }
+    {
+      free(A->ops);
+      A->ops = NULL;
+    }
   free(A);
   A = NULL;
 
@@ -1043,18 +1086,21 @@ SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A ARG_SUNCONTEXT)
   SUNLinearSolver S;
   OCTLinearSolverContent_GEN content;
 
-  if (OCTSparseMatrix_Rows(A) != OCTSparseMatrix_Columns(A)) return(NULL);
+  if (OCTSparseMatrix_Rows(A) != OCTSparseMatrix_Columns(A))
+   return(NULL);
 
-  if ( N_VGetVectorID(y) != SUNDIALS_NVEC_CUSTOM ) 
+  if ( N_VGetVectorID(y) != SUNDIALS_NVEC_CUSTOM )
     return(NULL);
 
-  if (OCTSparseMatrix_Rows(A) != N_VGetLength(y)) return(NULL);
- 
+  if (OCTSparseMatrix_Rows(A) != N_VGetLength(y))
+   return(NULL);
+
 
   /* Create an empty linear solver */
   S = NULL;
   S = SUNLinSolNewEmpty(SP_OCTAVE_SUNCONTEXT);
-  if (S == NULL) return(NULL);
+  if (S == NULL)
+    return(NULL);
 
   /* Attach operations */
   S->ops->gettype    = OCTLinSolGetType_Gen;
@@ -1118,13 +1164,15 @@ int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A, N_Vector x,
 int OCTLinSolFree_Gen(SUNLinearSolver S)
 {
   /* return with success if already freed */
-  if (S == NULL) return(SUNLS_SUCCESS);
+  if (S == NULL)
+   return(SUNLS_SUCCESS);
 
   /* delete generic structures */
-  if (S->ops) {
-    free(S->ops);
-    S->ops = NULL;
-  }
+  if (S->ops)
+    {
+      free(S->ops);
+      S->ops = NULL;
+    }
   free(S); S = NULL;
   return(SUNLS_SUCCESS);
 }
