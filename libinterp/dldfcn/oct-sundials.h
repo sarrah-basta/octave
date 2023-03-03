@@ -28,8 +28,8 @@
  * ----------------------------------------------------------------- */
 
 #ifndef OCTAVE_OCT_SUNDIALS_H
-#define OCTAVE_OCT_SUNDIALS_H 1
-#include "octave-config.h"
+#  define OCTAVE_OCT_SUNDIALS_H 1
+#  include "octave-config.h"
 #endif
 
 #include <stdio.h>
@@ -56,13 +56,11 @@
   this. */
 
 #if defined (HAVE_SUNDIALS)
-
-#   include <sundials/sundials_math.h>
-#   include <sundials/sundials_nvector.h>
-#   include <sundials/sundials_config.h>
-#   include <sundials/sundials_linearsolver.h>
-#   include <sundials/sundials_matrix.h>
-
+#  include <sundials/sundials_math.h>
+#  include <sundials/sundials_nvector.h>
+#  include <sundials/sundials_config.h>
+#  include <sundials/sundials_linearsolver.h>
+#  include <sundials/sundials_matrix.h>
 #endif
 
 /* -----------------------------------------------------------------
@@ -84,19 +82,15 @@
  * before 6.0.0 as well.
  * ----------------------------------------------------------------- */
 #if (HAVE_SUNDIALS_SUNCONTEXT)
-# define SP_ARG_SUNCONTEXT SUNContext m_sunContext
-# define ARG_SUNCONTEXT , SUNContext m_sunContext
-# define OCTAVE_SUNCONTEXT , m_sunContext
-# define SP_OCTAVE_SUNCONTEXT  m_sunContext
+#  define SP_ARG_SUNCONTEXT SUNContext m_sunContext
+#  define ARG_SUNCONTEXT , SUNContext m_sunContext
+#  define OCTAVE_SUNCONTEXT , m_sunContext
+#  define SP_OCTAVE_SUNCONTEXT  m_sunContext
 #else
-# define ARG_SUNCONTEXT 
-# define OCTAVE_SUNCONTEXT
-# define SP_ARG_SUNCONTEXT 
-# define SP_OCTAVE_SUNCONTEXT
-#endif
-
-#ifdef __cplusplus  /* wrapper to enable C++ usage */
-extern "C" {
+#  define ARG_SUNCONTEXT 
+#  define OCTAVE_SUNCONTEXT
+#  define SP_ARG_SUNCONTEXT 
+#  define SP_OCTAVE_SUNCONTEXT
 #endif
 
 /*
@@ -114,88 +108,56 @@ extern "C" {
  * NVECTOR API functions exported for Octave's custom implementation
  * ----------------------------------------------------------------- */
 
-SUNDIALS_EXPORT N_Vector 
-N_VNew_Octave(int vec_length ARG_SUNCONTEXT );
-SUNDIALS_EXPORT N_Vector 
-N_VNewEmpty_Octave ( SP_ARG_SUNCONTEXT );
-SUNDIALS_EXPORT N_Vector 
-N_VMake_Octave(const ColumnVector& v ARG_SUNCONTEXT );
+N_Vector N_VNew_Octave(int vec_length ARG_SUNCONTEXT );
+N_Vector N_VNewEmpty_Octave ( SP_ARG_SUNCONTEXT );
+N_Vector N_VMake_Octave(const ColumnVector& v ARG_SUNCONTEXT );
 
-SUNDIALS_EXPORT sunindextype 
-N_VGetLength_Octave(N_Vector v);
-SUNDIALS_EXPORT void 
-N_VPrint_Octave(N_Vector v);
-SUNDIALS_EXPORT N_Vector_ID 
-N_VGetVectorID_Octave(N_Vector v);
-SUNDIALS_EXPORT N_Vector 
-N_VCloneEmpty_Octave(N_Vector w);
-SUNDIALS_EXPORT N_Vector 
-N_VClone_Octave(N_Vector w);
-SUNDIALS_EXPORT void 
-N_VDestroy_Octave(N_Vector v);
-SUNDIALS_EXPORT void 
-N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw);
-SUNDIALS_EXPORT double 
-*N_VGetArrayPointer_Octave(N_Vector v);
-SUNDIALS_EXPORT void 
-N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v);
+sunindextype N_VGetLength_Octave(N_Vector v);
+void N_VPrint_Octave(N_Vector v);
+N_Vector_ID N_VGetVectorID_Octave(N_Vector v);
+N_Vector N_VCloneEmpty_Octave(N_Vector w);
+N_Vector N_VClone_Octave(N_Vector w);
+void N_VDestroy_Octave(N_Vector v);
+void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw);
+double *N_VGetArrayPointer_Octave(N_Vector v);
+void N_VSetArrayPointer_Octave(realtype *v_data, N_Vector v);
 
 /* standard vector operations */
-SUNDIALS_EXPORT void 
-N_VLinearSum_Octave(double a, N_Vector x, double b, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VConst_Octave(double c, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VProd_Octave(N_Vector x, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VScale_Octave(double c, N_Vector x, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VAbs_Octave(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VInv_Octave(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT void 
-N_VAddConst_Octave(N_Vector x, double b, N_Vector z);
-SUNDIALS_EXPORT double 
-N_VDotProd_Octave(N_Vector x, N_Vector y);
-SUNDIALS_EXPORT double 
-N_VMaxNorm_Octave(N_Vector x);
-SUNDIALS_EXPORT double 
-N_VWrmsNorm_Octave(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT double 
-N_VWrmsNormMask_Octave(N_Vector x, N_Vector w, N_Vector id);
-SUNDIALS_EXPORT double 
-N_VMin_Octave(N_Vector x);
-SUNDIALS_EXPORT void 
-N_VCompare_Octave(double c, N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype 
-N_VInvTest_Octave(N_Vector x, N_Vector z);
-SUNDIALS_EXPORT booleantype 
-N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m);
-SUNDIALS_EXPORT double 
-N_VMinQuotient_Octave(N_Vector num, N_Vector denom);
+void N_VLinearSum_Octave(double a, N_Vector x, double b, N_Vector y, N_Vector z);
+void N_VConst_Octave(double c, N_Vector z);
+void N_VProd_Octave(N_Vector x, N_Vector y, N_Vector z);
+void N_VDiv_Octave(N_Vector x, N_Vector y, N_Vector z);
+void N_VScale_Octave(double c, N_Vector x, N_Vector z);
+void N_VAbs_Octave(N_Vector x, N_Vector z);
+void N_VInv_Octave(N_Vector x, N_Vector z);
+void N_VAddConst_Octave(N_Vector x, double b, N_Vector z);
+double N_VDotProd_Octave(N_Vector x, N_Vector y);
+double N_VMaxNorm_Octave(N_Vector x);
+double N_VWrmsNorm_Octave(N_Vector x, N_Vector w);
+double N_VWrmsNormMask_Octave(N_Vector x, N_Vector w, N_Vector id);
+double N_VMin_Octave(N_Vector x);
+void N_VCompare_Octave(double c, N_Vector x, N_Vector z);
+booleantype N_VInvTest_Octave(N_Vector x, N_Vector z);
+booleantype N_VConstrMask_Octave(N_Vector c, N_Vector x, N_Vector m);
+double N_VMinQuotient_Octave(N_Vector num, N_Vector denom);
 
 /* fused vector operations */
-SUNDIALS_EXPORT int 
-N_VScaleAddMulti_Octave(int nvec, double* a, N_Vector x,
+int N_VScaleAddMulti_Octave(int nvec, double* a, N_Vector x,
                                             N_Vector* Y, N_Vector* Z);
 
 /* vector array operations */
-SUNDIALS_EXPORT int 
-N_VLinearSumVectorArray_Octave(int nvec, 
-                                                   double a, N_Vector* X,
-                                                   double b, N_Vector* Y,
-                                                   N_Vector* Z);
-SUNDIALS_EXPORT int 
-N_VScaleVectorArray_Octave(int nvec, double* c,
+int N_VLinearSumVectorArray_Octave(int nvec, 
+                                        double a, N_Vector* X,
+                                        double b, N_Vector* Y,
+                                        N_Vector* Z);
+int N_VScaleVectorArray_Octave(int nvec, double* c,
                                                N_Vector* X, N_Vector* Z);
 
 /* OPTIONAL local reduction kernels (no parallel communication) */
-SUNDIALS_EXPORT double 
-N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w);
-SUNDIALS_EXPORT double 
-N_VWSqrSumMaskLocal_Octave(N_Vector x, N_Vector w, 
+// double 
+double N_VWSqrSumLocal_Octave(N_Vector x, N_Vector w);
+// double 
+double N_VWSqrSumMaskLocal_Octave(N_Vector x, N_Vector w, 
                                                   N_Vector id);
 
 /*
@@ -203,7 +165,7 @@ N_VWSqrSumMaskLocal_Octave(N_Vector x, N_Vector w,
  * Enable / disable fused vector operations
  * -----------------------------------------------------------------
  */
-SUNDIALS_EXPORT int 
+int 
 N_VEnableFusedOps_Octave(N_Vector v, booleantype tf);
 
 
@@ -228,35 +190,22 @@ N_VEnableFusedOps_Octave(N_Vector v, booleantype tf);
  * custom implementation
  * ---------------------------------------- */
 
-SUNDIALS_EXPORT SUNMatrix 
-OCTSparseMatrix(sunindextype M, sunindextype N,
+SUNMatrix OCTSparseMatrix(sunindextype M, sunindextype N,
                                           sunindextype NNZ ARG_SUNCONTEXT );
-SUNDIALS_EXPORT void 
-OCTSparseMatrix_Print(SUNMatrix A);
+void OCTSparseMatrix_Print(SUNMatrix A);
 
-SUNDIALS_EXPORT sunindextype 
-OCTSparseMatrix_Rows(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype 
-OCTSparseMatrix_Columns(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype 
-OCTSparseMatrix_NNZ(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype 
-OCTSparseMatrix_NP(SUNMatrix A);
-SUNDIALS_EXPORT int 
-OCTSparseMatrix_SparseType(SUNMatrix A);
-SUNDIALS_EXPORT realtype* 
-OCTSparseMatrix_Data(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* 
-OCTSparseMatrix_IndexValues(SUNMatrix A);
-SUNDIALS_EXPORT sunindextype* 
-OCTSparseMatrix_IndexPointers(SUNMatrix A);
+sunindextype OCTSparseMatrix_Rows(SUNMatrix A);
+sunindextype OCTSparseMatrix_Columns(SUNMatrix A);
+sunindextype OCTSparseMatrix_NNZ(SUNMatrix A);
+sunindextype OCTSparseMatrix_NP(SUNMatrix A);
+int OCTSparseMatrix_SparseType(SUNMatrix A);
+realtype* OCTSparseMatrix_Data(SUNMatrix A);
+sunindextype* OCTSparseMatrix_IndexValues(SUNMatrix A);
+sunindextype* OCTSparseMatrix_IndexPointers(SUNMatrix A);
 
-SUNDIALS_EXPORT SUNMatrix_ID 
-OCTMatGetID_Sparse(SUNMatrix A);
-SUNDIALS_EXPORT void 
-OCTMatDestroy_Sparse (SUNMatrix A);
-SUNDIALS_EXPORT int 
-OCTMatZero_Sparse (SUNMatrix A);
+SUNMatrix_ID OCTMatGetID_Sparse(SUNMatrix A);
+void OCTMatDestroy_Sparse (SUNMatrix A);
+int OCTMatZero_Sparse (SUNMatrix A);
 
 /*
  * ----------------------------------------------------------------------------
@@ -264,8 +213,8 @@ OCTMatZero_Sparse (SUNMatrix A);
  * ----------------------------------------------------------------------------
  */
 struct _OCTLinearSolverContent_GEN {
-  int              last_flag;
-  int              first_factorize;
+  int last_flag;
+  int first_factorize;
 };
 
 /* --------------------------------------------------
@@ -279,19 +228,9 @@ typedef struct _OCTLinearSolverContent_GEN *OCTLinearSolverContent_GEN;
  * custom implementation
  * -----------------------------------*/
 
-SUNDIALS_EXPORT SUNLinearSolver 
-OCTLinSol_Gen(N_Vector y, SUNMatrix A ARG_SUNCONTEXT );
-SUNDIALS_EXPORT SUNLinearSolver_Type 
-OCTLinSolGetType_Gen(SUNLinearSolver S);
-SUNDIALS_EXPORT SUNLinearSolver_ID 
-OCTLinSolGetID_Gen(SUNLinearSolver S);
-SUNDIALS_EXPORT int 
-OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A,
+SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A ARG_SUNCONTEXT );
+SUNLinearSolver_Type OCTLinSolGetType_Gen(SUNLinearSolver S);
+SUNLinearSolver_ID OCTLinSolGetID_Gen(SUNLinearSolver S);
+int OCTLinSolSolve_Gen(SUNLinearSolver S, SUNMatrix A,
                                        N_Vector x, N_Vector b, realtype tol);
-SUNDIALS_EXPORT int 
-OCTLinSolFree_Gen(SUNLinearSolver S);
-
-
-#ifdef __cplusplus
-}
-#endif /*for extern C */
+int OCTLinSolFree_Gen(SUNLinearSolver S);

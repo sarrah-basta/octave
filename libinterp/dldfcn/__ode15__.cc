@@ -45,7 +45,7 @@
 
 #if defined (HAVE_SUNDIALS)
 
-#   include "oct-sundials.h"
+#  include "oct-sundials.h"
 
 #  if defined (HAVE_NVECTOR_NVECTOR_SERIAL_H)
 #    include <nvector/nvector_serial.h>
@@ -80,7 +80,7 @@
 #      include <ufsparse/klu.h>
 #    endif
 #    include <sunlinsol/sunlinsol_klu.h>
-#   endif
+#  endif
 
 #endif
 
@@ -562,7 +562,7 @@ OCTAVE_NAMESPACE_BEGIN
                        SUNMatrix& Jac)
 
   {
-#   if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
      ColumnVector y = NVecToCol (yy, m_num);
      ColumnVector yp = NVecToCol (yyp, m_num);
      SparseMatrix jac;
@@ -572,7 +572,7 @@ OCTAVE_NAMESPACE_BEGIN
      else
        jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
 
-#     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
        octave_f77_int_type nnz = to_f77_int (jac.nnz ());
        if (nnz > SUNSparseMatrix_NNZ (Jac))
         {
@@ -582,7 +582,7 @@ OCTAVE_NAMESPACE_BEGIN
           if (SUNSparseMatrix_Reallocate (Jac, nnz))
             error ("Unable to allocate sufficient memory for IDA sparse matrix");
         }
-#     endif
+#    endif
 
        SUNMatZero_Sparse (Jac);
        // We have to use "sunindextype *" here but still need to check that
@@ -599,7 +599,7 @@ OCTAVE_NAMESPACE_BEGIN
            rowvals[i] = to_f77_int (jac.ridx (i));
            d[i] = jac.data (i);
          }
-#   else
+#  else
      ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
      ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
      SparseMatrix jac;
@@ -617,7 +617,7 @@ OCTAVE_NAMESPACE_BEGIN
      *jnew = jac;
      SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
      Jac->content = content;
-#   endif   
+#  endif   
   }
 
   ColumnVector
@@ -681,13 +681,13 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector yy,yyp;
     if (m_havejacsparse)
       {
-#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
          yy = ColToNVec_Serial (m_y0, m_num);
          yyp = ColToNVec_Serial (m_yp0, m_num);
-#       else
+#  else
          yy = ColToNVec_Octave (m_y0, m_num);
          yyp = ColToNVec_Octave (m_yp0, m_num);
-#       endif
+#  endif
       }
     else
       {
@@ -706,11 +706,11 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector abs_tol;
     if (m_havejacsparse)
       {
-#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
          abs_tol = ColToNVec_Serial (abstol, m_num);
-#       else
+#  else
          abs_tol = ColToNVec_Octave (abstol, m_num);
-#       endif
+#  endif
       }
     else
       {
@@ -753,13 +753,13 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector yy, yyp;
     if (m_havejacsparse)
       {
-#       if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
          yy = ColToNVec_Serial (y, m_num);
          yyp = ColToNVec_Serial (yp, m_num);
-#       else
+#  else
          yy = ColToNVec_Octave (y, m_num);
          yyp = ColToNVec_Octave (yp, m_num);
-#       endif
+#  endif
       }
     else
       {
@@ -876,11 +876,11 @@ OCTAVE_NAMESPACE_BEGIN
             N_Vector dky;
             if (m_havejacsparse)
               {
-#               if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-                 dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-#               else
-                 dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-#               endif
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+                dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#  else
+                dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+#  endif
               }
             else
               {
@@ -1054,13 +1054,13 @@ OCTAVE_NAMESPACE_BEGIN
     N_Vector dky, dkyp;
     if (m_havejacsparse)
       {
-#     if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
        dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
        dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-#     else
+#  else
        dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
        dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-#     endif
+#  endif
       }
     else
       {

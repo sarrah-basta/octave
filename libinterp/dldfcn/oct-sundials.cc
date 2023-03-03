@@ -2,11 +2,7 @@
 #  include "config.h"
 #endif
 
-# include "oct-sundials.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "oct-sundials.h"
 
 using namespace octave;
 
@@ -29,7 +25,7 @@ N_Vector_ID N_VGetVectorID_Octave([[maybe_unused]] N_Vector v)
 
 /* Function to create a new empty octave vector */
 
-  N_Vector N_VNewEmpty_Octave(SP_ARG_SUNCONTEXT)
+N_Vector N_VNewEmpty_Octave(SP_ARG_SUNCONTEXT)
 {
   N_Vector v;
 
@@ -440,7 +436,7 @@ void N_VScale_Octave(realtype c, N_Vector x, N_Vector z)
   if (c == ONE)
     VCopy_Octave(x, z);  // substituting with (*zv) = (*xv) leads to wrong results.
   else if (c == -ONE)
-    (*zv) -= (*xv)
+    (*zv) -= (*xv);
   else
     (*zv) = c * (*xv);
 
@@ -1176,7 +1172,3 @@ int OCTLinSolFree_Gen(SUNLinearSolver S)
   free(S); S = NULL;
   return(SUNLS_SUCCESS);
 }
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
