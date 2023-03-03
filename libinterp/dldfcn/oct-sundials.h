@@ -99,7 +99,7 @@
  * -----------------------------------------------------------------
  */
 
-#define NV_CONTENT_C(v)  ( (ColumnVector *)(v->content) )
+#define NV_CONTENT_C(v)  ( reinterpret_cast<ColumnVector *>(v->content) )
 #define NV_LENGTH_C(v)   ( NV_CONTENT_C(v)->numel() )
 #define NV_DATA_C(v)     ( NV_CONTENT_C(v)->fortran_vec() )
 #define NV_Ith_C(v,i)     ( NV_DATA_C(v)[i])
@@ -173,7 +173,7 @@ N_VEnableFusedOps_Octave(N_Vector v, booleantype tf);
  * Macros for access to Octave implementation of SUNMATRIX
  * ----------------------------------------------------- */
 #define CSC_MAT 0  /* Matrix Type Definition */
-#define SM_CONTENT_O(A)     ( (SparseMatrix *)(A->content) )
+#define SM_CONTENT_O(A)     ( reinterpret_cast<SparseMatrix *>(A->content) )
 #define SM_ROWS_O(A)        ( SM_CONTENT_O(A)->rows() )
 #define SM_COLS_O(A)        ( SM_CONTENT_O(A)->cols() )
 #define SM_COLUMNS_O(A)     ( SM_CONTENT_O(A)->columns() )

@@ -127,77 +127,29 @@ SUNLinSol_KLU (N_Vector y, SUNMatrix A)
   static inline realtype *
   nv_data_c (N_Vector& v)
   {
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Disable warning from GCC about old-style casts in Sundials
-    // macro expansions.  Do this in a function so that this
-    // diagnostic may still be enabled for the rest of the file.
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wold-style-cast"
-#  endif
-
     return NV_DATA_C (v);
 
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Restore prevailing warning state for remainder of the file.
-#   pragma GCC diagnostic pop
-#  endif
   }
 
-static inline realtype *
-nv_data_s (N_Vector& v)
-{
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-  // Disable warning from GCC about old-style casts in Sundials
-  // macro expansions.  Do this in a function so that this
-  // diagnostic may still be enabled for the rest of the file.
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wold-style-cast"
-#  endif
+  static inline realtype *
+  nv_data_s (N_Vector& v)
+  {
+    return NV_DATA_S (v);
 
-  return NV_DATA_S (v);
-
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-  // Restore prevailing warning state for remainder of the file.
-#   pragma GCC diagnostic pop
-#  endif
-}
+  }
 
   static inline _N_VectorContent_Serial*
   nv_content_s (N_Vector& v)
   {
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Disable warning from GCC about old-style casts in Sundials
-    // macro expansions.  Do this in a function so that this
-    // diagnostic may still be enabled for the rest of the file.
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wold-style-cast"
-#  endif
-
     return NV_CONTENT_S (v);
 
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Restore prevailing warning state for remainder of the file.
-#   pragma GCC diagnostic pop
-#  endif
   }
 
   static inline ColumnVector *
   nv_content_c (N_Vector& v)
   {
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Disable warning from GCC about old-style casts in Sundials
-    // macro expansions.  Do this in a function so that this
-    // diagnostic may still be enabled for the rest of the file.
-#   pragma GCC diagnostic push
-#   pragma GCC diagnostic ignored "-Wold-style-cast"
-#  endif
-
     return NV_CONTENT_C (v);
 
-#  if defined (HAVE_PRAGMA_GCC_DIAGNOSTIC)
-    // Restore prevailing warning state for remainder of the file.
-#   pragma GCC diagnostic pop
-#  endif
   }
 
 
@@ -321,12 +273,10 @@ public:
 
 #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
     N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
-    N_Vector ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n);
-  N_Vector ColToNVec (const ColumnVector& data, octave_f77_int_type n);
+    N_Vector ColToNVec_Octave (const ColumnVector& data);
 #  else
     static N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
-    static N_Vector ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n);
-  static N_Vector ColToNVec (const ColumnVector& data, octave_f77_int_type n);
+    static N_Vector ColToNVec_Octave (const ColumnVector& data);
 #  endif
 
   void
@@ -517,7 +467,7 @@ IDA::resfun_impl (realtype t, N_Vector& yy,
           error ("Unable to create KLU sparse solver");  
 #  else
         std::cout<<"Setting up using Octave sparse solver \n";
-        N_Vector yy = ColToNVec_Octave (y, m_num);
+        N_Vector yy = ColToNVec_Octave (y);
         m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
           error ("Unable to create sparse Jacobian for Sundials");
@@ -659,7 +609,7 @@ IDA::jacdense_impl (realtype t, realtype cj,
   }
 
   N_Vector
-  IDA::ColToNVec_Octave (const ColumnVector& data, octave_f77_int_type n)
+  IDA::ColToNVec_Octave (const ColumnVector& data)
   {
     N_Vector v = N_VMake_Octave (data OCTAVE_SUNCONTEXT);
     return v;
@@ -704,8 +654,8 @@ IDA::initialize ()
          yy = ColToNVec_Serial (m_y0, m_num);
          yyp = ColToNVec_Serial (m_yp0, m_num);
 #  else
-         yy = ColToNVec_Octave (m_y0, m_num);
-         yyp = ColToNVec_Octave (m_yp0, m_num);
+         yy = ColToNVec_Octave (m_y0);
+         yyp = ColToNVec_Octave (m_yp0);
 #  endif
       }
     else
@@ -728,7 +678,7 @@ IDA::initialize ()
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
          abs_tol = ColToNVec_Serial (abstol, m_num);
 #  else
-         abs_tol = ColToNVec_Octave (abstol, m_num);
+         abs_tol = ColToNVec_Octave (abstol);
 #  endif
       }
     else
@@ -776,8 +726,8 @@ IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
          yy = ColToNVec_Serial (y, m_num);
          yyp = ColToNVec_Serial (yp, m_num);
 #  else
-         yy = ColToNVec_Octave (y, m_num);
-         yyp = ColToNVec_Octave (yp, m_num);
+         yy = ColToNVec_Octave (y);
+         yyp = ColToNVec_Octave (yp);
 #  endif
       }
     else

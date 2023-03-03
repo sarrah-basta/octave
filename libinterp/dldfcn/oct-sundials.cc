@@ -289,7 +289,7 @@ void N_VSpace_Octave(N_Vector v, sunindextype *lrw, sunindextype *liw)
 
 realtype *N_VGetArrayPointer_Octave(N_Vector v)
 {
-  return((realtype *) NV_DATA_C(v));
+  return(reinterpret_cast<realtype *> NV_DATA_C(v));
 }
 
 /*
@@ -1110,7 +1110,7 @@ SUNLinearSolver OCTLinSol_Gen(N_Vector y, SUNMatrix A ARG_SUNCONTEXT)
 
     /* Create content */
   content = NULL;
-  content = (OCTLinearSolverContent_GEN) malloc(sizeof *content);
+  content = reinterpret_cast<OCTLinearSolverContent_GEN> (malloc(sizeof *content));
   if (content == NULL) { SUNLinSolFree(S); return(NULL); }
 
   /* Attach content */
