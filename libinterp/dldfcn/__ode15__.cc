@@ -413,7 +413,7 @@ OCTAVE_NAMESPACE_BEGIN
     ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
     realtype *puntrr;
-    if(N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
+    if(::N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
       {
         ColumnVector *rest = const_cast <ColumnVector *> (nv_content_c(rr));
         *rest = res;
@@ -451,11 +451,11 @@ OCTAVE_NAMESPACE_BEGIN
 #  else
         std::cout<<"Setting up using Octave sparse solver \n";
         N_Vector yy = ColToNVec_Octave (y);
-        m_sunJacMatrix = OCTSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
+        m_sunJacMatrix = octave::SUNSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
         if (! m_sunJacMatrix)
           error ("Unable to create sparse Jacobian for Sundials");
 
-        m_sunLinearSolver = OCTLinSol_Gen (yy, m_sunJacMatrix
+        m_sunLinearSolver = SUNLinSol_Gen (yy, m_sunJacMatrix
                                            OCTAVE_SUNCONTEXT);
         if (! m_sunLinearSolver)
           error ("Unable to create KLU sparse solver");
@@ -493,7 +493,7 @@ OCTAVE_NAMESPACE_BEGIN
                       N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ)
 
   {
-    octave_f77_int_type Neq = N_VGetLength(yy);
+    octave_f77_int_type Neq = ::N_VGetLength(yy);
     ColumnVector y = NVecToCol (yy, Neq);
     ColumnVector yp = NVecToCol (yyp, Neq);
     Matrix jac;
@@ -576,7 +576,7 @@ OCTAVE_NAMESPACE_BEGIN
   IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   {
     ColumnVector data (n);
-    if(N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
+    if(::N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
       {
         ColumnVector *punt = const_cast <ColumnVector *> (nv_content_c(v));
         data = *punt;
@@ -594,7 +594,7 @@ OCTAVE_NAMESPACE_BEGIN
   N_Vector
   IDA::ColToNVec_Octave (const ColumnVector& data)
   {
-    N_Vector v = N_VMake_Octave (data OCTAVE_SUNCONTEXT);
+    N_Vector v = octave::N_VMake (data OCTAVE_SUNCONTEXT);
     return v;
   }
 
@@ -672,7 +672,7 @@ OCTAVE_NAMESPACE_BEGIN
     if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
       error ("IDA: Tolerance not set");
     
-    N_VDestroy (abs_tol);
+    ::N_VDestroy (abs_tol);
   }
 
   void
@@ -831,7 +831,7 @@ OCTAVE_NAMESPACE_BEGIN
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
                 dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
 #  else
-                dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+                dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
 #  endif
               }
             else
@@ -863,7 +863,7 @@ OCTAVE_NAMESPACE_BEGIN
                                        yold, num_event_args);
               }
 
-            N_VDestroy(dky);
+            ::N_VDestroy(dky);
           }
 
         // Cleanup plotter
@@ -1010,8 +1010,8 @@ OCTAVE_NAMESPACE_BEGIN
        dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
        dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
 #  else
-       dky = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
-       dkyp = N_VNew_Octave (m_num OCTAVE_SUNCONTEXT);
+       dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+       dkyp = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
 #  endif
       }
     else
@@ -1066,7 +1066,7 @@ OCTAVE_NAMESPACE_BEGIN
                                tout(cont-1), yold, num_event_args);
       }
 
-    N_VDestroy(dky);
+    ::N_VDestroy(dky);
 
     return status;
   }
