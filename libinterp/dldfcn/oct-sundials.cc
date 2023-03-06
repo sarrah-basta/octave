@@ -4,7 +4,7 @@
 
 #include "oct-sundials.h"
 
-OCTAVE_NAMESPACE_BEGIN(octave)
+OCTAVE_BEGIN_NAMESPACE(octave)
 
 /* --------------------------------------------------------------------------
  * Utility functions
@@ -1173,4 +1173,4 @@ int SUNLinSolFree_Gen (SUNLinearSolver S)
   return SUNLS_SUCCESS;
 }
 
-OCTAVE_NAMESPACE_END(octave)
+OCTAVE_END_NAMESPACE(octave)

@@ -103,7 +103,7 @@
 #define NV_DATA_C(v) (NV_CONTENT_C(v)->fortran_vec())
 #define NV_Ith_C(v, i) (NV_DATA_C(v)[i])
 
-OCTAVE_NAMESPACE_BEGIN(octave)
+OCTAVE_BEGIN_NAMESPACE(octave)
 
 /* -----------------------------------------------------------------
  * NVECTOR API functions exported for Octave's custom implementation
@@ -234,4 +234,4 @@ int SUNLinSolSolve_Gen (SUNLinearSolver S, SUNMatrix A,
                        N_Vector x, N_Vector b, realtype tol);
 int SUNLinSolFree_Gen (SUNLinearSolver S);
 
-OCTAVE_NAMESPACE_END(octave)
+OCTAVE_END_NAMESPACE(octave)
