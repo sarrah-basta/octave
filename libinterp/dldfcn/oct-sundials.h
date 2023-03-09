@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2023 The Octave Project Developers
+// Copyright (C) 2023 The Octave Project Developers
 //
 // See the file COPYRIGHT.md in the top-level directory of this
 // distribution or <https://octave.org/copyright/>.
@@ -22,14 +22,14 @@
 ////////////////////////////////////////////////////////////////////////
 
 /* -----------------------------------------------------------------
- * generating custom SUNDIALS implementations
+ * generating header files for custom SUNDIALS implementations
  * to be able to allow Octave's native classes and
  * solvers to be utilized by the SUNDIALS IDA Class
  * ----------------------------------------------------------------- */
 
 #ifndef OCTAVE_OCT_SUNDIALS_H
-#define OCTAVE_OCT_SUNDIALS_H 1
-#include "octave-config.h"
+#  define OCTAVE_OCT_SUNDIALS_H 1
+#  include "octave-config.h"
 #endif
 
 #include <stdio.h>
@@ -55,11 +55,11 @@
   this. */
 
 #if defined(HAVE_SUNDIALS)
-#include <sundials/sundials_math.h>
-#include <sundials/sundials_nvector.h>
-#include <sundials/sundials_config.h>
-#include <sundials/sundials_linearsolver.h>
-#include <sundials/sundials_matrix.h>
+#  include <sundials/sundials_math.h>
+#  include <sundials/sundials_nvector.h>
+#  include <sundials/sundials_config.h>
+#  include <sundials/sundials_linearsolver.h>
+#  include <sundials/sundials_matrix.h>
 #endif
 
 /* -----------------------------------------------------------------
@@ -80,16 +80,16 @@
  * declarations maintain backward compatibility with versions
  * before 6.0.0 as well.
  * ----------------------------------------------------------------- */
-#if (HAVE_SUNDIALS_SUNCONTEXT)
-#define SP_ARG_SUNCONTEXT SUNContext m_sunContext
-#define ARG_SUNCONTEXT , SUNContext m_sunContext
-#define OCTAVE_SUNCONTEXT , m_sunContext
-#define SP_OCTAVE_SUNCONTEXT m_sunContext
+#if defined(HAVE_SUNDIALS_SUNCONTEXT)
+#  define SP_ARG_SUNCONTEXT SUNContext m_sunContext
+#  define ARG_SUNCONTEXT , SUNContext m_sunContext
+#  define OCTAVE_SUNCONTEXT , m_sunContext
+#  define SP_OCTAVE_SUNCONTEXT m_sunContext
 #else
-#define ARG_SUNCONTEXT
-#define OCTAVE_SUNCONTEXT
-#define SP_ARG_SUNCONTEXT
-#define SP_OCTAVE_SUNCONTEXT
+#  define ARG_SUNCONTEXT
+#  define OCTAVE_SUNCONTEXT
+#  define SP_ARG_SUNCONTEXT
+#  define SP_OCTAVE_SUNCONTEXT
 #endif
 
 /*
@@ -143,22 +143,20 @@ double N_VMinQuotient (N_Vector num, N_Vector denom);
 
 /* fused vector operations */
 int N_VScaleAddMulti (int nvec, double *a, N_Vector x,
-                     N_Vector *Y, N_Vector *Z);
+                      N_Vector *Y, N_Vector *Z);
 
 /* vector array operations */
 int N_VLinearSumVectorArray (int nvec,
-                            double a, N_Vector *X,
-                            double b, N_Vector *Y,
-                            N_Vector *Z);
+                             double a, N_Vector *X,
+                             double b, N_Vector *Y,
+                             N_Vector *Z);
 int N_VScaleVectorArray (int nvec, double *c,
-                        N_Vector *X, N_Vector *Z);
+                         N_Vector *X, N_Vector *Z);
 
 /* OPTIONAL local reduction kernels (no parallel communication) */
-// double
 double N_VWSqrSumLocal (N_Vector x, N_Vector w);
-// double
 double N_VWSqrSumMaskLocal (N_Vector x, N_Vector w,
-                           N_Vector id);
+                            N_Vector id);
 
 /*
  * -----------------------------------------------------------------
@@ -231,7 +229,7 @@ SUNLinearSolver SUNLinSol_Gen (N_Vector y, SUNMatrix A ARG_SUNCONTEXT);
 SUNLinearSolver_Type SUNLinSolGetType_Gen (SUNLinearSolver S);
 SUNLinearSolver_ID SUNLinSolGetID_Gen (SUNLinearSolver S);
 int SUNLinSolSolve_Gen (SUNLinearSolver S, SUNMatrix A,
-                       N_Vector x, N_Vector b, realtype tol);
+                        N_Vector x, N_Vector b, realtype tol);
 int SUNLinSolFree_Gen (SUNLinearSolver S);
 
 OCTAVE_END_NAMESPACE(octave)

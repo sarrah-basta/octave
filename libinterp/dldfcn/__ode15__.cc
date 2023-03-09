@@ -23,8 +23,6 @@
 //
 ////////////////////////////////////////////////////////////////////////
 
-/* include guards so that files included 
-  in dependencies are not included again */
 #if defined (HAVE_CONFIG_H)
 #  include "config.h"
 #endif
@@ -42,8 +40,6 @@
 #include "ov.h"
 #include "ovl.h"
 #include "pager.h"
-#include "parse.h"
-
 
 #if defined (HAVE_SUNDIALS)
 
@@ -91,1289 +87,1300 @@ OCTAVE_BEGIN_NAMESPACE(octave)
 #if defined (HAVE_SUNDIALS)
 
 #  if ! defined (HAVE_IDASETJACFN) && defined (HAVE_IDADLSSETJACFN)
-  static inline int
-  IDASetJacFn (void *ida_mem, IDADlsJacFn jac)
-  {
-    return IDADlsSetJacFn (ida_mem, jac);
-  }
+static inline int
+IDASetJacFn (void *ida_mem, IDADlsJacFn jac)
+{
+  return IDADlsSetJacFn (ida_mem, jac);
+}
 #  endif
 
 #  if ! defined (HAVE_IDASETLINEARSOLVER) && defined (HAVE_IDADLSSETLINEARSOLVER)
-  static inline int
-  IDASetLinearSolver (void *ida_mem, SUNLinearSolver LS, SUNMatrix A)
-  {
-    return IDADlsSetLinearSolver (ida_mem, LS, A);
-  }
+static inline int
+IDASetLinearSolver (void *ida_mem, SUNLinearSolver LS, SUNMatrix A)
+{
+  return IDADlsSetLinearSolver (ida_mem, LS, A);
+}
 #  endif
 
 #  if ! defined (HAVE_SUNLINSOL_DENSE) && defined (HAVE_SUNDENSELINEARSOLVER)
-  static inline SUNLinearSolver
-  SUNLinSol_Dense (N_Vector y, SUNMatrix A)
-  {
-    return SUNDenseLinearSolver (y, A);
-  }
+static inline SUNLinearSolver
+SUNLinSol_Dense (N_Vector y, SUNMatrix A)
+{
+  return SUNDenseLinearSolver (y, A);
+}
 #  endif
 
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
 #    if ! defined (HAVE_SUNLINSOL_KLU) && defined (HAVE_SUNKLU)
-  static inline SUNLinearSolver
-  SUNLinSol_KLU (N_Vector y, SUNMatrix A)
-  {
-    return SUNKLU (y, A);
-  }
+static inline SUNLinearSolver
+SUNLinSol_KLU (N_Vector y, SUNMatrix A)
+{
+  return SUNKLU (y, A);
+}
 #    endif
 #  endif
 
-  static inline realtype *
-  nv_data_c (N_Vector& v)
+static inline realtype *
+nv_data_c (N_Vector& v)
+{
+  return NV_DATA_C (v);
+}
+
+static inline realtype *
+nv_data_s (N_Vector& v)
+{
+  return NV_DATA_S (v);
+}
+
+static inline _N_VectorContent_Serial *
+nv_content_s (N_Vector& v)
+{
+  return NV_CONTENT_S (v);
+}
+
+static inline ColumnVector *
+nv_content_c (N_Vector& v)
+{
+  return NV_CONTENT_C (v);
+}
+
+class IDA
+{
+public:
+
+  typedef
+  ColumnVector (*DAERHSFuncIDA) (const ColumnVector& x,
+                                 const ColumnVector& xdot,
+                                 realtype t, const octave_value& idaf);
+
+  typedef
+  Matrix (*DAEJacFuncDense) (const ColumnVector& x,
+                             const ColumnVector& xdot, realtype t,
+                             realtype cj, const octave_value& idaj);
+
+  typedef
+  SparseMatrix (*DAEJacFuncSparse) (const ColumnVector& x,
+                                    const ColumnVector& xdot,
+                                    realtype t, realtype cj,
+                                    const octave_value& idaj);
+
+  typedef
+  Matrix (*DAEJacCellDense) (Matrix *dfdy, Matrix *dfdyp,
+                             realtype cj);
+
+  typedef
+  SparseMatrix (*DAEJacCellSparse) (SparseMatrix *dfdy,
+                                    SparseMatrix *dfdyp, realtype cj);
+
+  //Default
+  IDA ()
+    : m_t0 (0.0), m_y0 (), m_yp0 (), m_havejac (false), m_havejacfcn (false),
+      m_havejacsparse (false), m_mem (nullptr), m_num (), m_ida_fcn (),
+      m_ida_jac (), m_dfdy (nullptr), m_dfdyp (nullptr), m_spdfdy (nullptr),
+      m_spdfdyp (nullptr), m_fcn (nullptr), m_jacfcn (nullptr),
+      m_jacspfcn (nullptr), m_jacdcell (nullptr), m_jacspcell (nullptr),
+      m_sunJacMatrix (nullptr), m_sunLinearSolver (nullptr)
+  { }
+
+
+  IDA (realtype t, ColumnVector y, ColumnVector yp,
+       const octave_value& ida_fcn, DAERHSFuncIDA daefun)
+    : m_t0 (t), m_y0 (y), m_yp0 (yp), m_havejac (false), m_havejacfcn (false),
+      m_havejacsparse (false), m_mem (nullptr), m_num (), m_ida_fcn (ida_fcn),
+      m_ida_jac (), m_dfdy (nullptr), m_dfdyp (nullptr), m_spdfdy (nullptr),
+      m_spdfdyp (nullptr), m_fcn (daefun), m_jacfcn (nullptr),
+      m_jacspfcn (nullptr), m_jacdcell (nullptr), m_jacspcell (nullptr),
+      m_sunJacMatrix (nullptr), m_sunLinearSolver (nullptr)
+  { }
+
+  OCTAVE_DISABLE_COPY_MOVE (IDA)
+
+  ~IDA ()
   {
-    return NV_DATA_C (v);
-
-  }
-
-  static inline realtype *
-  nv_data_s (N_Vector& v)
-  {
-    return NV_DATA_S (v);
-
-  }
-
-  static inline _N_VectorContent_Serial*
-  nv_content_s (N_Vector& v)
-  {
-    return NV_CONTENT_S (v);
-
-  }
-
-  static inline ColumnVector *
-  nv_content_c (N_Vector& v)
-  {
-    return NV_CONTENT_C (v);
-
-  }
-
-
-  class IDA
-  {
-  public:
-
-    typedef
-    ColumnVector (*DAERHSFuncIDA) (const ColumnVector& x,
-                                   const ColumnVector& xdot,
-                                   realtype t, const octave_value& idaf);
-
-    typedef
-    Matrix (*DAEJacFuncDense) (const ColumnVector& x,
-                               const ColumnVector& xdot, realtype t,
-                               realtype cj, const octave_value& idaj);
-
-    typedef
-    SparseMatrix (*DAEJacFuncSparse) (const ColumnVector& x,
-                                      const ColumnVector& xdot,
-                                      realtype t, realtype cj,
-                                      const octave_value& idaj);
-
-    typedef
-    Matrix (*DAEJacCellDense) (Matrix *dfdy, Matrix *dfdyp,
-                               realtype cj);
-
-    typedef
-    SparseMatrix (*DAEJacCellSparse) (SparseMatrix *dfdy,
-                                      SparseMatrix *dfdyp, realtype cj);
-
-    //Default
-    IDA (void)
-      : m_t0 (0.0), m_y0 (), m_yp0 (), m_havejac (false), m_havejacfcn (false),
-        m_havejacsparse (false), m_mem (nullptr), m_num (), m_ida_fcn (),
-        m_ida_jac (), m_dfdy (nullptr), m_dfdyp (nullptr), m_spdfdy (nullptr),
-        m_spdfdyp (nullptr), m_fcn (nullptr), m_jacfcn (nullptr),
-        m_jacspfcn (nullptr), m_jacdcell (nullptr), m_jacspcell (nullptr),
-        m_sunJacMatrix (nullptr), m_sunLinearSolver (nullptr)
-    { }
-
-
-    IDA (realtype t, ColumnVector y, ColumnVector yp,
-         const octave_value& ida_fcn, DAERHSFuncIDA daefun)
-      : m_t0 (t), m_y0 (y), m_yp0 (yp), m_havejac (false), m_havejacfcn (false),
-        m_havejacsparse (false), m_mem (nullptr), m_num (), m_ida_fcn (ida_fcn),
-        m_ida_jac (), m_dfdy (nullptr), m_dfdyp (nullptr), m_spdfdy (nullptr),
-        m_spdfdyp (nullptr), m_fcn (daefun), m_jacfcn (nullptr),
-        m_jacspfcn (nullptr), m_jacdcell (nullptr), m_jacspcell (nullptr),
-        m_sunJacMatrix (nullptr), m_sunLinearSolver (nullptr)
-    { }
-
-
-    ~IDA (void)
-    {
-      IDAFree (&m_mem);
-      SUNLinSolFree (m_sunLinearSolver);
-      SUNMatDestroy (m_sunJacMatrix);
+    IDAFree (&m_mem);
+    SUNLinSolFree (m_sunLinearSolver);
+    SUNMatDestroy (m_sunJacMatrix);
 #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-      SUNContext_Free (&m_sunContext);
+    SUNContext_Free (&m_sunContext);
 #  endif
-    }
+  }
 
-    IDA&
-    set_jacobian (const octave_value& jac, DAEJacFuncDense j)
-    {
-      m_jacfcn = j;
-      m_ida_jac = jac;
-      m_havejac = true;
-      m_havejacfcn = true;
-      m_havejacsparse = false;
+  IDA&
+  set_jacobian (const octave_value& jac, DAEJacFuncDense j)
+  {
+    m_jacfcn = j;
+    m_ida_jac = jac;
+    m_havejac = true;
+    m_havejacfcn = true;
+    m_havejacsparse = false;
 
-      return *this;
-    }
+    return *this;
+  }
 
-    IDA&
-    set_jacobian (const octave_value& jac, DAEJacFuncSparse j)
-    {
-      m_jacspfcn = j;
-      m_ida_jac = jac;
-      m_havejac = true;
-      m_havejacfcn = true;
-      m_havejacsparse = true;
+  IDA&
+  set_jacobian (const octave_value& jac, DAEJacFuncSparse j)
+  {
+    m_jacspfcn = j;
+    m_ida_jac = jac;
+    m_havejac = true;
+    m_havejacfcn = true;
+    m_havejacsparse = true;
 
-      return *this;
-    }
+    return *this;
+  }
 
-    IDA&
-    set_jacobian (Matrix *dy, Matrix *dyp, DAEJacCellDense j)
-    {
-      m_jacdcell = j;
-      m_dfdy = dy;
-      m_dfdyp = dyp;
-      m_havejac = true;
-      m_havejacfcn = false;
-      m_havejacsparse = false;
+  IDA&
+  set_jacobian (Matrix *dy, Matrix *dyp, DAEJacCellDense j)
+  {
+    m_jacdcell = j;
+    m_dfdy = dy;
+    m_dfdyp = dyp;
+    m_havejac = true;
+    m_havejacfcn = false;
+    m_havejacsparse = false;
 
-      return *this;
-    }
+    return *this;
+  }
 
-    IDA&
-    set_jacobian (SparseMatrix *dy, SparseMatrix *dyp,
-                  DAEJacCellSparse j)
-    {
-      m_jacspcell = j;
-      m_spdfdy = dy;
-      m_spdfdyp = dyp;
-      m_havejac = true;
-      m_havejacfcn = false;
-      m_havejacsparse = true;
+  IDA&
+  set_jacobian (SparseMatrix *dy, SparseMatrix *dyp,
+                DAEJacCellSparse j)
+  {
+    m_jacspcell = j;
+    m_spdfdy = dy;
+    m_spdfdyp = dyp;
+    m_havejac = true;
+    m_havejacfcn = false;
+    m_havejacsparse = true;
 
-      return *this;
-    }
+    return *this;
+  }
 
-    void set_userdata (void);
+  void set_userdata ();
 
-    void initialize (void);
+  void initialize ();
 
-    static ColumnVector NVecToCol (N_Vector& v, octave_f77_int_type n);
+  static ColumnVector NVecToCol (N_Vector& v, octave_f77_int_type n);
 
 #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-    N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
-    N_Vector ColToNVec_Octave (const ColumnVector& data);
+  N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
+  N_Vector ColToNVec_Octave (const ColumnVector& data);
 #  else
-    static N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
-    static N_Vector ColToNVec_Octave (const ColumnVector& data);
+  static N_Vector ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n);
+  static N_Vector ColToNVec_Octave (const ColumnVector& data);
 #  endif
 
-    void
-    set_up (const ColumnVector& y);
+  void
+  set_up (const ColumnVector& y);
 
-    void
-    set_tolerance (ColumnVector& abstol, realtype reltol);
+  void
+  set_tolerance (ColumnVector& abstol, realtype reltol);
 
-    void
-    set_tolerance (realtype abstol, realtype reltol);
+  void
+  set_tolerance (realtype abstol, realtype reltol);
 
-    static int
-    resfun (realtype t, N_Vector yy, N_Vector yyp,
-            N_Vector rr, void *user_data);
+  static int
+  resfun (realtype t, N_Vector yy, N_Vector yyp,
+          N_Vector rr, void *user_data);
 
-    void
-    resfun_impl (realtype t, N_Vector& yy,
-                 N_Vector& yyp, N_Vector& rr);
-    static int
-    jacdense (realtype t, realtype cj, N_Vector yy, N_Vector yyp,
-              N_Vector, SUNMatrix JJ, void *user_data, N_Vector,
-              N_Vector, N_Vector)
-    {
-      IDA *self = static_cast <IDA *> (user_data);
-      self->jacdense_impl (t, cj, yy, yyp, JJ);
-      return 0;
-    }
-
-    void
-    jacdense_impl (realtype t, realtype cj,
-                   N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ);
-
-    static int
-    jacsparse (realtype t, realtype cj, N_Vector yy, N_Vector yyp,
-               N_Vector, SUNMatrix Jac, void *user_data, N_Vector,
-               N_Vector, N_Vector)
-    {
-      IDA *self = static_cast <IDA *> (user_data);
-      self->jacsparse_impl (t, cj, yy, yyp, Jac);
-      return 0;
-    }
-
-    void
-    jacsparse_impl (realtype t, realtype cj,
-                    N_Vector& yy, N_Vector& yyp, SUNMatrix& Jac);
-
-
-    void set_maxstep (realtype maxstep);
-
-    void set_initialstep (realtype initialstep);
-
-    bool
-    interpolate (octave_idx_type& cont, Matrix& output, ColumnVector& tout,
-                 int refine, realtype tend, bool haveoutputfcn,
-                 bool haveoutputsel, const octave_value& output_fcn,
-                 ColumnVector& outputsel, bool haveeventfunction,
-                 const octave_value& event_fcn, ColumnVector& te,
-                 Matrix& ye, ColumnVector& ie, ColumnVector& oldval,
-                 ColumnVector& oldisterminal, ColumnVector& olddir,
-                 octave_idx_type& temp, ColumnVector& yold,
-                 const octave_idx_type num_event_args);
-
-    bool
-    outputfun (const octave_value& output_fcn, bool haveoutputsel,
-               const ColumnVector& output, realtype tout, realtype tend,
-               ColumnVector& outputsel, const std::string& flag);
-
-
-    bool
-    event (const octave_value& event_fcn,
-           ColumnVector& te, Matrix& ye, ColumnVector& ie,
-           realtype tsol, const ColumnVector& y, const std::string& flag,
-           const ColumnVector& yp, ColumnVector& oldval,
-           ColumnVector& oldisterminal, ColumnVector& olddir,
-           octave_idx_type cont, octave_idx_type& temp, realtype told,
-           ColumnVector& yold,
-           const octave_idx_type num_event_args);
-
-    void set_maxorder (int maxorder);
-
-    octave_value_list
-    integrate (const octave_idx_type numt, const ColumnVector& tt,
-               const ColumnVector& y0, const ColumnVector& yp0,
-               const int refine, bool haverefine, bool haveoutputfcn,
-               const octave_value& output_fcn, bool haveoutputsel,
-               ColumnVector& outputsel, bool haveeventfunction,
-               const octave_value& event_fcn,
-               const octave_idx_type num_event_args);
-
-    void print_stat (void);
-
-  private:
-
-    realtype m_t0;
-    ColumnVector m_y0;
-    ColumnVector m_yp0;
-    bool m_havejac;
-    bool m_havejacfcn;
-    bool m_havejacsparse;
-    void *m_mem;
-    octave_f77_int_type m_num;
-    octave_value m_ida_fcn;
-    octave_value m_ida_jac;
-    Matrix *m_dfdy;
-    Matrix *m_dfdyp;
-    SparseMatrix *m_spdfdy;
-    SparseMatrix *m_spdfdyp;
-    DAERHSFuncIDA m_fcn;
-    DAEJacFuncDense m_jacfcn;
-    DAEJacFuncSparse m_jacspfcn;
-    DAEJacCellDense m_jacdcell;
-    DAEJacCellSparse m_jacspcell;
-#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-    SUNContext m_sunContext;
-#  endif
-    SUNMatrix m_sunJacMatrix;
-    SUNLinearSolver m_sunLinearSolver;
-  };
-
-  int
-  IDA::resfun (realtype t, N_Vector yy, N_Vector yyp, N_Vector rr,
-               void *user_data)
+  void
+  resfun_impl (realtype t, N_Vector& yy,
+               N_Vector& yyp, N_Vector& rr);
+  static int
+  jacdense (realtype t, realtype cj, N_Vector yy, N_Vector yyp,
+            N_Vector, SUNMatrix JJ, void *user_data, N_Vector,
+            N_Vector, N_Vector)
   {
     IDA *self = static_cast <IDA *> (user_data);
-    self->resfun_impl (t, yy, yyp, rr);
+    self->jacdense_impl (t, cj, yy, yyp, JJ);
     return 0;
   }
 
   void
-  IDA::resfun_impl (realtype t, N_Vector& yy,
-                    N_Vector& yyp, N_Vector& rr)
+  jacdense_impl (realtype t, realtype cj,
+                 N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ);
+
+  static int
+  jacsparse (realtype t, realtype cj, N_Vector yy, N_Vector yyp,
+             N_Vector, SUNMatrix Jac, void *user_data, N_Vector,
+             N_Vector, N_Vector)
   {
-    ColumnVector y = IDA::NVecToCol (yy, m_num);
-
-    ColumnVector yp = IDA::NVecToCol (yyp, m_num);
-
-    ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
-
-    realtype *puntrr;
-    if(::N_VGetVectorID(rr) == SUNDIALS_NVEC_CUSTOM)
-      {
-        ColumnVector *rest = const_cast <ColumnVector *> (nv_content_c(rr));
-        *rest = res;
-      }
-    else
-      {
-        puntrr = nv_data_s (rr);
-        for (octave_idx_type i = 0; i < m_num; i++)
-          puntrr[i] = res(i);
-      }
+    IDA *self = static_cast <IDA *> (user_data);
+    self->jacsparse_impl (t, cj, yy, yyp, Jac);
+    return 0;
   }
 
   void
-  IDA::set_up (const ColumnVector& y)
-  {
-    if (m_havejacsparse)
-      {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
-        // Initially allocate memory for 0 entries. We will reallocate when we
-        // get the Jacobian matrix from the user and know the actual number of
-        // entries.
-        std::cout<<"Setting up using KLU sparse solver \n";
-        N_Vector yy = ColToNVec_Serial (y, m_num);
-        m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT
-                                          OCTAVE_SUNCONTEXT);
-#    endif     
-        if (! m_sunJacMatrix)
-          error ("Unable to create sparse Jacobian for Sundials");
+  jacsparse_impl (realtype t, realtype cj,
+                  N_Vector& yy, N_Vector& yyp, SUNMatrix& Jac);
 
-        m_sunLinearSolver = SUNLinSol_KLU (yy, m_sunJacMatrix
-                                           OCTAVE_SUNCONTEXT);
-        if (! m_sunLinearSolver)
-          error ("Unable to create KLU sparse solver");  
-#  else
-        std::cout<<"Setting up using Octave sparse solver \n";
-        N_Vector yy = ColToNVec_Octave (y);
-        m_sunJacMatrix = octave::SUNSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
-        if (! m_sunJacMatrix)
-          error ("Unable to create sparse Jacobian for Sundials");
+  void set_maxstep (realtype maxstep);
 
-        m_sunLinearSolver = SUNLinSol_Gen (yy, m_sunJacMatrix
-                                           OCTAVE_SUNCONTEXT);
-        if (! m_sunLinearSolver)
-          error ("Unable to create KLU sparse solver");
-#  endif
-        if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
-          error ("Unable to set sparse linear solver");
+  void set_initialstep (realtype initialstep);
 
-        IDASetJacFn (m_mem, IDA::jacsparse);
+  bool
+  interpolate (octave_idx_type& cont, Matrix& output, ColumnVector& tout,
+               int refine, realtype tend, bool haveoutputfcn,
+               bool haveoutputsel, const octave_value& output_fcn,
+               ColumnVector& outputsel, bool haveeventfunction,
+               const octave_value& event_fcn, ColumnVector& te,
+               Matrix& ye, ColumnVector& ie, ColumnVector& oldval,
+               ColumnVector& oldisterminal, ColumnVector& olddir,
+               octave_idx_type& temp, ColumnVector& yold,
+               const octave_idx_type num_event_args);
 
-      }
-    else
-      {
-        N_Vector yy = ColToNVec_Serial (y, m_num);
+  bool
+  outputfun (const octave_value& output_fcn, bool haveoutputsel,
+             const ColumnVector& output, realtype tout, realtype tend,
+             ColumnVector& outputsel, const std::string& flag);
 
-        m_sunJacMatrix = SUNDenseMatrix (m_num, m_num OCTAVE_SUNCONTEXT);
-        if (! m_sunJacMatrix)
-          error ("Unable to create dense Jacobian for Sundials");
 
-        m_sunLinearSolver = SUNLinSol_Dense (yy, m_sunJacMatrix
-                                             OCTAVE_SUNCONTEXT);
-        if (! m_sunLinearSolver)
-          error ("Unable to create dense linear solver");
+  bool
+  event (const octave_value& event_fcn,
+         ColumnVector& te, Matrix& ye, ColumnVector& ie,
+         realtype tsol, const ColumnVector& y, const std::string& flag,
+         const ColumnVector& yp, ColumnVector& oldval,
+         ColumnVector& oldisterminal, ColumnVector& olddir,
+         octave_idx_type cont, octave_idx_type& temp, realtype told,
+         ColumnVector& yold,
+         const octave_idx_type num_event_args);
 
-        if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
-          error ("Unable to set dense linear solver");
-
-        if (m_havejac && IDASetJacFn (m_mem, IDA::jacdense) != 0)
-          error ("Unable to set dense Jacobian function");
-
-      }
-  }
-
-  void
-  IDA::jacdense_impl (realtype t, realtype cj,
-                      N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ)
-
-  {
-    octave_f77_int_type Neq = ::N_VGetLength(yy);
-    ColumnVector y = NVecToCol (yy, Neq);
-    ColumnVector yp = NVecToCol (yyp, Neq);
-    Matrix jac;
-
-    if (m_havejacfcn)
-      jac = (*m_jacfcn) (y, yp, t, cj, m_ida_jac);
-    else
-      jac = (*m_jacdcell) (m_dfdy, m_dfdyp, cj);
-
-    octave_f77_int_type num_jac = to_f77_int (jac.numel ());
-    std::copy (jac.fortran_vec (),
-               jac.fortran_vec () + num_jac,
-               SUNDenseMatrix_Data (JJ));
-  }
-
-  void
-  IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
-                       SUNMatrix& Jac)
-
-  {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-     ColumnVector y = NVecToCol (yy, m_num);
-     ColumnVector yp = NVecToCol (yyp, m_num);
-     SparseMatrix jac;
-
-     if (m_havejacfcn)
-       jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
-     else
-       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
-
-#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
-       octave_f77_int_type nnz = to_f77_int (jac.nnz ());
-       if (nnz > ::SUNSparseMatrix_NNZ (Jac))
-        {
-          // Allocate memory for sparse Jacobian defined in user function.
-          // This will always be required at least once since we set the number
-          // of non-zero elements to zero initially.
-          if (SUNSparseMatrix_Reallocate (Jac, nnz))
-            error ("Unable to allocate sufficient memory for IDA sparse matrix");
-        }
-#    endif
-
-       ::SUNMatZero_Sparse (Jac);
-       // We have to use "sunindextype *" here but still need to check that
-       // conversion of each element to "octave_f77_int_type" is save.
-       sunindextype *colptrs = ::SUNSparseMatrix_IndexPointers (Jac);
-       sunindextype *rowvals = ::SUNSparseMatrix_IndexValues (Jac);
-
-       for (octave_f77_int_type i = 0; i < m_num + 1; i++)
-         colptrs[i] = to_f77_int (jac.cidx (i));
-
-       double *d = ::SUNSparseMatrix_Data (Jac); 
-       for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
-         {
-           rowvals[i] = to_f77_int (jac.ridx (i));
-           d[i] = jac.data (i);
-         }
-#  else
-     ColumnVector *y = const_cast <ColumnVector *> (nv_content_c(yy));
-     ColumnVector *yp = const_cast <ColumnVector *> (nv_content_c(yyp));
-     SparseMatrix jac;
-
-     if (m_havejacfcn)
-       jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
-     else
-       jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
-    
-     SUNMatZero(Jac);
-     // We have to use "sunindextype *" here but still need to check that
-     // conversion of each element to "octave_f77_int_type" is save.
-
-     SparseMatrix *jnew = new SparseMatrix();
-     *jnew = jac;
-     SparseMatrix *content = const_cast <SparseMatrix *> (jnew);
-     Jac->content = content;
-#  endif   
-  }
-
-  ColumnVector
-  IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
-  {
-    ColumnVector data (n);
-    if(::N_VGetVectorID(v) == SUNDIALS_NVEC_CUSTOM)
-      {
-        ColumnVector *punt = const_cast <ColumnVector *> (nv_content_c(v));
-        data = *punt;
-      }
-    else
-      {
-        realtype *punt = nv_data_s (v);
-
-        for (octave_f77_int_type i = 0; i < n; i++)
-          data(i) = punt[i];
-      }  
-    return data;
-  }
-
-  N_Vector
-  IDA::ColToNVec_Octave (const ColumnVector& data)
-  {
-    N_Vector v = octave::N_VMake (data OCTAVE_SUNCONTEXT);
-    return v;
-  }
-
-  N_Vector
-  IDA::ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n)
-  {
-    N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
-    realtype *punt = nv_data_s (v);
-
-    for (octave_f77_int_type i = 0; i < n; i++)
-      punt[i] = data(i);
-
-    return v;
-  }
-
-  void
-  IDA::set_userdata (void)
-  {
-    void *userdata = this;
-
-    if (IDASetUserData (m_mem, userdata) != 0)
-      error ("User data not set");
-  }
-
-  void
-  IDA::initialize (void)
-  {
-    m_num = to_f77_int (m_y0.numel ());
-#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-    if (SUNContext_Create (nullptr, &m_sunContext) < 0)
-      error ("__ode15__: unable to create context for SUNDIALS");
-    m_mem = IDACreate (m_sunContext);
-#  else
-    m_mem = IDACreate ();
-#  endif
-    N_Vector yy,yyp;
-    if (m_havejacsparse)
-      {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-         yy = ColToNVec_Serial (m_y0, m_num);
-         yyp = ColToNVec_Serial (m_yp0, m_num);
-#  else
-         yy = ColToNVec_Octave (m_y0);
-         yyp = ColToNVec_Octave (m_yp0);
-#  endif
-      }
-    else
-      {
-        yy = ColToNVec_Serial (m_y0, m_num);
-        yyp = ColToNVec_Serial (m_yp0, m_num);
-      }
-
-    IDA::set_userdata ();
-    if (IDAInit (m_mem, IDA::resfun, m_t0, yy, yyp) != 0)
-      error ("IDA not initialized");
-  }
-
-  void
-  IDA::set_tolerance (ColumnVector& abstol, realtype reltol)
-  {
-    N_Vector abs_tol;
-    if (m_havejacsparse)
-      {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-         abs_tol = ColToNVec_Serial (abstol, m_num);
-#  else
-         abs_tol = ColToNVec_Octave (abstol);
-#  endif
-      }
-    else
-      {
-        abs_tol = ColToNVec_Serial (abstol, m_num);
-      }    
-
-    if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
-      error ("IDA: Tolerance not set");
-    
-    ::N_VDestroy (abs_tol);
-  }
-
-  void
-  IDA::set_tolerance (realtype abstol, realtype reltol)
-  {
-    if (IDASStolerances (m_mem, reltol, abstol) != 0)
-      error ("IDA: Tolerance not set");
-  }
+  void set_maxorder (int maxorder);
 
   octave_value_list
-  IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
-                  const ColumnVector& y, const ColumnVector& yp,
-                  const int refine, bool haverefine, bool haveoutputfcn,
-                  const octave_value& output_fcn, bool haveoutputsel,
-                  ColumnVector& outputsel, bool haveeventfunction,
-                  const octave_value& event_fcn,
-                  const octave_idx_type num_event_args)
-  {
-    // Set up output
-    ColumnVector tout, yout (m_num), ypout (m_num), ysel (outputsel.numel ());
-    ColumnVector ie, te, oldval, oldisterminal, olddir;
-    Matrix output, ye;
-    octave_idx_type cont = 0, temp = 0;
-    bool status = 0;
-    std::string string = "";
-    ColumnVector yold = y;
+  integrate (const octave_idx_type numt, const ColumnVector& tt,
+             const ColumnVector& y0, const ColumnVector& yp0,
+             const int refine, bool haverefine, bool haveoutputfcn,
+             const octave_value& output_fcn, bool haveoutputsel,
+             ColumnVector& outputsel, bool haveeventfunction,
+             const octave_value& event_fcn,
+             const octave_idx_type num_event_args);
 
-    realtype tsol = tspan(0);
-    realtype tend = tspan(numt-1);
-    N_Vector yy, yyp;
-    if (m_havejacsparse)
-      {
-#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-         yy = ColToNVec_Serial (y, m_num);
-         yyp = ColToNVec_Serial (yp, m_num);
-#  else
-         yy = ColToNVec_Octave (y);
-         yyp = ColToNVec_Octave (yp);
+  void print_stat ();
+
+private:
+
+  realtype m_t0;
+  ColumnVector m_y0;
+  ColumnVector m_yp0;
+  bool m_havejac;
+  bool m_havejacfcn;
+  bool m_havejacsparse;
+  void *m_mem;
+  octave_f77_int_type m_num;
+  octave_value m_ida_fcn;
+  octave_value m_ida_jac;
+  Matrix *m_dfdy;
+  Matrix *m_dfdyp;
+  SparseMatrix *m_spdfdy;
+  SparseMatrix *m_spdfdyp;
+  DAERHSFuncIDA m_fcn;
+  DAEJacFuncDense m_jacfcn;
+  DAEJacFuncSparse m_jacspfcn;
+  DAEJacCellDense m_jacdcell;
+  DAEJacCellSparse m_jacspcell;
+#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+  SUNContext m_sunContext;
 #  endif
-      }
-    else
-      {
-        yy = ColToNVec_Serial (y, m_num);
-        yyp = ColToNVec_Serial (yp, m_num);
-      }
+  SUNMatrix m_sunJacMatrix;
+  SUNLinearSolver m_sunLinearSolver;
+};
 
-    // Initialize OutputFcn
-    if (haveoutputfcn)
-      status = IDA::outputfun (output_fcn, haveoutputsel, y,
-                               tsol, tend, outputsel, "init");
+int
+IDA::resfun (realtype t, N_Vector yy, N_Vector yyp, N_Vector rr,
+             void *user_data)
+{
+  IDA *self = static_cast <IDA *> (user_data);
+  self->resfun_impl (t, yy, yyp, rr);
+  return 0;
+}
 
-    // Initialize Events
-    if (haveeventfunction)
-      status = IDA::event (event_fcn, te, ye, ie, tsol, y,
-                           "init", yp, oldval, oldisterminal,
-                           olddir, cont, temp, tsol, yold, num_event_args);
-    if (numt > 2)
-      {
-        // First output value
-        tout.resize (numt);
-        tout(0) = tsol;
-        output.resize (numt, m_num);
+void
+IDA::resfun_impl (realtype t, N_Vector& yy,
+                  N_Vector& yyp, N_Vector& rr)
+{
+  ColumnVector y = IDA::NVecToCol (yy, m_num);
 
-        for (octave_idx_type i = 0; i < m_num; i++)
-          output.elem (0, i) = y.elem (i);
+  ColumnVector yp = IDA::NVecToCol (yyp, m_num);
 
-        //Main loop
-        for (octave_idx_type j = 1; j < numt && status == 0; j++)
-          {
-            // IDANORMAL already interpolates tspan(j)
-            if (IDASolve (m_mem, tspan (j), &tsol, yy, yyp, IDA_NORMAL) != 0)
-              error ("IDASolve failed");
-            yout = NVecToCol (yy, m_num);
-            ypout = NVecToCol (yyp, m_num);
-            tout(j) = tsol;
+  ColumnVector res = (*m_fcn) (y, yp, t, m_ida_fcn);
 
-            for (octave_idx_type i = 0; i < m_num; i++)
-              output.elem (j, i) = yout.elem (i);
+  realtype *puntrr;
+  if (::N_VGetVectorID (rr) == SUNDIALS_NVEC_CUSTOM)
+  {
+    ColumnVector *rest = const_cast<ColumnVector *> (nv_content_c (rr));
+    *rest = res;
+  }
+  else
+  {
+    puntrr = nv_data_s (rr);
+    for (octave_idx_type i = 0; i < m_num; i++)
+      puntrr[i] = res (i);
+  }
+}
 
-            if (haveoutputfcn)
-              status = IDA::outputfun (output_fcn, haveoutputsel, yout, tsol,
-                                       tend, outputsel, string);
-
-            if (haveeventfunction)
-              status = IDA::event (event_fcn, te, ye, ie, tout(j), yout,
-                                   string, ypout, oldval, oldisterminal,
-                                   olddir, j, temp, tout(j-1), yold,
-                                   num_event_args);
-
-            // If integration is stopped, return only the reached steps
-            if (status == 1)
-              {
-                output.resize (j + 1, m_num);
-                tout.resize (j + 1);
-              }
-
-          }
-      }
-    else // numel (tspan) == 2
-      {
-        // First output value
-        tout.resize (1);
-        tout(0) = tsol;
-        output.resize (1, m_num);
-
-        for (octave_idx_type i = 0; i < m_num; i++)
-          output.elem (0, i) = y.elem (i);
-
-        bool posdirection = (tend > tsol);
-
-        //main loop
-        while (((posdirection == 1 && tsol < tend)
-               || (posdirection == 0 && tsol > tend))
-               && status == 0)
-          {
-            if (IDASolve (m_mem, tend, &tsol, yy, yyp, IDA_ONE_STEP) != 0)
-              error ("IDASolve failed");
-
-            if (haverefine)
-              status = IDA::interpolate (cont, output, tout, refine, tend,
-                                         haveoutputfcn, haveoutputsel,
-                                         output_fcn, outputsel,
-                                         haveeventfunction, event_fcn, te,
-                                         ye, ie, oldval, oldisterminal,
-                                         olddir, temp, yold,
-                                         num_event_args);
-
-            ypout = NVecToCol (yyp, m_num);
-            cont += 1;
-            output.resize (cont + 1, m_num); // This may be not efficient
-            tout.resize (cont + 1);
-            tout(cont) = tsol;
-
-            yout = NVecToCol (yy, m_num);
-
-            for (octave_idx_type i = 0; i < m_num; i++)
-              output.elem (cont, i) = yout.elem (i);
-
-            if (haveoutputfcn && ! haverefine && tout(cont) < tend)
-              status = IDA::outputfun (output_fcn, haveoutputsel, yout, tsol,
-                                       tend, outputsel, string);
-
-            if (haveeventfunction && ! haverefine && tout(cont) < tend)
-              status = IDA::event (event_fcn, te, ye, ie, tout(cont), yout,
-                                   string, ypout, oldval, oldisterminal,
-                                   olddir, cont, temp, tout(cont-1), yold,
-                                   num_event_args);
-          }
-
-        if (status == 0)
-          {
-            // Interpolate in tend
-            N_Vector dky;
-            if (m_havejacsparse)
-              {
+void
+IDA::set_up (const ColumnVector& y)
+{
+  if (m_havejacsparse)
+    {
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-                dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#    if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+      // Initially allocate memory for 0 entries. We will reallocate when we
+      // get the Jacobian matrix from the user and know the actual number of
+      // entries.
+      std::cout << "Setting up using KLU sparse solver \n";
+      N_Vector yy = ColToNVec_Serial (y, m_num);
+      m_sunJacMatrix = SUNSparseMatrix (m_num, m_num, 0, CSC_MAT OCTAVE_SUNCONTEXT);
+#    endif
+      if (! m_sunJacMatrix)
+        error ("Unable to create sparse Jacobian for Sundials");
+
+      m_sunLinearSolver = SUNLinSol_KLU (yy, m_sunJacMatrix
+                                         OCTAVE_SUNCONTEXT);
+      if (! m_sunLinearSolver)
+        error ("Unable to create KLU sparse solver");
 #  else
-                dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+      std::cout << "Setting up using Octave sparse solver \n";
+      N_Vector yy = ColToNVec_Octave (y);
+      m_sunJacMatrix = octave::SUNSparseMatrix (m_num, m_num, 0 OCTAVE_SUNCONTEXT);
+      if (! m_sunJacMatrix)
+        error ("Unable to create sparse Jacobian for Sundials");
+
+      m_sunLinearSolver = SUNLinSol_Gen (yy, m_sunJacMatrix
+                                                OCTAVE_SUNCONTEXT);
+      if (! m_sunLinearSolver)
+        error ("Unable to create KLU sparse solver");
 #  endif
-              }
-            else
-              {
-                dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-              }
+      if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
+        error ("Unable to set sparse linear solver");
 
-            if (IDAGetDky (m_mem, tend, 0, dky) != 0)
-              error ("IDA failed to interpolate y");
+      IDASetJacFn (m_mem, IDA::jacsparse);
+    }
+  else
+    {
+      N_Vector yy = ColToNVec_Serial (y, m_num);
 
-            tout(cont) = tend;
+      m_sunJacMatrix = SUNDenseMatrix (m_num, m_num OCTAVE_SUNCONTEXT);
+      if (! m_sunJacMatrix)
+        error ("Unable to create dense Jacobian for Sundials");
 
-            yout = NVecToCol (dky, m_num);
+      m_sunLinearSolver = SUNLinSol_Dense (yy, m_sunJacMatrix
+                                           OCTAVE_SUNCONTEXT);
+      if (! m_sunLinearSolver)
+        error ("Unable to create dense linear solver");
 
-            for (octave_idx_type i = 0; i < m_num; i++)
-              output.elem (cont, i) = yout.elem (i);
+      if (IDASetLinearSolver (m_mem, m_sunLinearSolver, m_sunJacMatrix))
+        error ("Unable to set dense linear solver");
 
-            // Plot final value
-            if (haveoutputfcn)
-              {
-                status = IDA::outputfun (output_fcn, haveoutputsel, yout,
-                                         tend, tend, outputsel, string);
+      if (m_havejac && IDASetJacFn (m_mem, IDA::jacdense) != 0)
+        error ("Unable to set dense Jacobian function");
 
-                // Events during last step
-                if (haveeventfunction)
-                  status = IDA::event (event_fcn, te, ye, ie, tend, yout,
-                                       string, ypout, oldval, oldisterminal,
-                                       olddir, cont, temp, tout(cont-1),
-                                       yold, num_event_args);
-              }
+    }
+}
 
-            ::N_VDestroy(dky);
-          }
+void
+IDA::jacdense_impl (realtype t, realtype cj,
+                    N_Vector& yy, N_Vector& yyp, SUNMatrix& JJ)
 
-        // Cleanup plotter
-        status = IDA::outputfun (output_fcn, haveoutputsel, yout, tend, tend,
-                                 outputsel, "done");
+{
+  octave_f77_int_type Neq = ::N_VGetLength (yy);
 
-      }
+  ColumnVector y = NVecToCol (yy, Neq);
 
-    // Index of Events (ie) variable must use 1-based indexing
-    return ovl (tout, output, te, ye, ie + 1.0);
-  }
+  ColumnVector yp = NVecToCol (yyp, Neq);
 
-  bool
-  IDA::event (const octave_value& event_fcn,
-              ColumnVector& te, Matrix& ye, ColumnVector& ie, realtype tsol,
-              const ColumnVector& y, const std::string& flag,
-              const ColumnVector& yp, ColumnVector& oldval,
-              ColumnVector& oldisterminal, ColumnVector& olddir,
-              octave_idx_type cont, octave_idx_type& temp, realtype told,
-              ColumnVector& yold,
-              const octave_idx_type num_event_args)
-  {
-    bool status = 0;
+  Matrix jac;
 
-    octave_value_list args;
-    if (num_event_args == 2)
-      args = ovl (tsol, y);
-    else
-      args = ovl (tsol, y, yp);
+  if (m_havejacfcn)
+    jac = (*m_jacfcn) (y, yp, t, cj, m_ida_jac);
+  else
+    jac = (*m_jacdcell) (m_dfdy, m_dfdyp, cj);
 
-    // cont is the number of steps reached by the solver
-    // temp is the number of events registered
+  octave_f77_int_type num_jac = to_f77_int (jac.numel ());
+  std::copy (jac.fortran_vec (),
+             jac.fortran_vec () + num_jac,
+             SUNDenseMatrix_Data (JJ));
+}
 
-    if (flag == "init")
-      {
-        octave_value_list output = feval (event_fcn, args, 3);
-        oldval = output(0).vector_value ();
-        oldisterminal = output(1).vector_value ();
-        olddir = output(2).vector_value ();
-      }
-    else if (flag == "")
-      {
-        ColumnVector index (0);
-        octave_value_list output = feval (event_fcn, args, 3);
-        ColumnVector val = output(0).vector_value ();
-        ColumnVector isterminal = output(1).vector_value ();
-        ColumnVector dir = output(2).vector_value ();
+void
+IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
+                     SUNMatrix& Jac)
 
-        // Get the index of the changed values
-        for (octave_idx_type i = 0; i < val.numel (); i++)
-          {
-            // Check for sign change and whether a rising / falling edge
-            // either passes through zero or detaches from zero (bug #59063)
-            if ((dir(i) != -1
-                 && ((val(i) >= 0 && oldval(i) < 0)
-                     || (val(i) > 0 && oldval(i) <= 0))) // increasing
-                || (dir(i) != 1
-                    && ((val(i) <= 0 && oldval(i) > 0)
-                        || (val(i) < 0 && oldval(i) >= 0)))) // decreasing
-              {
-                index.resize (index.numel () + 1);
-                index (index.numel () - 1) = i;
-              }
-          }
-
-        if (cont == 1 && index.numel () > 0)  // Events in first step
-          {
-            temp = 1; // register only the first event
-            te.resize (1);
-            ye.resize (1, m_num);
-            ie.resize (1);
-
-            // Linear interpolation
-            ie(0) = index(0);
-            te(0) = tsol - val (index(0)) * (tsol - told)
-                    / (val (index(0)) - oldval (index(0)));
-
-            ColumnVector ytemp
-              = y - ((tsol - te(0)) * (y - yold) / (tsol - told));
-
-            for (octave_idx_type i = 0; i < m_num; i++)
-              ye.elem (0, i) = ytemp.elem (i);
-
-          }
-        else if (index.numel () > 0)
-          // Not first step: register all events and test
-          // if stop integration or not
-          {
-            te.resize (temp + index.numel ());
-            ye.resize (temp + index.numel (), m_num);
-            ie.resize (temp + index.numel ());
-
-            for (octave_idx_type i = 0; i < index.numel (); i++)
-              {
-
-                if (isterminal (index(i)) == 1)
-                  status = 1; // Stop integration
-
-                // Linear interpolation
-                ie(temp+i) = index(i);
-                te(temp+i) = tsol - val(index(i)) * (tsol - told)
-                             / (val(index(i)) - oldval(index(i)));
-
-                ColumnVector ytemp
-                  = y - (tsol - te (temp + i)) * (y - yold) / (tsol - told);
-
-                for (octave_idx_type j = 0; j < m_num; j++)
-                  ye.elem (temp + i, j) = ytemp.elem (j);
-
-              }
-
-            temp += index.numel ();
-          }
-
-        // Update variables
-        yold = y;
-        told = tsol;
-        olddir = dir;
-        oldval = val;
-        oldisterminal = isterminal;
-      }
-
-    return status;
-  }
-
-  bool
-  IDA::interpolate (octave_idx_type& cont, Matrix& output, ColumnVector& tout,
-                    int refine, realtype tend, bool haveoutputfcn,
-                    bool haveoutputsel, const octave_value& output_fcn,
-                    ColumnVector& outputsel, bool haveeventfunction,
-                    const octave_value& event_fcn, ColumnVector& te,
-                    Matrix& ye, ColumnVector& ie, ColumnVector& oldval,
-                    ColumnVector& oldisterminal, ColumnVector& olddir,
-                    octave_idx_type& temp, ColumnVector& yold,
-                    const octave_idx_type num_event_args)
-  {
-    realtype h = 0, tcur = 0;
-    bool status = 0;
-
-    N_Vector dky, dkyp;
-    if (m_havejacsparse)
-      {
+{
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-       dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-       dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+  ColumnVector y = NVecToCol (yy, m_num);
+
+  ColumnVector yp = NVecToCol (yyp, m_num);
+
+  SparseMatrix jac;
+
+  if (m_havejacfcn)
+    jac = (*m_jacspfcn) (y, yp, t, cj, m_ida_jac);
+  else
+    jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
+
+#     if defined (HAVE_SUNSPARSEMATRIX_REALLOCATE)
+  octave_f77_int_type nnz = to_f77_int (jac.nnz ());
+  if (nnz > ::SUNSparseMatrix_NNZ (Jac))
+    {
+      // Allocate memory for sparse Jacobian defined in user function.
+      // This will always be required at least once since we set the number
+      // of nonzero elements to zero initially.
+      if (SUNSparseMatrix_Reallocate (Jac, nnz))
+        error ("Unable to allocate sufficient memory for IDA sparse matrix");
+    }
+#     endif
+
+  ::SUNMatZero_Sparse (Jac);
+  // We have to use "sunindextype *" here but still need to check that
+  // conversion of each element to "octave_f77_int_type" is save.
+  sunindextype *colptrs = ::SUNSparseMatrix_IndexPointers (Jac);
+  sunindextype *rowvals = ::SUNSparseMatrix_IndexValues (Jac);
+
+  for (octave_f77_int_type i = 0; i < m_num + 1; i++)
+    colptrs[i] = to_f77_int (jac.cidx (i));
+
+  double *d = ::SUNSparseMatrix_Data (Jac);
+  for (octave_f77_int_type i = 0; i < to_f77_int (jac.nnz ()); i++)
+    {
+      rowvals[i] = to_f77_int (jac.ridx (i));
+      d[i] = jac.data (i);
+    }
 #  else
-       dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
-       dkyp = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+  ColumnVector *y = const_cast<ColumnVector *> (nv_content_c (yy));
+  ColumnVector *yp = const_cast<ColumnVector *> (nv_content_c (yyp));
+  SparseMatrix jac;
+
+  if (m_havejacfcn)
+    jac = (*m_jacspfcn) (*y, *yp, t, cj, m_ida_jac);
+  else
+    jac = (*m_jacspcell) (m_spdfdy, m_spdfdyp, cj);
+
+  SUNMatZero (Jac);
+  // We have to use "sunindextype *" here but still need to check that
+  // conversion of each element to "octave_f77_int_type" is save.
+
+  SparseMatrix *jnew = new SparseMatrix ();
+  *jnew = jac;
+  SparseMatrix *content = const_cast<SparseMatrix *> (jnew);
+  Jac->content = content;
 #  endif
-      }
-    else
-      {
-        dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-        dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-      }
+}
 
-    ColumnVector yout (m_num);
-    ColumnVector ypout (m_num);
-    std::string string = "";
+ColumnVector
+IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
+{
+  ColumnVector data (n);
+  if (::N_VGetVectorID (v) == SUNDIALS_NVEC_CUSTOM)
+    {
+      ColumnVector *punt = const_cast<ColumnVector *> (nv_content_c (v));
+      data = *punt;
+    }
+  else
+    {
+      realtype *punt = nv_data_s (v);
 
-    if (IDAGetLastStep (m_mem, &h) != 0)
-      error ("IDA failed to return last step");
+      for (octave_f77_int_type i = 0; i < n; i++)
+        data(i) = punt[i];
+    }
+  return data;
+}
 
-    if (IDAGetCurrentTime (m_mem, &tcur) != 0)
-      error ("IDA failed to return the current time");
+N_Vector
+IDA::ColToNVec_Octave (const ColumnVector& data)
+{
+  N_Vector v = octave::N_VMake (data OCTAVE_SUNCONTEXT);
+  return v;
+}
 
-    realtype tin = tcur - h;
+N_Vector
+IDA::ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n)
+{
+  N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
+  realtype *punt = nv_data_s (v);
 
-    realtype step = h / refine;
+  for (octave_f77_int_type i = 0; i < n; i++)
+    punt[i] = data (i);
 
-    for (octave_idx_type i = 1;
-         i < refine && tin + step * i < tend && status == 0;
-         i++)
-      {
-        if (IDAGetDky (m_mem, tin + step*i, 0, dky) != 0)
-          error ("IDA failed to interpolate y");
+  return v;
+}
 
-        if (IDAGetDky (m_mem, tin + step*i, 1, dkyp) != 0)
-          error ("IDA failed to interpolate yp");
+void
+IDA::set_userdata ()
+{
+  void *userdata = this;
 
-        cont += 1;
-        output.resize (cont + 1, m_num);
-        tout.resize (cont + 1);
+  if (IDASetUserData (m_mem, userdata) != 0)
+    error ("User data not set");
+}
 
-        tout(cont) = tin + step * i;
-        yout = NVecToCol (dky, m_num);
-        ypout = NVecToCol (dkyp, m_num);
-
-        for (octave_idx_type j = 0; j < m_num; j++)
-          output.elem (cont, j) = yout.elem (j);
-
-        if (haveoutputfcn)
-          status = IDA::outputfun (output_fcn, haveoutputsel, yout,
-                                   tout(cont), tend, outputsel, "");
-
-        if (haveeventfunction)
-          status = IDA::event (event_fcn, te, ye, ie, tout(cont),
-                               yout, string, ypout, oldval,
-                               oldisterminal, olddir, cont, temp,
-                               tout(cont-1), yold, num_event_args);
-      }
-
-    ::N_VDestroy(dky);
-
-    return status;
-  }
-
-  bool
-  IDA::outputfun (const octave_value& output_fcn, bool haveoutputsel,
-                  const ColumnVector& yout, realtype tsol,
-                  realtype tend, ColumnVector& outputsel,
-                  const std::string& flag)
+void
+IDA::initialize ()
+{
+  m_num = to_f77_int (m_y0.numel ());
+#  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+  if (SUNContext_Create (nullptr, &m_sunContext) < 0)
+    error ("__ode15__: unable to create context for SUNDIALS");
+  m_mem = IDACreate (m_sunContext);
+#  else
+  m_mem = IDACreate ();
+#  endif
+  N_Vector yy, yyp;
+  if (m_havejacsparse)
   {
-    bool status = 0;
-
-    octave_value_list output;
-    output(2) = flag;
-
-    ColumnVector ysel (outputsel.numel ());
-    if (haveoutputsel)
-      {
-        for (octave_idx_type i = 0; i < outputsel.numel (); i++)
-          ysel(i) = yout(outputsel(i));
-
-        output(1) = ysel;
-      }
-    else
-      output(1) = yout;
-
-    if (flag == "init")
-      {
-        ColumnVector toutput (2);
-        toutput(0) = tsol;
-        toutput(1) = tend;
-        output(0) = toutput;
-
-        feval (output_fcn, output, 0);
-      }
-    else if (flag == "")
-      {
-        output(0) = tsol;
-        octave_value_list val = feval (output_fcn, output, 1);
-        status = val(0).bool_value ();
-      }
-    else
-      {
-        // Cleanup plotter
-        output(0) = tend;
-        feval (output_fcn, output, 0);
-      }
-
-    return status;
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    yy = ColToNVec_Serial (m_y0, m_num);
+    yyp = ColToNVec_Serial (m_yp0, m_num);
+#  else
+    yy = ColToNVec_Octave (m_y0);
+    yyp = ColToNVec_Octave (m_yp0);
+#  endif
   }
-
-  void
-  IDA::set_maxstep (realtype maxstep)
+  else
   {
-    if (IDASetMaxStep (m_mem, maxstep) != 0)
-      error ("IDA: Max Step not set");
+    yy = ColToNVec_Serial (m_y0, m_num);
+    yyp = ColToNVec_Serial (m_yp0, m_num);
   }
 
-  void
-  IDA::set_initialstep (realtype initialstep)
+  IDA::set_userdata ();
+
+  if (IDAInit (m_mem, IDA::resfun, m_t0, yy, yyp) != 0)
+    error ("IDA not initialized");
+}
+
+void
+IDA::set_tolerance (ColumnVector& abstol, realtype reltol)
+{
+  N_Vector abs_tol;
+  if (m_havejacsparse)
   {
-    if (IDASetInitStep (m_mem, initialstep) != 0)
-      error ("IDA: Initial Step not set");
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    abs_tol = ColToNVec_Serial (abstol, m_num);
+#  else
+    abs_tol = ColToNVec_Octave (abstol);
+#  endif
   }
-
-  void
-  IDA::set_maxorder (int maxorder)
+  else
   {
-    if (IDASetMaxOrd (m_mem, maxorder) != 0)
-      error ("IDA: Max Order not set");
+    abs_tol = ColToNVec_Serial (abstol, m_num);
   }
 
-  void
-  IDA::print_stat (void)
+  if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
+    error ("IDA: Tolerance not set");
+
+  ::N_VDestroy (abs_tol);
+}
+
+void
+IDA::set_tolerance (realtype abstol, realtype reltol)
+{
+  if (IDASStolerances (m_mem, reltol, abstol) != 0)
+    error ("IDA: Tolerance not set");
+}
+
+octave_value_list
+IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
+                const ColumnVector& y, const ColumnVector& yp,
+                const int refine, bool haverefine, bool haveoutputfcn,
+                const octave_value& output_fcn, bool haveoutputsel,
+                ColumnVector& outputsel, bool haveeventfunction,
+                const octave_value& event_fcn,
+                const octave_idx_type num_event_args)
+{
+  // Set up output
+  ColumnVector tout, yout (m_num), ypout (m_num), ysel (outputsel.numel ());
+  ColumnVector ie, te, oldval, oldisterminal, olddir;
+  Matrix output, ye;
+  octave_idx_type cont = 0, temp = 0;
+  bool status = false;
+  std::string string = "";
+  ColumnVector yold = y;
+
+  realtype tsol = tspan(0);
+  realtype tend = tspan(numt - 1);
+  N_Vector yy, yyp;
+  if (m_havejacsparse)
   {
-    long int nsteps = 0, netfails = 0, nrevals = 0;
-
-    if (IDAGetNumSteps (m_mem, &nsteps) != 0)
-      error ("IDA failed to return the number of internal steps");
-
-    if (IDAGetNumErrTestFails (m_mem, &netfails) != 0)
-      error ("IDA failed to return the number of internal errors");
-
-    if (IDAGetNumResEvals (m_mem, &nrevals) != 0)
-      error ("IDA failed to return the number of residual evaluations");
-
-    octave_stdout << nsteps << " successful steps\n";
-    octave_stdout << netfails << " failed attempts\n";
-    octave_stdout << nrevals << " function evaluations\n";
-    // octave_stdout << " partial derivatives\n";
-    // octave_stdout << " LU decompositions\n";
-    // octave_stdout << " solutions of linear systems\n";
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+    yy = ColToNVec_Serial (y, m_num);
+    yyp = ColToNVec_Serial (yp, m_num);
+#  else
+    yy = ColToNVec_Octave (y);
+    yyp = ColToNVec_Octave (yp);
+#  endif
   }
-
-  static ColumnVector
-  ida_user_function (const ColumnVector& x, const ColumnVector& xdot,
-                     double t, const octave_value& ida_fc)
+  else
   {
-    octave_value_list tmp;
-
-    try
-      {
-        tmp = feval (ida_fc, ovl (t, x, xdot), 1);
-      }
-    catch (execution_exception& ee)
-      {
-        err_user_supplied_eval (ee, "__ode15__");
-      }
-
-    return tmp(0).vector_value ();
+    yy = ColToNVec_Serial (y, m_num);
+    yyp = ColToNVec_Serial (yp, m_num);
   }
 
-  static Matrix
-  ida_dense_jac (const ColumnVector& x, const ColumnVector& xdot,
-                 double t, double cj, const octave_value& ida_jc)
-  {
-    octave_value_list tmp;
+  // Initialize OutputFcn
+  if (haveoutputfcn)
+    status = IDA::outputfun (output_fcn, haveoutputsel, y,
+                             tsol, tend, outputsel, "init");
 
-    try
-      {
-        tmp = feval (ida_jc, ovl (t, x, xdot), 2);
-      }
-    catch (execution_exception& ee)
-      {
-        err_user_supplied_eval (ee, "__ode15__");
-      }
+  // Initialize Events
+  if (haveeventfunction)
+    status = IDA::event (event_fcn, te, ye, ie, tsol, y,
+                         "init", yp, oldval, oldisterminal,
+                         olddir, cont, temp, tsol, yold, num_event_args);
 
-    return tmp(0).matrix_value () + cj * tmp(1).matrix_value ();
-  }
+  if (numt > 2)
+    {
+      // First output value
+      tout.resize (numt);
+      tout(0) = tsol;
+      output.resize (numt, m_num);
 
-  static SparseMatrix
-  ida_sparse_jac (const ColumnVector& x, const ColumnVector& xdot,
-                  double t, double cj, const octave_value& ida_jc)
-  {
-    octave_value_list tmp;
+      for (octave_idx_type i = 0; i < m_num; i++)
+        output.elem (0, i) = y.elem (i);
 
-    try
-      {
-        tmp = feval (ida_jc, ovl (t, x, xdot), 2);
-      }
-    catch (execution_exception& ee)
-      {
-        err_user_supplied_eval (ee, "__ode15__");
-      }
+      //Main loop
+      for (octave_idx_type j = 1; j < numt && status == 0; j++)
+        {
+          // IDANORMAL already interpolates tspan(j)
 
-    return tmp(0).sparse_matrix_value () + cj * tmp(1).sparse_matrix_value ();
-  }
+          if (IDASolve (m_mem, tspan (j), &tsol, yy, yyp, IDA_NORMAL) != 0)
+            error ("IDASolve failed");
 
-  static Matrix
-  ida_dense_cell_jac (Matrix *dfdy, Matrix *dfdyp, double cj)
-  {
-    return (*dfdy) + cj * (*dfdyp);
-  }
+          yout = NVecToCol (yy, m_num);
+          ypout = NVecToCol (yyp, m_num);
+          tout(j) = tsol;
 
-  static SparseMatrix
-  ida_sparse_cell_jac (SparseMatrix *spdfdy, SparseMatrix *spdfdyp,
-                       double cj)
-  {
-    return (*spdfdy) + cj * (*spdfdyp);
-  }
+          for (octave_idx_type i = 0; i < m_num; i++)
+            output.elem (j, i) = yout.elem (i);
 
-  static octave_value_list
-  do_ode15 (const octave_value& ida_fcn,
-            const ColumnVector& tspan,
-            const octave_idx_type numt,
-            const realtype t0,
-            const ColumnVector& y0,
-            const ColumnVector& yp0,
-            const octave_scalar_map& options,
+          if (haveoutputfcn)
+            status = IDA::outputfun (output_fcn, haveoutputsel, yout, tsol,
+                                     tend, outputsel, string);
+
+          if (haveeventfunction)
+            status = IDA::event (event_fcn, te, ye, ie, tout(j), yout,
+                                 string, ypout, oldval, oldisterminal,
+                                 olddir, j, temp, tout(j-1), yold,
+                                 num_event_args);
+
+          // If integration is stopped, return only the reached steps
+          if (status == 1)
+            {
+              output.resize (j + 1, m_num);
+              tout.resize (j + 1);
+            }
+
+        }
+    }
+  else // numel (tspan) == 2
+    {
+      // First output value
+      tout.resize (1);
+      tout(0) = tsol;
+      output.resize (1, m_num);
+
+      for (octave_idx_type i = 0; i < m_num; i++)
+        output.elem (0, i) = y.elem (i);
+
+      bool posdirection = (tend > tsol);
+
+      //main loop
+      while (((posdirection == 1 && tsol < tend)
+              || (posdirection == 0 && tsol > tend))
+             && status == 0)
+        {
+          if (IDASolve (m_mem, tend, &tsol, yy, yyp, IDA_ONE_STEP) != 0)
+            error ("IDASolve failed");
+
+          if (haverefine)
+            status = IDA::interpolate (cont, output, tout, refine, tend,
+                                       haveoutputfcn, haveoutputsel,
+                                       output_fcn, outputsel,
+                                       haveeventfunction, event_fcn, te,
+                                       ye, ie, oldval, oldisterminal,
+                                       olddir, temp, yold,
+                                       num_event_args);
+
+          ypout = NVecToCol (yyp, m_num);
+          cont += 1;
+          output.resize (cont + 1, m_num); // This may be not efficient
+          tout.resize (cont + 1);
+          tout(cont) = tsol;
+          yout = NVecToCol (yy, m_num);
+
+          for (octave_idx_type i = 0; i < m_num; i++)
+            output.elem (cont, i) = yout.elem (i);
+
+          if (haveoutputfcn && ! haverefine && tout(cont) < tend)
+            status = IDA::outputfun (output_fcn, haveoutputsel, yout, tsol,
+                                     tend, outputsel, string);
+
+          if (haveeventfunction && ! haverefine && tout(cont) < tend)
+            status = IDA::event (event_fcn, te, ye, ie, tout(cont), yout,
+                                 string, ypout, oldval, oldisterminal,
+                                 olddir, cont, temp, tout(cont-1), yold,
+                                 num_event_args);
+        }
+
+      if (status == 0)
+        {
+          // Interpolate in tend
+          N_Vector dky;
+          if (m_havejacsparse)
+          {
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#  else
+            dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+#  endif
+          }
+          else
+          {
+            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+          }
+
+          if (IDAGetDky (m_mem, tend, 0, dky) != 0)
+            error ("IDA failed to interpolate y");
+
+          tout(cont) = tend;
+
+          yout = NVecToCol (dky, m_num);
+
+          for (octave_idx_type i = 0; i < m_num; i++)
+            output.elem (cont, i) = yout.elem (i);
+
+          // Plot final value
+          if (haveoutputfcn)
+            {
+              status = IDA::outputfun (output_fcn, haveoutputsel, yout,
+                                       tend, tend, outputsel, string);
+
+              // Events during last step
+              if (haveeventfunction)
+                status = IDA::event (event_fcn, te, ye, ie, tend, yout,
+                                     string, ypout, oldval, oldisterminal,
+                                     olddir, cont, temp, tout (cont - 1),
+                                     yold, num_event_args);
+            }
+
+          ::N_VDestroy (dky);
+        }
+
+      // Cleanup plotter
+      status = IDA::outputfun (output_fcn, haveoutputsel, yout, tend, tend,
+                               outputsel, "done");
+    }
+
+  // Index of Events (ie) variable must use 1-based indexing
+  return ovl (tout, output, te, ye, ie + 1.0);
+}
+
+bool
+IDA::event (const octave_value& event_fcn,
+            ColumnVector& te, Matrix& ye, ColumnVector& ie, realtype tsol,
+            const ColumnVector& y, const std::string& flag,
+            const ColumnVector& yp, ColumnVector& oldval,
+            ColumnVector& oldisterminal, ColumnVector& olddir,
+            octave_idx_type cont, octave_idx_type& temp, realtype told,
+            ColumnVector& yold,
             const octave_idx_type num_event_args)
-  {
-    octave_value_list retval;
+{
+  bool status = false;
 
-    // Create object
-    IDA dae (t0, y0, yp0, ida_fcn, ida_user_function);
+  octave_value_list args;
+  if (num_event_args == 2)
+    args = ovl (tsol, y);
+  else
+    args = ovl (tsol, y, yp);
 
-    // Set Jacobian
-    bool havejac = options.getfield ("havejac").bool_value ();
+  // cont is the number of steps reached by the solver
+  // temp is the number of events registered
 
-    bool havejacsparse = options.getfield ("havejacsparse").bool_value ();
+  interpreter& interp = __get_interpreter__ ();
 
-    bool havejacfcn = options.getfield ("havejacfcn").bool_value ();
+  if (flag == "init")
+    {
+      octave_value_list output = interp.feval (event_fcn, args, 3);
+      oldval = output(0).vector_value ();
+      oldisterminal = output(1).vector_value ();
+      olddir = output(2).vector_value ();
+    }
+  else if (flag == "")
+    {
+      ColumnVector index (0);
+      octave_value_list output = interp.feval (event_fcn, args, 3);
+      ColumnVector val = output(0).vector_value ();
+      ColumnVector isterminal = output(1).vector_value ();
+      ColumnVector dir = output(2).vector_value ();
 
-    Matrix ida_dfdy, ida_dfdyp;
-    SparseMatrix ida_spdfdy, ida_spdfdyp;
+      // Get the index of the changed values
+      for (octave_idx_type i = 0; i < val.numel (); i++)
+        {
+          // Check for sign change and whether a rising / falling edge
+          // either passes through zero or detaches from zero (bug #59063)
+          if ((dir(i) != -1
+               && ((val(i) >= 0 && oldval(i) < 0)
+                   || (val(i) > 0 && oldval(i) <= 0))) // increasing
+              || (dir(i) != 1
+                  && ((val(i) <= 0 && oldval(i) > 0)
+                      || (val(i) < 0 && oldval(i) >= 0)))) // decreasing
+            {
+              index.resize (index.numel () + 1);
+              index (index.numel () - 1) = i;
+            }
+        }
 
-    if (havejac)
-      {
-        if (havejacfcn)
-          {
-            octave_value ida_jac = options.getfield ("Jacobian");
+      if (cont == 1 && index.numel () > 0)  // Events in first step
+        {
+          temp = 1; // register only the first event
+          te.resize (1);
+          ye.resize (1, m_num);
+          ie.resize (1);
 
-            if (havejacsparse)
-              dae.set_jacobian (ida_jac, ida_sparse_jac);
-            else
-              dae.set_jacobian (ida_jac, ida_dense_jac);
-          }
-        else
-          {
-            Cell jaccell = options.getfield ("Jacobian").cell_value ();
+          // Linear interpolation
+          ie(0) = index(0);
+          te(0) = tsol - val (index(0)) * (tsol - told)
+                  / (val (index(0)) - oldval (index(0)));
 
-            if (havejacsparse)
-              {
-                ida_spdfdy = jaccell(0).sparse_matrix_value ();
-                ida_spdfdyp = jaccell(1).sparse_matrix_value ();
+          ColumnVector ytemp
+            = y - ((tsol - te(0)) * (y - yold) / (tsol - told));
 
-                dae.set_jacobian (&ida_spdfdy, &ida_spdfdyp,
-                                  ida_sparse_cell_jac);
-              }
-            else
-              {
-                ida_dfdy = jaccell(0).matrix_value ();
-                ida_dfdyp = jaccell(1).matrix_value ();
+          for (octave_idx_type i = 0; i < m_num; i++)
+            ye.elem (0, i) = ytemp.elem (i);
 
-                dae.set_jacobian (&ida_dfdy, &ida_dfdyp, ida_dense_cell_jac);
-              }
-          }
-      }
+        }
+      else if (index.numel () > 0)
+        // Not first step: register all events and test
+        // if stop integration or not
+        {
+          te.resize (temp + index.numel ());
+          ye.resize (temp + index.numel (), m_num);
+          ie.resize (temp + index.numel ());
 
-    // Initialize IDA
-    dae.initialize ();
+          for (octave_idx_type i = 0; i < index.numel (); i++)
+            {
 
-    // Set tolerances
-    realtype rel_tol = options.getfield ("RelTol").double_value ();
+              if (isterminal (index(i)) == 1)
+                status = 1; // Stop integration
 
-    bool haveabstolvec = options.getfield ("haveabstolvec").bool_value ();
+              // Linear interpolation
+              ie(temp+i) = index(i);
+              te(temp+i) = tsol - val(index(i)) * (tsol - told)
+                           / (val(index(i)) - oldval(index(i)));
 
-    if (haveabstolvec)
-      {
-        ColumnVector abs_tol = options.getfield ("AbsTol").vector_value ();
+              ColumnVector ytemp
+                = y - (tsol - te (temp + i)) * (y - yold) / (tsol - told);
 
-        dae.set_tolerance (abs_tol, rel_tol);
-      }
-    else
-      {
-        realtype abs_tol = options.getfield ("AbsTol").double_value ();
+              for (octave_idx_type j = 0; j < m_num; j++)
+                ye.elem (temp + i, j) = ytemp.elem (j);
 
-        dae.set_tolerance (abs_tol, rel_tol);
-      }
+            }
 
-    //Set max step
-    realtype maxstep = options.getfield ("MaxStep").double_value ();
+          temp += index.numel ();
+        }
 
-    dae.set_maxstep (maxstep);
+      // Update variables
+      yold = y;
+      told = tsol;
+      olddir = dir;
+      oldval = val;
+      oldisterminal = isterminal;
+    }
 
-    //Set initial step
-    if (! options.getfield ("InitialStep").isempty ())
-      {
-        realtype initialstep = options.getfield ("InitialStep").double_value ();
+  return status;
+}
 
-        dae.set_initialstep (initialstep);
-      }
+bool
+IDA::interpolate (octave_idx_type& cont, Matrix& output, ColumnVector& tout,
+                  int refine, realtype tend, bool haveoutputfcn,
+                  bool haveoutputsel, const octave_value& output_fcn,
+                  ColumnVector& outputsel, bool haveeventfunction,
+                  const octave_value& event_fcn, ColumnVector& te,
+                  Matrix& ye, ColumnVector& ie, ColumnVector& oldval,
+                  ColumnVector& oldisterminal, ColumnVector& olddir,
+                  octave_idx_type& temp, ColumnVector& yold,
+                  const octave_idx_type num_event_args)
+{
+  realtype h = 0, tcur = 0;
+  bool status = false;
 
-    //Set max order FIXME: it doesn't work
-    int maxorder = options.getfield ("MaxOrder").int_value ();
+  N_Vector dky, dkyp;
 
-    dae.set_maxorder (maxorder);
+  if (m_havejacsparse)
+    {
+#  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
+      dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+      dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+#  else
+      dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+      dkyp = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+#  endif
+    }
+  else
+    {
+      dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+      dkyp = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+    }
 
-    //Set Refine
-    const int refine = options.getfield ("Refine").int_value ();
+  ColumnVector yout (m_num);
+  ColumnVector ypout (m_num);
+  std::string string = "";
 
-    bool haverefine = (refine > 1);
+  if (IDAGetLastStep (m_mem, &h) != 0)
+    error ("IDA failed to return last step");
 
-    octave_value output_fcn;
-    ColumnVector outputsel;
+  if (IDAGetCurrentTime (m_mem, &tcur) != 0)
+    error ("IDA failed to return the current time");
 
-    // OutputFcn
-    bool haveoutputfunction
-      = options.getfield ("haveoutputfunction").bool_value ();
+  realtype tin = tcur - h;
 
-    if (haveoutputfunction)
-      output_fcn = options.getfield ("OutputFcn");
+  realtype step = h / refine;
 
-    // OutputSel
-    bool haveoutputsel = options.getfield ("haveoutputselection").bool_value ();
+  for (octave_idx_type i = 1;
+       i < refine && tin + step * i < tend && status == 0;
+       i++)
+    {
+      if (IDAGetDky (m_mem, tin + step*i, 0, dky) != 0)
+        error ("IDA failed to interpolate y");
 
-    if (haveoutputsel)
-      outputsel = options.getfield ("OutputSel").vector_value ();
+      if (IDAGetDky (m_mem, tin + step*i, 1, dkyp) != 0)
+        error ("IDA failed to interpolate yp");
 
-    octave_value event_fcn;
+      cont += 1;
+      output.resize (cont + 1, m_num);
+      tout.resize (cont + 1);
 
-    // Events
-    bool haveeventfunction
-      = options.getfield ("haveeventfunction").bool_value ();
+      tout(cont) = tin + step * i;
+      yout = NVecToCol (dky, m_num);
+      ypout = NVecToCol (dkyp, m_num);
 
-    if (haveeventfunction)
-      event_fcn = options.getfield ("Events");
+      for (octave_idx_type j = 0; j < m_num; j++)
+        output.elem (cont, j) = yout.elem (j);
 
-    // Set up linear solver
-    dae.set_up (y0);
+      if (haveoutputfcn)
+        status = IDA::outputfun (output_fcn, haveoutputsel, yout,
+                                 tout(cont), tend, outputsel, "");
 
-    // Integrate
-    retval = dae.integrate (numt, tspan, y0, yp0, refine,
-                            haverefine, haveoutputfunction,
-                            output_fcn, haveoutputsel, outputsel,
-                            haveeventfunction, event_fcn, num_event_args);
+      if (haveeventfunction)
+        status = IDA::event (event_fcn, te, ye, ie, tout(cont),
+                             yout, string, ypout, oldval,
+                             oldisterminal, olddir, cont, temp,
+                             tout(cont - 1), yold, num_event_args);
+    }
 
-    // Statistics
-    bool havestats = options.getfield ("havestats").bool_value ();
+  ::N_VDestroy (dky);
 
-    if (havestats)
-      dae.print_stat ();
+  return status;
+}
 
-    return retval;
-  }
+bool
+IDA::outputfun (const octave_value& output_fcn, bool haveoutputsel,
+                const ColumnVector& yout, realtype tsol,
+                realtype tend, ColumnVector& outputsel,
+                const std::string& flag)
+{
+  bool status = false;
+
+  octave_value_list output;
+  output(2) = flag;
+
+  ColumnVector ysel (outputsel.numel ());
+  if (haveoutputsel)
+    {
+      for (octave_idx_type i = 0; i < outputsel.numel (); i++)
+        ysel(i) = yout(outputsel(i));
+
+      output(1) = ysel;
+    }
+  else
+    output(1) = yout;
+
+  interpreter& interp = __get_interpreter__ ();
+
+  if (flag == "init")
+    {
+      ColumnVector toutput (2);
+      toutput(0) = tsol;
+      toutput(1) = tend;
+      output(0) = toutput;
+
+      interp.feval (output_fcn, output, 0);
+    }
+  else if (flag == "")
+    {
+      output(0) = tsol;
+      octave_value_list val = interp.feval (output_fcn, output, 1);
+      status = val(0).bool_value ();
+    }
+  else
+    {
+      // Cleanup plotter
+      output(0) = tend;
+      interp.feval (output_fcn, output, 0);
+    }
+
+  return status;
+}
+
+void
+IDA::set_maxstep (realtype maxstep)
+{
+  if (IDASetMaxStep (m_mem, maxstep) != 0)
+    error ("IDA: Max Step not set");
+}
+
+void
+IDA::set_initialstep (realtype initialstep)
+{
+  if (IDASetInitStep (m_mem, initialstep) != 0)
+    error ("IDA: Initial Step not set");
+}
+
+void
+IDA::set_maxorder (int maxorder)
+{
+  if (IDASetMaxOrd (m_mem, maxorder) != 0)
+    error ("IDA: Max Order not set");
+}
+
+void
+IDA::print_stat ()
+{
+  long int nsteps = 0, netfails = 0, nrevals = 0;
+
+  if (IDAGetNumSteps (m_mem, &nsteps) != 0)
+    error ("IDA failed to return the number of internal steps");
+
+  if (IDAGetNumErrTestFails (m_mem, &netfails) != 0)
+    error ("IDA failed to return the number of internal errors");
+
+  if (IDAGetNumResEvals (m_mem, &nrevals) != 0)
+    error ("IDA failed to return the number of residual evaluations");
+
+  octave_stdout << nsteps << " successful steps\n";
+  octave_stdout << netfails << " failed attempts\n";
+  octave_stdout << nrevals << " function evaluations\n";
+  // octave_stdout << " partial derivatives\n";
+  // octave_stdout << " LU decompositions\n";
+  // octave_stdout << " solutions of linear systems\n";
+}
+
+static ColumnVector
+ida_user_function (const ColumnVector& x, const ColumnVector& xdot,
+                   double t, const octave_value& ida_fc)
+{
+  octave_value_list tmp;
+
+  try
+    {
+      interpreter& interp = __get_interpreter__ ();
+
+      tmp = interp.feval (ida_fc, ovl (t, x, xdot), 1);
+    }
+  catch (execution_exception& ee)
+    {
+      err_user_supplied_eval (ee, "__ode15__");
+    }
+
+  return tmp(0).vector_value ();
+}
+
+static Matrix
+ida_dense_jac (const ColumnVector& x, const ColumnVector& xdot,
+               double t, double cj, const octave_value& ida_jc)
+{
+  octave_value_list tmp;
+
+  try
+    {
+      interpreter& interp = __get_interpreter__ ();
+
+      tmp = interp.feval (ida_jc, ovl (t, x, xdot), 2);
+    }
+  catch (execution_exception& ee)
+    {
+      err_user_supplied_eval (ee, "__ode15__");
+    }
+
+  return tmp(0).matrix_value () + cj * tmp(1).matrix_value ();
+}
+
+static SparseMatrix
+ida_sparse_jac (const ColumnVector& x, const ColumnVector& xdot,
+                double t, double cj, const octave_value& ida_jc)
+{
+  octave_value_list tmp;
+
+  try
+    {
+      interpreter& interp = __get_interpreter__ ();
+
+      tmp = interp.feval (ida_jc, ovl (t, x, xdot), 2);
+    }
+  catch (execution_exception& ee)
+    {
+      err_user_supplied_eval (ee, "__ode15__");
+    }
+
+  return tmp(0).sparse_matrix_value () + cj * tmp(1).sparse_matrix_value ();
+}
+
+static Matrix
+ida_dense_cell_jac (Matrix *dfdy, Matrix *dfdyp, double cj)
+{
+  return (*dfdy) + cj * (*dfdyp);
+}
+
+static SparseMatrix
+ida_sparse_cell_jac (SparseMatrix *spdfdy, SparseMatrix *spdfdyp,
+                     double cj)
+{
+  return (*spdfdy) + cj * (*spdfdyp);
+}
+
+static octave_value_list
+do_ode15 (const octave_value& ida_fcn,
+          const ColumnVector& tspan,
+          const octave_idx_type numt,
+          const realtype t0,
+          const ColumnVector& y0,
+          const ColumnVector& yp0,
+          const octave_scalar_map& options,
+          const octave_idx_type num_event_args)
+{
+  octave_value_list retval;
+
+  // Create object
+  IDA dae (t0, y0, yp0, ida_fcn, ida_user_function);
+
+  // Set Jacobian
+  bool havejac = options.getfield ("havejac").bool_value ();
+
+  bool havejacsparse = options.getfield ("havejacsparse").bool_value ();
+
+  bool havejacfcn = options.getfield ("havejacfcn").bool_value ();
+
+  Matrix ida_dfdy, ida_dfdyp;
+  SparseMatrix ida_spdfdy, ida_spdfdyp;
+
+  if (havejac)
+    {
+      if (havejacfcn)
+        {
+          octave_value ida_jac = options.getfield ("Jacobian");
+
+          if (havejacsparse)
+            dae.set_jacobian (ida_jac, ida_sparse_jac);
+          else
+            dae.set_jacobian (ida_jac, ida_dense_jac);
+        }
+      else
+        {
+          Cell jaccell = options.getfield ("Jacobian").cell_value ();
+
+          if (havejacsparse)
+            {
+              ida_spdfdy = jaccell(0).sparse_matrix_value ();
+              ida_spdfdyp = jaccell(1).sparse_matrix_value ();
+
+              dae.set_jacobian (&ida_spdfdy, &ida_spdfdyp,
+                                ida_sparse_cell_jac);
+            }
+          else
+            {
+              ida_dfdy = jaccell(0).matrix_value ();
+              ida_dfdyp = jaccell(1).matrix_value ();
+
+              dae.set_jacobian (&ida_dfdy, &ida_dfdyp, ida_dense_cell_jac);
+            }
+        }
+    }
+
+  // Initialize IDA
+  dae.initialize ();
+
+  // Set tolerances
+  realtype rel_tol = options.getfield ("RelTol").double_value ();
+
+  bool haveabstolvec = options.getfield ("haveabstolvec").bool_value ();
+
+  if (haveabstolvec)
+    {
+      ColumnVector abs_tol = options.getfield ("AbsTol").vector_value ();
+
+      dae.set_tolerance (abs_tol, rel_tol);
+    }
+  else
+    {
+      realtype abs_tol = options.getfield ("AbsTol").double_value ();
+
+      dae.set_tolerance (abs_tol, rel_tol);
+    }
+
+  //Set max step
+  realtype maxstep = options.getfield ("MaxStep").double_value ();
+
+  dae.set_maxstep (maxstep);
+
+  //Set initial step
+  if (! options.getfield ("InitialStep").isempty ())
+    {
+      realtype initialstep = options.getfield ("InitialStep").double_value ();
+
+      dae.set_initialstep (initialstep);
+    }
+
+  //Set max order FIXME: it doesn't work
+  int maxorder = options.getfield ("MaxOrder").int_value ();
+
+  dae.set_maxorder (maxorder);
+
+  //Set Refine
+  const int refine = options.getfield ("Refine").int_value ();
+
+  bool haverefine = (refine > 1);
+
+  octave_value output_fcn;
+  ColumnVector outputsel;
+
+  // OutputFcn
+  bool haveoutputfunction
+    = options.getfield ("haveoutputfunction").bool_value ();
+
+  if (haveoutputfunction)
+    output_fcn = options.getfield ("OutputFcn");
+
+  // OutputSel
+  bool haveoutputsel = options.getfield ("haveoutputselection").bool_value ();
+
+  if (haveoutputsel)
+    outputsel = options.getfield ("OutputSel").vector_value ();
+
+  octave_value event_fcn;
+
+  // Events
+  bool haveeventfunction
+    = options.getfield ("haveeventfunction").bool_value ();
+
+  if (haveeventfunction)
+    event_fcn = options.getfield ("Events");
+
+  // Set up linear solver
+  dae.set_up (y0);
+
+  // Integrate
+  retval = dae.integrate (numt, tspan, y0, yp0, refine,
+                          haverefine, haveoutputfunction,
+                          output_fcn, haveoutputsel, outputsel,
+                          haveeventfunction, event_fcn, num_event_args);
+
+  // Statistics
+  bool havestats = options.getfield ("havestats").bool_value ();
+
+  if (havestats)
+    dae.print_stat ();
+
+  return retval;
+}
 
 #endif
 

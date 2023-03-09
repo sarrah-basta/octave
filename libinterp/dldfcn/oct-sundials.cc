@@ -1,3 +1,32 @@
+// Copyright (C) 2023 The Octave Project Developers
+//
+// See the file COPYRIGHT.md in the top-level directory of this
+// distribution or <https://octave.org/copyright/>.
+//
+// This file is part of Octave.
+//
+// Octave is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Octave is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Octave; see the file COPYING.  If not, see
+// <https://www.gnu.org/licenses/>.
+//
+////////////////////////////////////////////////////////////////////////
+
+/* -----------------------------------------------------------------
+ * generating custom SUNDIALS implementations
+ * to be able to allow Octave's native classes and
+ * solvers to be utilized by the SUNDIALS IDA Class
+ * ----------------------------------------------------------------- */
+
 #if defined (HAVE_CONFIG_H)
 #  include "config.h"
 #endif
@@ -110,10 +139,10 @@ N_Vector N_VNew (int length ARG_SUNCONTEXT)
 {
   N_Vector v;
   void *content;
-  #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
+#if defined (HAVE_SUNDIALS_SUNCONTEXT)
   if (m_sunContext == nullptr)
     return nullptr;
-  #endif
+#endif
 
   /* Create an empty vector object */
   v = nullptr;
@@ -122,26 +151,25 @@ N_Vector N_VNew (int length ARG_SUNCONTEXT)
     return nullptr;
 
   /* Create data */
-  if (length > 0) {
-
-  /* Allocate memory & Create content */
-  content = nullptr;
-  content = new ColumnVector (length);
-  if (content == nullptr)
+  if (length > 0) 
     {
-      ::N_VDestroy(v);
-      return nullptr;
+      /* Allocate memory & Create content */
+      content = nullptr;
+      content = new ColumnVector (length);
+      if (content == nullptr)
+        {
+          ::N_VDestroy (v);
+          return nullptr;
+        }
+      /* Attach content */
+      v->content = content;
+      if(NV_DATA_C (v) == nullptr)
+        {
+          octave::N_VDestroy (v);
+          return nullptr;
+        }
     }
-  /* Attach content */
-  v->content = content;
-  if(NV_DATA_C (v) == nullptr)
-    {
-      octave::N_VDestroy (v);
-      return nullptr;
-    }
-
-}
-return v;
+  return v;
 }
 /* Constructor to create a serial N_Vector
   from existing ColumnVector component */
@@ -208,11 +236,11 @@ N_Vector N_VCloneEmpty (N_Vector w)
 
   /* Create vector */
   v = nullptr;
-  #  if defined (HAVE_SUNDIALS_SUNCONTEXT)
-    v = octave::N_VNewEmpty(w->sunctx);
-  #else
-    v = octave::N_VNewEmpty();
-  #endif
+# if defined (HAVE_SUNDIALS_SUNCONTEXT)
+    v = octave::N_VNewEmpty (w->sunctx);
+#else
+    v = octave::N_VNewEmpty ();
+#endif
   if (v == nullptr)
     return nullptr;
 
@@ -396,7 +424,7 @@ void N_VProd (N_Vector x, N_Vector y, N_Vector z)
   xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
   zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
   yv = static_cast<ColumnVector *> NV_CONTENT_C (y);
-  *zv = product((*xv),(*yv));
+  *zv = product ((*xv),(*yv));
 
   return;
 }
@@ -411,7 +439,7 @@ void N_VDiv (N_Vector x, N_Vector y, N_Vector z)
   xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
   zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
   yv = static_cast<ColumnVector *> NV_CONTENT_C (y);
-  *zv = quotient((*xv),(*yv));
+  *zv = quotient ((*xv),(*yv));
 
   return;
 }
@@ -453,7 +481,7 @@ void N_VAbs (N_Vector x, N_Vector z)
   xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
   zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
 
-  (*zv) = xv->abs();
+  (*zv) = xv->abs ();
   return;
 }
 
@@ -493,7 +521,7 @@ realtype N_VDotProd (N_Vector x, N_Vector y)
   realtype sum;
   xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
   yv = static_cast <ColumnVector *> NV_CONTENT_C (y);
-  sum = (*xv).transpose() * (*yv);
+  sum = (*xv).transpose () * (*yv);
   return sum;
 }
 
@@ -505,9 +533,9 @@ realtype N_VMaxNorm (N_Vector x)
   ColumnVector *xv, abret;
   realtype ret;
   xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  abret = static_cast <ColumnVector> (xv->abs());
+  abret = static_cast <ColumnVector> (xv->abs ());
   ColumnVector *abp = &(abret);
-  ret = abp->max();
+  ret = abp->max ();
 
   return ret;
 }
@@ -544,7 +572,7 @@ realtype N_VWSqrSumLocal (N_Vector x, N_Vector w)
  */
 realtype N_VWrmsNormMask (N_Vector x, N_Vector w, N_Vector id)
 {
-  octave_value_list ov = ovl((octave::N_VWSqrSumMaskLocal (x, w, id)/(NV_LENGTH_C (x))));
+  octave_value_list ov = ovl ((octave::N_VWSqrSumMaskLocal (x, w, id)/(NV_LENGTH_C (x))));
   return (octave::Fsqrt (ov,1)(0)).double_value();
 }
 
@@ -565,9 +593,9 @@ realtype N_VWSqrSumMaskLocal (N_Vector x, N_Vector w, N_Vector id)
 
   const octave_value_list ov = octave_value_list ({(*mv),(*xv),(*mv)});
   const octave_value_list ov2 = octave_value_list ({(*mv),(*yv),(*mv)});
-  (*pv) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
-  (*pv2) = (octave::Fmerge(ov2,1)(0)).column_vector_value();
-  sum = octave::N_VWSqrSumLocal(prod, prod2);
+  (*pv) = (octave::Fmerge (ov2,1)(0)).column_vector_value();
+  (*pv2) = (octave::Fmerge (ov2,1)(0)).column_vector_value();
+  sum = octave::N_VWSqrSumLocal (prod, prod2);
 
   return sum;
 }
@@ -595,8 +623,8 @@ void N_VCompare (realtype c, N_Vector x, N_Vector z)
   * FIXME : The comparisons here shouldn't be low-level,
   * but octave::Fge which should be used gives an interpreter error
   */
-  for (int i = 0; i < (xv)->numel(); i++) 
-      (*zv)(i) = ((xv->abs())(i) >= c) ? ONE : ZERO;
+  for (int i = 0; i < (xv)->numel (); i++) 
+    (*zv)(i) = ((xv->abs ())(i) >= c) ? ONE : ZERO;
     
 
   return;
@@ -615,7 +643,7 @@ booleantype N_VInvTest (N_Vector x, N_Vector z)
   yv = static_cast <ColumnVector *> NV_CONTENT_C (y);
   booleantype no_zero_found = SUNTRUE ;
   (*zv) = ONE / (*xv);
-  if(xv->nnz() != xv->numel())
+  if(xv->nnz () != xv->numel ())
     no_zero_found = SUNFALSE;
   if(no_zero_found==SUNTRUE)
     (*zv) = ONE / (*xv);
@@ -650,8 +678,8 @@ booleantype N_VConstrMask (N_Vector c, N_Vector x, N_Vector m)
       continue;
 
     /* Check if a set constraint has been violated */
-    test = ((cv->abs())(i) > ONEPT5 && (*xv)(i)*(*cv)(i) <= ZERO)
-             || ((cv->abs())(i)  > HALF && (*xv)(i)*(*cv)(i) <  ZERO);
+    test = ((cv->abs ())(i) > ONEPT5 && (*xv)(i)*(*cv)(i) <= ZERO)
+             || ((cv->abs ())(i)  > HALF && (*xv)(i)*(*cv)(i) <  ZERO);
     if (test)
      {
         temp = (*mv)(i) = ONE;
@@ -676,7 +704,7 @@ realtype N_VMinQuotient (N_Vector num, N_Vector denom)
     yv = static_cast<ColumnVector *> NV_CONTENT_C (denom);
     zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
     *zv = quotient ((*xv),(*yv));
-    min = (zv)->min();
+    min = (zv)->min ();
 
   return min;
 }
@@ -799,7 +827,7 @@ int N_VScaleVectorArray (int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   /* should have called N_VScale */
   if (nvec == 1)
    {
-      octave::N_VScale(c[0], X[0], Z[0]);
+      octave::N_VScale (c[0], X[0], Z[0]);
       return 0;
     }
 
@@ -815,7 +843,7 @@ int N_VScaleVectorArray (int nvec, realtype* c, N_Vector* X, N_Vector* Z)
       for (i=0; i<nvec; i++)
        {
           xd = NV_DATA_C (X[i]);
-          for (j=0; j<(zv)->numel(); j++)
+          for (j=0; j < (zv)->numel (); j++)
             xd[j] *= c[i];
         }
       return 0;
@@ -843,7 +871,7 @@ static void VCopy_Local (N_Vector x, N_Vector z)
   xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
   zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
 
-  for (sunindextype i = 0; i < xv->numel(); i++)
+  for (sunindextype i = 0; i < xv->numel (); i++)
     (*zv)(i) = (*xv)(i);
 
   return;
@@ -956,64 +984,64 @@ SUNMatrix SUNSparseMatrix (sunindextype M, sunindextype N,
 
 sunindextype SUNSparseMatrix_Rows (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_ROWS_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_ROWS_O (A);
   else
     return SUNMAT_ILL_INPUT;
 }
 
 sunindextype SUNSparseMatrix_Columns (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_COLUMNS_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_COLUMNS_O (A);
   else
     return SUNMAT_ILL_INPUT;
 }
 
 sunindextype SUNSparseMatrix_NNZ (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_NNZ_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_NNZ_O (A);
   else
     return SUNMAT_ILL_INPUT;
 }
 
 sunindextype SUNSparseMatrix_NP (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_NP_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_NP_O (A);
   else
     return SUNMAT_ILL_INPUT;
 }
 
 int SUNSparseMatrix_SparseType (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_SPARSETYPE_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_SPARSETYPE_O (A);
   else
     return SUNMAT_ILL_INPUT;
 }
 
 realtype *SUNSparseMatrix_Data (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_DATA_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_DATA_O (A);
   else
     return nullptr;
 }
 
 sunindextype *SUNSparseMatrix_IndexValues (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_INDEXVALS_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_INDEXVALS_O (A);
   else
     return nullptr;
 }
 
 sunindextype *SUNSparseMatrix_IndexPointers (SUNMatrix A)
 {
-  if (SUNMatGetID(A) == SUNMATRIX_CUSTOM)
-    return SM_INDEXPTRS_O(A);
+  if (SUNMatGetID (A) == SUNMATRIX_CUSTOM)
+    return SM_INDEXPTRS_O (A);
   else
     return nullptr;
 }
@@ -1038,17 +1066,17 @@ void SUNMatDestroy_Sparse (SUNMatrix A)
   if (A->content != nullptr)
     {
       /* deleting object created using new */
-      delete SM_CONTENT_O(A);
+      delete SM_CONTENT_O (A);
     }
   A->content = nullptr;
 
   /* free ops and matrix */
   if (A->ops)
     {
-      free(A->ops);
+      free (A->ops);
       A->ops = nullptr;
     }
-  free(A);
+  free (A);
   A = nullptr;
 
   return;
@@ -1056,8 +1084,8 @@ void SUNMatDestroy_Sparse (SUNMatrix A)
 
 int SUNMatZero_Sparse (SUNMatrix A)
 {
-  SparseMatrix *ptr = new SparseMatrix (SM_ROWS_O(A),SM_COLS_O(A));
-  SparseMatrix *am = static_cast <SparseMatrix *> SM_CONTENT_O(A);
+  SparseMatrix *ptr = new SparseMatrix (SM_ROWS_O (A),SM_COLS_O (A));
+  SparseMatrix *am = static_cast <SparseMatrix *> SM_CONTENT_O (A);
   *am = *ptr;
 
   return SUNMAT_SUCCESS;
@@ -1067,7 +1095,7 @@ int SUNMatZero_Sparse (SUNMatrix A)
 
 void SUNSparseMatrix_Print (SUNMatrix A)
 {
-  SparseMatrix *am = static_cast <SparseMatrix *>SM_CONTENT_O(A);
+  SparseMatrix *am = static_cast <SparseMatrix *>SM_CONTENT_O (A);
   std::cout<<(*am);
   return;
 }
@@ -1082,13 +1110,13 @@ SUNLinearSolver SUNLinSol_Gen (N_Vector y, SUNMatrix A ARG_SUNCONTEXT)
   SUNLinearSolver S;
   SUNLinearSolverContent_GEN content;
 
-  if (octave::SUNSparseMatrix_Rows(A) != octave::SUNSparseMatrix_Columns(A))
+  if (octave::SUNSparseMatrix_Rows (A) != octave::SUNSparseMatrix_Columns (A))
    return nullptr;
 
-  if ( ::N_VGetVectorID(y) != SUNDIALS_NVEC_CUSTOM )
+  if ( ::N_VGetVectorID (y) != SUNDIALS_NVEC_CUSTOM )
     return nullptr;
 
-  if (octave::SUNSparseMatrix_Rows(A) != ::N_VGetLength(y))
+  if (octave::SUNSparseMatrix_Rows (A) != ::N_VGetLength (y))
    return nullptr;
 
 
@@ -1110,8 +1138,8 @@ SUNLinearSolver SUNLinSol_Gen (N_Vector y, SUNMatrix A ARG_SUNCONTEXT)
 
     /* Create content */
   content = nullptr;
-  content = reinterpret_cast<SUNLinearSolverContent_GEN> (malloc(sizeof *content));
-  if (content == nullptr) { SUNLinSolFree(S); return nullptr; }
+  content = reinterpret_cast<SUNLinearSolverContent_GEN> (malloc (sizeof *content));
+  if (content == nullptr) { SUNLinSolFree (S); return nullptr; }
 
   /* Attach content */
   S->content = content;
@@ -1152,7 +1180,7 @@ int SUNLinSolSolve_Gen (SUNLinearSolver S, SUNMatrix A, N_Vector x,
 
   SparseMatrix *am = static_cast<SparseMatrix *> SM_CONTENT_O (A);
 
-  (*xv) = am->solve((*zv));
+  (*xv) = am->solve (*zv);
 
   return 1;
 }
@@ -1166,10 +1194,10 @@ int SUNLinSolFree_Gen (SUNLinearSolver S)
   /* delete generic structures */
   if (S->ops)
     {
-      free(S->ops);
+      free (S->ops);
       S->ops = nullptr;
     }
-  free(S); S = nullptr;
+  free (S); S = nullptr;
   return SUNLS_SUCCESS;
 }
 
