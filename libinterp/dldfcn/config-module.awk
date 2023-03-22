@@ -22,11 +22,11 @@
 ## <https://www.gnu.org/licenses/>.
 ##
 ########################################################################
-
+ 
 BEGIN {
   FS = "|";
   nfiles = 0;
-
+ 
   print "## DO NOT EDIT -- generated from module-files by config-module.awk";
   print ""
   print "EXTRA_DIST += \\"
@@ -45,15 +45,14 @@ BEGIN {
   libraries[nfiles] = $4;
 } END {
   sep = " \\\n";
-  print "DLDFCN_SRC = \\";
+  printf ("DLDFCN_SRC =");
   for (i = 1; i <= nfiles; i++) {
-    if (i == nfiles)
-      sep = "\n";
-    printf ("  %%reldir%%/%s%s", files[i], sep);
+    split (files[i], src_files, " ");
+    printf ("%s  %%reldir%%/%s", sep, src_files[1]);
   }
   print "";
-
-  sep = " \\\n";
+ 
+  print "";
   print "DLDFCN_LIBS = $(DLDFCN_SRC:.cc=.la)";
   print "";
   print "octlib_LTLIBRARIES += $(DLDFCN_LIBS)";
@@ -63,21 +62,16 @@ BEGIN {
   print "";
   print "%.oct : %.la"
   print "\t$(AM_V_GEN)$(INSTALL_PROGRAM) %reldir%/.libs/$(shell $(SED) -n -e \"s/dlname='\\([^']*\\)'/\\1/p\" < $<) $@"
-
+ 
   for (i = 1; i <= nfiles; i++) {
-    basename = files[i];
+    split (files[i], src_files, " ");
+    basename = src_files[1];
     sub (/\.cc$/, "", basename);
     print "";
-    if (files[i] == "__ode15__.cc")
-    {
-      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/__ode15__.cc %%reldir%%/oct-sundials.cc \n",
-            basename);
-    }
-    else
-    {
-      printf ("%%canon_reldir%%_%s_la_SOURCES = %%reldir%%/%s\n",
-            basename, files[i]);
-    }
+    printf ("%%canon_reldir%%_%s_la_SOURCES =", basename);
+    for (j in src_files)
+      printf (" %%reldir%%/%s", src_files[j]);
+    print "";
     if (cppflags[i])
       {
         printf ("%%canon_reldir%%_%s_la_CPPFLAGS = $(libinterp_liboctinterp_la_CPPFLAGS) %s\n",
@@ -90,15 +84,21 @@ BEGIN {
     printf ("%%canon_reldir%%_%s_la_DEPENDENCIES = $(OCT_LINK_DEPS)\n",
             basename);
   }
-
+ 
   print "";
   print "$(srcdir)/%reldir%/module.mk: $(srcdir)/%reldir%/config-module.sh $(srcdir)/%reldir%/config-module.awk $(srcdir)/%reldir%/module-files";
   print "\t$(AM_V_GEN)$(SHELL) $(srcdir)/%reldir%/config-module.sh $(srcdir)";
-
+ 
   print "";
   print "DLDFCN_OCT_FILES = $(DLDFCN_LIBS:.la=.oct)";
   print "";
-  print "DLDFCN_DEFUN_FILES = $(DLDFCN_SRC)";
+  printf ("DLDFCN_DEFUN_FILES =");
+  for (i = 1; i <= nfiles; i++) {
+    split (files[i], src_files, " ");
+    for (j in src_files)
+      printf ("%s  %%reldir%%/%s", sep, src_files[j]);
+  }
+  print "";
   print "";
   print "DLDFCN_PKG_ADD_FILE = %reldir%/PKG_ADD";
   print "";
@@ -123,7 +123,7 @@ BEGIN {
   print " $(DLDFCN_OCT_FILES)";
   print "";
   print "DIRSTAMP_FILES += %reldir%/$(octave_dirstamp)";
-
+ 
   print "";
   print "libinterp_CLEANFILES += \\";
   print "  $(DLDFCN_PKG_ADD_FILE) \\";
