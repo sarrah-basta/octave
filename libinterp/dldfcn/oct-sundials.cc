@@ -214,7 +214,7 @@ sunindextype N_VGetLength (N_Vector v)
 void N_VPrint (N_Vector x)
 {
   ColumnVector *xv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
+  xv = NV_CONTENT_C (x);
 
   std::cout<<(*xv);
 
@@ -317,7 +317,7 @@ void N_VSpace (N_Vector v, sunindextype *lrw, sunindextype *liw)
 
 realtype *N_VGetArrayPointer (N_Vector v)
 {
-  return reinterpret_cast<realtype *> NV_DATA_C (v);
+  return NV_DATA_C (v);
 }
 
 /*
@@ -327,9 +327,9 @@ void N_VLinearSum (realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 {
 
   ColumnVector *xv, *yv, *zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C (y);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  yv = NV_CONTENT_C (y);
+  zv = NV_CONTENT_C (z);
   booleantype test;
 
   /* Case: a == b == 1.0 */
@@ -407,7 +407,7 @@ void N_VLinearSum (realtype a, N_Vector x, realtype b, N_Vector y, N_Vector z)
 void N_VConst (realtype c, N_Vector z)
 {
   ColumnVector *zv;
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
+  zv = NV_CONTENT_C (z);
 
   zv->fill (c);
 
@@ -421,9 +421,9 @@ void N_VProd (N_Vector x, N_Vector y, N_Vector z)
 {
 
   ColumnVector *xv, *zv, *yv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
-  yv = static_cast<ColumnVector *> NV_CONTENT_C (y);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
+  yv = NV_CONTENT_C (y);
   *zv = product ((*xv),(*yv));
 
   return;
@@ -436,9 +436,9 @@ void N_VDiv (N_Vector x, N_Vector y, N_Vector z)
 {
 
   ColumnVector *xv, *zv, *yv;
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
-  yv = static_cast<ColumnVector *> NV_CONTENT_C (y);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
+  yv = NV_CONTENT_C (y);
   *zv = quotient ((*xv),(*yv));
 
   return;
@@ -449,8 +449,8 @@ void N_VDiv (N_Vector x, N_Vector y, N_Vector z)
  */
 void N_VScale (realtype c, N_Vector x, N_Vector z)
 {
-  ColumnVector *xv = const_cast <ColumnVector *> NV_CONTENT_C (x);
-  ColumnVector *zv = const_cast <ColumnVector *> NV_CONTENT_C (z);
+  ColumnVector *xv = NV_CONTENT_C (x);
+  ColumnVector *zv = NV_CONTENT_C (z);
 
   // checks if both NVectors z and x
   // are stored in the same place
@@ -478,8 +478,8 @@ void N_VScale (realtype c, N_Vector x, N_Vector z)
 void N_VAbs (N_Vector x, N_Vector z)
 {
   ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
 
   (*zv) = xv->abs ();
   return;
@@ -491,8 +491,8 @@ void N_VAbs (N_Vector x, N_Vector z)
 void N_VInv (N_Vector x, N_Vector z)
 {
   ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
 
   (*zv) = ONE / (*xv);
 
@@ -505,8 +505,8 @@ void N_VInv (N_Vector x, N_Vector z)
 void N_VAddConst (N_Vector x, realtype b, N_Vector z)
 {
   ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
 
   (*zv) = (*xv) + b;
   return;
@@ -519,8 +519,8 @@ realtype N_VDotProd (N_Vector x, N_Vector y)
 {
   ColumnVector *xv,*yv;
   realtype sum;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C (y);
+  xv = NV_CONTENT_C (x);
+  yv = NV_CONTENT_C (y);
   sum = (*xv).transpose () * (*yv);
   return sum;
 }
@@ -532,8 +532,8 @@ realtype N_VMaxNorm (N_Vector x)
 {
   ColumnVector *xv, abret;
   realtype ret;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  abret = static_cast <ColumnVector> (xv->abs ());
+  xv = NV_CONTENT_C (x);
+  abret = (xv->abs ());
   ColumnVector *abp = &(abret);
   ret = abp->max ();
 
@@ -557,9 +557,9 @@ realtype N_VWSqrSumLocal (N_Vector x, N_Vector w)
   N_Vector prod = octave::N_VClone (x);
   ColumnVector *xv,*yv, *pv;
   realtype sum;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C (w);
-  pv = static_cast <ColumnVector *> NV_CONTENT_C (prod);
+  xv = NV_CONTENT_C (x);
+  yv = NV_CONTENT_C (w);
+  pv = NV_CONTENT_C (prod);
 
   (*pv) = product ((*xv),(*yv));
   octave_value_list ov = ovl ((*pv));
@@ -585,11 +585,11 @@ realtype N_VWSqrSumMaskLocal (N_Vector x, N_Vector w, N_Vector id)
   N_Vector prod2 = octave::N_VClone (x);
   ColumnVector *xv,*yv, *mv, *pv, *pv2;
   realtype sum;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C (w);
-  mv = static_cast <ColumnVector *> NV_CONTENT_C (id);    //mask vector
-  pv = static_cast <ColumnVector *> NV_CONTENT_C (prod);
-  pv2 = static_cast <ColumnVector *> NV_CONTENT_C (prod2);
+  xv = NV_CONTENT_C (x);
+  yv = NV_CONTENT_C (w);
+  mv = NV_CONTENT_C (id);    //mask vector
+  pv = NV_CONTENT_C (prod);
+  pv2 = NV_CONTENT_C (prod2);
 
   const octave_value_list ov = octave_value_list ({(*mv),(*xv),(*mv)});
   const octave_value_list ov2 = octave_value_list ({(*mv),(*yv),(*mv)});
@@ -605,7 +605,7 @@ realtype N_VMin (N_Vector x)
 {
   ColumnVector *xv;
   realtype min;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
+  xv = NV_CONTENT_C (x);
 
   min = xv->min();
   return min;
@@ -617,8 +617,8 @@ realtype N_VMin (N_Vector x)
 void N_VCompare (realtype c, N_Vector x, N_Vector z)
 {
   ColumnVector *xv,*zv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
   /*
   * FIXME : The comparisons here shouldn't be low-level,
   * but octave::Fge which should be used gives an interpreter error
@@ -638,9 +638,9 @@ booleantype N_VInvTest (N_Vector x, N_Vector z)
   N_Vector y = octave::N_VClone (x);
 
   ColumnVector *xv, *zv, *yv;
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast <ColumnVector *> NV_CONTENT_C (z);
-  yv = static_cast <ColumnVector *> NV_CONTENT_C (y);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
+  yv = NV_CONTENT_C (y);
   booleantype no_zero_found = SUNTRUE ;
   (*zv) = ONE / (*xv);
   if(xv->nnz () != xv->numel ())
@@ -666,9 +666,9 @@ booleantype N_VConstrMask (N_Vector c, N_Vector x, N_Vector m)
   booleantype test;
 
   ColumnVector *cv, *xv, *mv; 
-  xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  cv = static_cast <ColumnVector *> NV_CONTENT_C (c);
-  mv = static_cast <ColumnVector *> NV_CONTENT_C (m);
+  xv = NV_CONTENT_C (x);
+  cv = NV_CONTENT_C (c);
+  mv = NV_CONTENT_C (m);
 
   for (sunindextype i = 0; i < NV_LENGTH_C (x); i++) {
     (*mv)(i) = ZERO;
@@ -700,9 +700,9 @@ realtype N_VMinQuotient (N_Vector num, N_Vector denom)
     realtype min;
     min = BIG_REAL;
 
-    xv = static_cast<ColumnVector *> NV_CONTENT_C (num);
-    yv = static_cast<ColumnVector *> NV_CONTENT_C (denom);
-    zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
+    xv = NV_CONTENT_C (num);
+    yv = NV_CONTENT_C (denom);
+    zv = NV_CONTENT_C (z);
     *zv = quotient ((*xv),(*yv));
     min = (zv)->min ();
 
@@ -737,8 +737,8 @@ int N_VLinearCombination (int nvec, realtype* c, N_Vector* X, N_Vector z)
 
   ColumnVector *xv, *zv;
 
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (X[0]);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (X[0]);
+  zv = NV_CONTENT_C (z);
 
   /*
    * z = sum{ c[i] * X[i] }, i = 0,...,nvec-1
@@ -763,9 +763,9 @@ int N_VScaleAddMulti (int nvec, realtype* a, N_Vector x, N_Vector* Y, N_Vector* 
 
   ColumnVector *xv, *zv, *yv;
 
-  yv = static_cast<ColumnVector *> NV_CONTENT_C (Y[0]);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (Z[0]);
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
+  yv = NV_CONTENT_C (Y[0]);
+  zv = NV_CONTENT_C (Z[0]);
+  xv = NV_CONTENT_C (x);
 
   /*
    * Z[i][j] = Y[i][j] + a[i] * x[j]
@@ -802,9 +802,9 @@ int N_VLinearSumVectorArray (int nvec,
 
   for (i=0; i<nvec; i++)
    {
-      yv = static_cast<ColumnVector *> NV_CONTENT_C (Y[i]);
-      zv = static_cast<ColumnVector *> NV_CONTENT_C (Z[i]);
-      xv = static_cast<ColumnVector *> NV_CONTENT_C (X[i]);
+      yv = NV_CONTENT_C (Y[i]);
+      zv = NV_CONTENT_C (Z[i]);
+      xv = NV_CONTENT_C (X[i]);
       (*zv) = a * (*xv) + b * (*yv);
     }
 
@@ -818,8 +818,8 @@ int N_VScaleVectorArray (int nvec, realtype* c, N_Vector* X, N_Vector* Z)
   realtype    *xd=nullptr;
   ColumnVector *xv, *zv;
 
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (X[0]);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (Z[0]);
+  xv = NV_CONTENT_C (X[0]);
+  zv = NV_CONTENT_C (Z[0]);
 
   /* invalid number of vectors */
   if (nvec < 1) return -1;
@@ -868,8 +868,8 @@ static void VCopy_Local (N_Vector x, N_Vector z)
 {
   ColumnVector *xv, *zv;
 
-  xv = static_cast<ColumnVector *> NV_CONTENT_C (x);
-  zv = static_cast<ColumnVector *> NV_CONTENT_C (z);
+  xv = NV_CONTENT_C (x);
+  zv = NV_CONTENT_C (z);
 
   for (sunindextype i = 0; i < xv->numel (); i++)
     (*zv)(i) = (*xv)(i);
@@ -1085,7 +1085,7 @@ void SUNMatDestroy_Sparse (SUNMatrix A)
 int SUNMatZero_Sparse (SUNMatrix A)
 {
   SparseMatrix *ptr = new SparseMatrix (SM_ROWS_O (A),SM_COLS_O (A));
-  SparseMatrix *am = static_cast <SparseMatrix *> SM_CONTENT_O (A);
+  SparseMatrix *am = SM_CONTENT_O (A);
   *am = *ptr;
 
   return SUNMAT_SUCCESS;
@@ -1095,7 +1095,7 @@ int SUNMatZero_Sparse (SUNMatrix A)
 
 void SUNSparseMatrix_Print (SUNMatrix A)
 {
-  SparseMatrix *am = static_cast <SparseMatrix *>SM_CONTENT_O (A);
+  SparseMatrix *am = SM_CONTENT_O (A);
   std::cout<<(*am);
   return;
 }
@@ -1175,10 +1175,10 @@ int SUNLinSolSolve_Gen (SUNLinearSolver S, SUNMatrix A, N_Vector x,
   /* check for valid inputs */
   if ( (A == nullptr) || (S == nullptr) || (x == nullptr) || (b == nullptr) )
     return SUNLS_MEM_NULL;
-  ColumnVector *xv = static_cast <ColumnVector *> NV_CONTENT_C (x);
-  ColumnVector *zv = static_cast <ColumnVector *> NV_CONTENT_C (b);
+  ColumnVector *xv = NV_CONTENT_C (x);
+  ColumnVector *zv = NV_CONTENT_C (b);
 
-  SparseMatrix *am = static_cast<SparseMatrix *> SM_CONTENT_O (A);
+  SparseMatrix *am = SM_CONTENT_O (A);
 
   (*xv) = am->solve (*zv);
 
