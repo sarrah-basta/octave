@@ -120,30 +120,6 @@ SUNLinSol_KLU (N_Vector y, SUNMatrix A)
 #    endif
 #  endif
 
-static inline realtype *
-nv_data_c (N_Vector& v)
-{
-  return NV_DATA_C (v);
-}
-
-static inline realtype *
-nv_data_s (N_Vector& v)
-{
-  return NV_DATA_S (v);
-}
-
-static inline _N_VectorContent_Serial *
-nv_content_s (N_Vector& v)
-{
-  return NV_CONTENT_S (v);
-}
-
-static inline ColumnVector *
-nv_content_c (N_Vector& v)
-{
-  return NV_CONTENT_C (v);
-}
-
 class IDA
 {
 public:
@@ -408,12 +384,12 @@ IDA::resfun_impl (realtype t, N_Vector& yy,
   realtype *puntrr;
   if (::N_VGetVectorID (rr) == SUNDIALS_NVEC_CUSTOM)
   {
-    ColumnVector *rest = const_cast<ColumnVector *> (nv_content_c (rr));
+    ColumnVector *rest = NV_CONTENT_C (rr);
     *rest = res;
   }
   else
   {
-    puntrr = nv_data_s (rr);
+    puntrr = NV_DATA_S (rr);
     for (octave_idx_type i = 0; i < m_num; i++)
       puntrr[i] = res (i);
   }
@@ -548,8 +524,8 @@ IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
       d[i] = jac.data (i);
     }
 #  else
-  ColumnVector *y = const_cast<ColumnVector *> (nv_content_c (yy));
-  ColumnVector *yp = const_cast<ColumnVector *> (nv_content_c (yyp));
+  ColumnVector *y = NV_CONTENT_C (yy);
+  ColumnVector *yp = NV_CONTENT_C (yyp);
   SparseMatrix jac;
 
   if (m_havejacfcn)
@@ -563,7 +539,7 @@ IDA::jacsparse_impl (realtype t, realtype cj, N_Vector& yy, N_Vector& yyp,
 
   SparseMatrix *jnew = new SparseMatrix ();
   *jnew = jac;
-  SparseMatrix *content = const_cast<SparseMatrix *> (jnew);
+  SparseMatrix *content = jnew;
   Jac->content = content;
 #  endif
 }
@@ -574,12 +550,12 @@ IDA::NVecToCol (N_Vector& v, octave_f77_int_type n)
   ColumnVector data (n);
   if (::N_VGetVectorID (v) == SUNDIALS_NVEC_CUSTOM)
     {
-      ColumnVector *punt = const_cast<ColumnVector *> (nv_content_c (v));
+      ColumnVector *punt = NV_CONTENT_C (v);
       data = *punt;
     }
   else
     {
-      realtype *punt = nv_data_s (v);
+      realtype *punt = NV_DATA_S (v);
 
       for (octave_f77_int_type i = 0; i < n; i++)
         data(i) = punt[i];
@@ -598,7 +574,7 @@ N_Vector
 IDA::ColToNVec_Serial (const ColumnVector& data, octave_f77_int_type n)
 {
   N_Vector v = N_VNew_Serial (n OCTAVE_SUNCONTEXT);
-  realtype *punt = nv_data_s (v);
+  realtype *punt = NV_DATA_S (v);
 
   for (octave_f77_int_type i = 0; i < n; i++)
     punt[i] = data (i);
@@ -654,17 +630,17 @@ IDA::set_tolerance (ColumnVector& abstol, realtype reltol)
 {
   N_Vector abs_tol;
   if (m_havejacsparse)
-  {
+    {
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    abs_tol = ColToNVec_Serial (abstol, m_num);
+      abs_tol = ColToNVec_Serial (abstol, m_num);
 #  else
-    abs_tol = ColToNVec_Octave (abstol);
+      abs_tol = ColToNVec_Octave (abstol);
 #  endif
-  }
+    }
   else
-  {
-    abs_tol = ColToNVec_Serial (abstol, m_num);
-  }
+    {
+      abs_tol = ColToNVec_Serial (abstol, m_num);
+    }
 
   if (IDASVtolerances (m_mem, reltol, abs_tol) != 0)
     error ("IDA: Tolerance not set");
@@ -701,20 +677,20 @@ IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
   realtype tend = tspan(numt - 1);
   N_Vector yy, yyp;
   if (m_havejacsparse)
-  {
+    {
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-    yy = ColToNVec_Serial (y, m_num);
-    yyp = ColToNVec_Serial (yp, m_num);
+      yy = ColToNVec_Serial (y, m_num);
+      yyp = ColToNVec_Serial (yp, m_num);
 #  else
-    yy = ColToNVec_Octave (y);
-    yyp = ColToNVec_Octave (yp);
+      yy = ColToNVec_Octave (y);
+      yyp = ColToNVec_Octave (yp);
 #  endif
-  }
+    }
   else
-  {
-    yy = ColToNVec_Serial (y, m_num);
-    yyp = ColToNVec_Serial (yp, m_num);
-  }
+    {
+      yy = ColToNVec_Serial (y, m_num);
+      yyp = ColToNVec_Serial (yp, m_num);
+    }
 
   // Initialize OutputFcn
   if (haveoutputfcn)
@@ -826,17 +802,17 @@ IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
           // Interpolate in tend
           N_Vector dky;
           if (m_havejacsparse)
-          {
+            {
 #  if defined (HAVE_SUNDIALS_SUNLINSOL_KLU)
-            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+              dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
 #  else
-            dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
+              dky = octave::N_VNew (m_num OCTAVE_SUNCONTEXT);
 #  endif
-          }
+            }
           else
-          {
-            dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
-          }
+            {
+              dky = N_VNew_Serial (m_num OCTAVE_SUNCONTEXT);
+            }
 
           if (IDAGetDky (m_mem, tend, 0, dky) != 0)
             error ("IDA failed to interpolate y");
@@ -858,7 +834,7 @@ IDA::integrate (const octave_idx_type numt, const ColumnVector& tspan,
               if (haveeventfunction)
                 status = IDA::event (event_fcn, te, ye, ie, tend, yout,
                                      string, ypout, oldval, oldisterminal,
-                                     olddir, cont, temp, tout (cont - 1),
+                                     olddir, cont, temp, tout(cont - 1),
                                      yold, num_event_args);
             }
 
